@@ -181,6 +181,21 @@ function statusToString(::FMI3Struct, status::Union{fmi3Status, Integer})
         return "Unknown"
     end
 end
+function statusToString(status::Integer)
+    if status == fmi3StatusOK
+        return "OK"
+    elseif status == fmi3StatusWarning
+        return "Warning"
+    elseif status == fmi3StatusDiscard
+        return "Discard"
+    elseif status == fmi3StatusError
+        return "Error"
+    elseif status == fmi3StatusFatal
+        return "Fatal"
+    else
+        return "Unknown"
+    end
+end
 export statusToString
 
 """

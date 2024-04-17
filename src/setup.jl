@@ -3,12 +3,14 @@
 # Licensed under the MIT license. See LICENSE file in the project root for details.
 #
 
+import SciMLBase: ODEFunction
+
 function setupSolver!(fmu::FMU, tspan, kwargs)
 
     t_start = tspan[1]
     t_stop = tspan[end]
 
-    if isnothing(tstart)
+    if isnothing(t_start)
         t_start = getDefaultStartTime(fmu)
         
         if isnothing(t_start)
@@ -26,7 +28,7 @@ function setupSolver!(fmu::FMU, tspan, kwargs)
         end
     end
 
-    tspan[:] = (t_start, t_stop)
+    tspan = (t_start, t_stop)
 
     if !haskey(kwargs, :reltol)
         kwargs[:reltol] = getDefaultTolerance(fmu)
@@ -42,21 +44,19 @@ function setupSolver!(fmu::FMU, tspan, kwargs)
         kwargs[:dtmax] = (t_stop-t_start)/100.0
     end
 
-    return nothing
+    return tspan
 end
 
 # sets up the ODEProblem for simulating a ME-FMU
-function setupODEProblem(c::FMUInstance, x0::AbstractArray{fmi2Real}, tspan::Union{Tuple{Float64, Float64}, Nothing}=nothing; 
+function setupODEProblem(c::Union{FMUInstance, Nothing}, x0::Union{AbstractArray{fmi2Real}, Nothing}, tspan::Union{Tuple{Float64, Float64}, Nothing}=nothing; 
     p=(), 
     inputFunction::Union{FMUInputFunction, Nothing}=nothing)
-    
-    callbacks = []
     
     fx = (dx, x, p, t) -> f(dx, x, p, t; inputFunction=inputFunction)
     ff = ODEFunction{true}(fx) # , tgrad=nothing)
     problem = ODEProblem{true}(ff, x0, tspan, p)
 
-    return problem, callbacks
+    return problem
 end
 
 function setupODEProblem!(args...; kwargs...)

@@ -940,11 +940,11 @@ function canGetSetFMUState(md::fmi2ModelDescription)
 end
 function canGetSetFMUState(md::fmi3ModelDescription)
     if !isnothing(md.coSimulation) 
-        return md.coSimulation.canGetAndSetFMUstate
+        return md.coSimulation.canGetAndSetFMUState
     elseif !isnothing(md.modelExchange) 
-        return md.modelExchange.canGetAndSetFMUstate
+        return md.modelExchange.canGetAndSetFMUState
     elseif !isnothing(md.scheduledExecution) 
-        return md.scheduledExecution.canGetAndSetFMUstate
+        return md.scheduledExecution.canGetAndSetFMUState
     end
 end
 canGetSetFMUState(fmu::FMU) = canGetSetFMUState(fmu.modelDescription)
@@ -971,11 +971,11 @@ function canSerializeFMUState(md::fmi2ModelDescription)
 end
 function canSerializeFMUState(md::fmi3ModelDescription)
     if !isnothing(md.coSimulation) 
-        return md.coSimulation.canSerializeFMUstate 
+        return md.coSimulation.canSerializeFMUState 
     elseif !isnothing(md.modelExchange) 
-        return md.modelExchange.canSerializeFMUstate
+        return md.modelExchange.canSerializeFMUState
     elseif !isnothing(md.scheduledExecution) 
-        return md.scheduledExecution.canSerializeFMUstate
+        return md.scheduledExecution.canSerializeFMUState
     end
 end
 canSerializeFMUState(fmu::FMU) = canSerializeFMUState(fmu.modelDescription)
@@ -995,11 +995,11 @@ Returns true, if the FMU provides directional derivatives
 """
 function providesDirectionalDerivatives(md::fmi3ModelDescription)
     if !isnothing(md.coSimulation)
-        return (md.coSimulation.providesDirectionalDerivative == true)
+        return (md.coSimulation.providesDirectionalDerivatives == true)
     elseif !isnothing(md.modelExchange)
-        return (md.modelExchange.providesDirectionalDerivative == true)
+        return (md.modelExchange.providesDirectionalDerivatives == true)
     elseif !isnothing(md.scheduledExecution)
-        return (md.scheduledExecution.providesDirectionalDerivative == true)
+        return (md.scheduledExecution.providesDirectionalDerivatives == true)
     end
 
     return false

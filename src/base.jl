@@ -47,6 +47,7 @@ getRealType(::FMU2Component) = fmi2Real
 getRealType(::FMU3Instance) = fmi3Float64
 
 # check if is true 
+isTrue(val::Bool) = val
 isTrue(val::fmi2Boolean) = (val == fmi2True)
 isTrue(val::fmi3Boolean) = (val == fmi3True)
 

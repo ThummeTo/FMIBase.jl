@@ -1,15 +1,15 @@
-#
-# Copyright (c) 2021 Tobias Thummerer, Lars Mikelsons, Josef Kircher
+#!
+# Copyright (c) 2021 Tobias Thummerer, Lars Mikelsons
 # Licensed under the MIT license. See LICENSE file in the project root for details.
 #
 
 # returns the event indicators for an FMU.
 function condition(c::FMUInstance, out, x, t, integrator, inputFunction) 
-    indicators!(c, out, x, t, inputFunction)
+    condition!(c, out, x, t, inputFunction)
     return nothing
 end
 
-function indicators!(c::FMUInstance, 
+function condition!(c::FMUInstance, 
     ec,
     x::AbstractArray{<:Real}, 
     t::Real,
@@ -132,7 +132,7 @@ function saveEventIndicators(c::FMUInstance, recordEventIndicators, x, t, integr
     c.solution.evals_saveeventindicators += 1
 
     out = zeros(getRealType(c), c.fmu.modelDescription.numberOfEventIndicators)
-    indicators!(c, out, x, t, inputFunction)
+    condition!(c, out, x, t, inputFunction)
 
     # ToDo: Replace by inplace statement!
     return (out[recordEventIndicators]...,)

@@ -13,7 +13,7 @@ using Requires
 import ChainRulesCore
 import Base: show
 
-# just load to make it available in other packages
+# just load to make it available in other packages (FMIImport, FMIExport)
 import EzXML
 import ZipFile
 
@@ -44,6 +44,7 @@ include("logging.jl")
 include("sense.jl")
 include("snapshot.jl")
 include("valueRefs.jl")
+include("info.jl")
 
 # Requires init
 function __init__()
