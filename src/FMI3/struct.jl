@@ -55,7 +55,7 @@ mutable struct FMU3Instance{F} <: FMUInstance
     loggingOn::Bool
     instanceName::String
     continuousStatesChanged::fmi3Boolean
-    visible::fmi3Boolean
+    visible::Bool
 
     # caches
     t::fmi3Float64             # the system time
@@ -123,6 +123,23 @@ mutable struct FMU3Instance{F} <: FMUInstance
     default_y::AbstractVector{<:Real}
     default_ec::AbstractVector{<:Real}
 
+    # performance (pointers to prevent repeating allocations)
+    _enterEventMode::Array{fmi3Boolean, 1}
+    _discreteStatesNeedUpdate::Array{fmi3Boolean, 1}
+    _terminateSimulation::Array{fmi3Boolean, 1}
+    _nominalsOfContinuousStatesChanged::Array{fmi3Boolean, 1}
+    _valuesOfContinuousStatesChanged::Array{fmi3Boolean, 1}
+    _nextEventTimeDefined::Array{fmi3Boolean, 1}
+    _nextEventTime::Array{fmi3Float64, 1}
+
+    _ptr_enterEventMode::Ptr{fmi3Boolean}
+    _ptr_discreteStatesNeedUpdate::Ptr{fmi3Boolean}
+    _ptr_terminateSimulation::Ptr{fmi3Boolean}
+    _ptr_nominalsOfContinuousStatesChanged::Ptr{fmi3Boolean}
+    _ptr_valuesOfContinuousStatesChanged::Ptr{fmi3Boolean}
+    _ptr_nextEventTimeDefined::Ptr{fmi3Boolean}
+    _ptr_nextEventTime::Ptr{fmi3Float64}
+
     # a container for all created snapshots, so that we can properly release them at unload
     snapshots::Vector{FMUSnapshot}
 
@@ -137,8 +154,22 @@ mutable struct FMU3Instance{F} <: FMUInstance
         inst.type = nothing
         inst.threadid = Threads.threadid()
 
-        # event handling 
-        # [todo] nothing?
+        # performance (pointers to prevent repeating allocations)
+        inst._enterEventMode = zeros(fmi3Boolean, 1)
+        inst._discreteStatesNeedUpdate = zeros(fmi3Boolean, 1)
+        inst._terminateSimulation = zeros(fmi3Boolean, 1)
+        inst._nominalsOfContinuousStatesChanged = zeros(fmi3Boolean, 1)
+        inst._valuesOfContinuousStatesChanged = zeros(fmi3Boolean, 1)
+        inst._nextEventTimeDefined = zeros(fmi3Boolean, 1)
+        inst._nextEventTime = zeros(fmi3Float64, 1)
+
+        inst._ptr_enterEventMode = pointer(inst._enterEventMode)
+        inst._ptr_discreteStatesNeedUpdate = pointer(inst._discreteStatesNeedUpdate)
+        inst._ptr_terminateSimulation = pointer(inst._terminateSimulation)
+        inst._ptr_nominalsOfContinuousStatesChanged = pointer(inst._nominalsOfContinuousStatesChanged)
+        inst._ptr_valuesOfContinuousStatesChanged = pointer(inst._valuesOfContinuousStatesChanged)
+        inst._ptr_nextEventTimeDefined = pointer(inst._nextEventTimeDefined)
+        inst._ptr_nextEventTime = pointer(inst._nextEventTime)
         
         # AD
         inst.output = FMUADOutput{Real}(; initType=Float64)
@@ -147,8 +178,8 @@ mutable struct FMU3Instance{F} <: FMUInstance
         inst.frule_output = FMUEvaluationOutput{Float64}()
 
         # logging
-        inst.loggingOn = fmi3False
-        inst.visible = fmi3False
+        inst.loggingOn = false
+        inst.visible = false
         inst.instanceName = ""
 
         # caches
@@ -159,7 +190,7 @@ mutable struct FMU3Instance{F} <: FMUInstance
         inst.z = nothing
         inst.z_prev = nothing
 
-        inst.values = Dict()
+        inst.values = Dict{fmi3ValueReference, Union{fmi3Float64, fmi3Int64, fmi3Boolean}}()
         inst.x_vrs = Array{fmi3ValueReference, 1}()
         inst.ẋ_vrs = Array{fmi3ValueReference, 1}() 
         inst.u_vrs = Array{fmi3ValueReference, 1}()  
@@ -199,7 +230,7 @@ mutable struct FMU3Instance{F} <: FMUInstance
         inst.default_y = EMPTY_fmi3Float64
         inst.default_ec = EMPTY_fmi3Float64
 
-        inst.snapshots = []
+        inst.snapshots = Vector{FMUSnapshot}()
 
         return inst
     end
@@ -231,6 +262,45 @@ mutable struct FMU3Instance{F} <: FMUInstance
 
 end
 export FMU3Instance
+
+# overloading get/set/haspropoerty for preallocated pointers (buffers for return values)
+
+const FMU3Instance_AdditionalFields = (:enterEventMode,
+    :discreteStatesNeedUpdate, 
+    :terminateSimulation, 
+    :nominalsOfContinuousStatesChanged, 
+    :valuesOfContinuousStatesChanged,
+    :nextEventTimeDefined,
+    :nextEventTime)
+
+function Base.setproperty!(str::FMU3Instance, var::Symbol, value)
+    if var ∈ FMU3Instance_AdditionalFields
+        fname = Symbol("_" * String(var))
+        field = Base.getfield(str, fname)
+        field[1] = value 
+        return nothing
+    else
+        return Base.setfield!(str, var, value)
+    end
+end
+
+function Base.hasproperty(str::FMU3Instance, var::Symbol)
+    if var ∈ FMU3Instance_AdditionalFields
+        return true
+    else
+        return Base.hasfield(str, var)
+    end
+end
+
+function Base.getproperty(str::FMU3Instance, var::Symbol)
+    if var ∈ FMU3Instance_AdditionalFields
+        fname = Symbol("_" * String(var))
+        field = Base.getfield(str, fname)
+        return field[1]
+    else
+        return Base.getfield(str, var)
+    end
+end
 
 """ 
 Overload the Base.show() function for custom printing of the FMU3Instance.
@@ -394,7 +464,7 @@ mutable struct FMU3 <: FMU
         inst.handleEventIndicators = nothing
 
         # parameters that need sensitivities and/or are catched by optimizers (like in FMIFlux.jl)
-        inst.default_t = -1.0
+        inst.default_t = NO_fmi3Float64
         inst.default_p_refs = EMPTY_fmi3ValueReference
         inst.default_p = EMPTY_fmi3Float64
         inst.default_ec = EMPTY_fmi3Float64

@@ -231,7 +231,7 @@ function eval!(cRef::UInt64,
     end
 
     # set time
-    if t != getNotSetReal(c.fmu)
+    if isSetReal(c.fmu, t)
         setTime(c, t)
     end
 

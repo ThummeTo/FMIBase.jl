@@ -41,13 +41,19 @@ function prepareValueReference(md::fmiModelDescription, vr::Symbol)
     elseif vr == :all
         return md.valueReferences
     elseif vr == :none
-        return Array{fmiValueReference,1}()
+        return Vector{fmiValueReference}()
     else
         @assert false "Unknwon symbol `$vr`, can't convert to value reference."
     end
 end
 export prepareValueReference
 
+"""
+    prepareValue(value)
+
+Prepares a value for a FMI ccall (they only accept arrays).
+Technically, the value is packed into an array - if not already.
+"""
 prepareValue(value) = [value]
 prepareValue(value::AbstractVector) = value
 export prepareValue

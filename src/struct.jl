@@ -209,7 +209,21 @@ function Base.show(io::IO, s::FMUSnapshot)
 end
 
 """
-    ToDo: Doc String 
+    FMUInputFunction(inputFunction, vrs)
+
+Struct container for inplace input functions for FMUs.
+
+# Arguments
+- `inputFunction`: The input function (inplace) that gets called when new inputs are needed, must match one of the patterns described under *Input function patterns*.
+- `vrs::AbstractVector`: A vector of value refernces to be set by the input function
+
+## Input function patterns
+Available input patterns are [`c`: current component, `u`: current state ,`t`: current time, returning array of values to be passed to `fmi2SetReal(..., inputValueReferences, inputFunction(...))` or `fmi3SetFloat64`]:
+- `inputFunction(t::Real, u::AbstractVector{<:Real})`
+- `inputFunction(c::Union{FMUInstance, Nothing}, t::Real, u::AbstractVector{<:Real})`
+- `inputFunction(c::Union{FMUInstance, Nothing}, x::AbstractVector{<:Real}, u::AbstractVector{<:Real})`
+- `inputFunction(x::AbstractVector{<:Real}, t::Real, u::AbstractVector{<:Real})`
+- `inputFunction(c::Union{FMUInstance, Nothing}, x::AbstractVector{<:Real}, t::Real, u::AbstractVector{<:Real})`
 """
 struct FMUInputFunction{F, T, V}
     fct!::F 
@@ -221,13 +235,13 @@ struct FMUInputFunction{F, T, V}
 
         _fct = nothing 
 
-        if hasmethod(fct, Tuple{T, AbstractArray{<:T,1}})
+        if hasmethod(fct, Tuple{T, AbstractVector{<:T}})
             _fct = (c, x, t, u) -> fct(t, u)
-        elseif hasmethod(fct, Tuple{Union{FMU2Component, Nothing}, T, AbstractArray{<:T,1}})
+        elseif hasmethod(fct, Tuple{Union{FMUInstance, Nothing}, T, AbstractVector{<:T}})
             _fct = (c, x, t, u) -> fct(c, t, u)
-        elseif hasmethod(fct, Tuple{Union{FMU2Component, Nothing}, AbstractArray{<:T,1}, AbstractArray{<:T,1}})
+        elseif hasmethod(fct, Tuple{Union{FMUInstance, Nothing}, AbstractVector{<:T}, AbstractVector{<:T}})
             _fct = (c, x, t, u) -> fct(c, x, u)
-        elseif hasmethod(fct, Tuple{AbstractArray{<:T,1}, T, AbstractArray{<:T,1}})
+        elseif hasmethod(fct, Tuple{AbstractVector{<:T}, T, AbstractVector{<:T}})
             _fct = (c, x, t, u) -> fct(x, t, u)
         else 
             _fct = fct

@@ -3,6 +3,11 @@
 # Licensed under the MIT license. See LICENSE file in the project root for details.
 #
 
+"""
+    stringToDataType(modelDescription, typename)
+
+Converts a typename to type, for example `"Float64"` (::String) to `fmi3Float64` (::DataType).
+"""
 function stringToDataType(::fmi3ModelDescription, typename::Union{String, SubString})
     if typename == "Float32"
         return fmi3Float32
@@ -30,8 +35,8 @@ function stringToDataType(::fmi3ModelDescription, typename::Union{String, SubStr
         return fmi3String
     elseif typename == "Clock"
         return fmi3Clock
-    elseif typename == "Enum"
-        return fmi3Enum
+    elseif typename == "Enumeration"
+        return Int64
     else
         @assert false "Unknown datatype `$(typename)`."
     end
@@ -56,12 +61,14 @@ export stringToDataType
 """
     stringToValueReference(obj, names)
 
-where:
+Finds the value reference for a given `name`.
 
-obj ∈ (fmi2ModelDescription, fmi3ModelDescription, FMU2, FMU3)
-names ∈ (String, AbstractVector{String})
+# Arguments
+- `obj ∈ (fmi2ModelDescription, fmi3ModelDescription, FMU2, FMU3)` the FMI object
+- `names ∈ (String, AbstractVector{String})` the value refernce name or multiple names
 
-Returns an array of `fmi2ValueReferences` (FMI2) or `fmi3ValueReferences` (FMI3) corresponding to the variable name(s).
+# Return
+Returns a single or an array of `fmi2ValueReferences` (FMI2) or `fmi3ValueReferences` (FMI3) corresponding to the variable name(s).
 """
 function stringToValueReference(md::fmiModelDescription, name::String)
     reference = nothing
@@ -93,7 +100,7 @@ function modelVariablesForValueReference(md::fmiModelDescription, vr::fmiValueRe
             push!(ar, modelVariable)
         end
     end
-    ar
+    return ar
 end
 modelVariablesForValueReference(fmu::FMU, vr::fmiValueReference) = modelVariablesForValueReference(fmu.modelDescription, vr)
 export modelVariablesForValueReference
@@ -123,7 +130,42 @@ function dataTypeForValueReference(md::fmi2ModelDescription, vr::fmi2ValueRefere
     end
     return nothing
 end
-dataTypeForValueReference(fmu::FMU2, vr::fmi2ValueReference) = dataTypeForValueReference(fmu.modelDescription, vr)
+function dataTypeForValueReference(md::fmi3ModelDescription, vr::fmi3ValueReference)
+    mv = modelVariablesForValueReference(md, vr)[1]
+    if isa(mv, FMICore.fmi3VariableFloat32) 
+        return fmi3Float32
+    elseif isa(mv, FMICore.fmi3VariableFloat64) 
+        return fmi3Float64
+    elseif isa(mv, FMICore.fmi3VariableInt8) 
+        return fmi3Int8
+    elseif isa(mv, FMICore.fmi3VariableInt16) 
+        return fmi3Int16
+    elseif isa(mv, FMICore.fmi3VariableInt32) 
+        return fmi3Int32
+    elseif isa(mv, FMICore.fmi3VariableInt64)  
+        return fmi3Int64
+    elseif isa(mv, FMICore.fmi3VariableUInt8) 
+        return fmi3UInt8
+    elseif isa(mv, FMICore.fmi3VariableUInt16)
+        return fmi3UInt16
+    elseif isa(mv, FMICore.fmi3VariableUInt32)
+        return fmi3UInt32
+    elseif isa(mv, FMICore.fmi3VariableUInt64)
+        return fmi3UInt64
+    elseif isa(mv, FMICore.fmi3VariableBoolean) 
+        return fmi3Boolean
+    elseif isa(mv, FMICore.fmi3VariableString)
+        return fmi3String
+    elseif isa(mv, FMICore.fmi3VariableBinary)
+        return fmi3Binary
+    elseif isa(mv, FMICore.fmi3VariableEnumeration)
+        @warn "dataTypeForValueReference(...): Currently not implemented for fmi3Enum."
+    else 
+        @assert false "dataTypeForValueReference(...): Unknown data type for value reference `$(vr)`."
+    end
+    return nothing
+end
+dataTypeForValueReference(fmu::FMU, vr::fmiValueReference) = dataTypeForValueReference(fmu.modelDescription, vr)
 export dataTypeForValueReference
 
 """

@@ -16,6 +16,8 @@ import Base: show
 # just load to make it available in other packages (FMIImport, FMIExport)
 import EzXML
 import ZipFile
+import SciMLBase
+import DiffEqCallbacks
 
 include("utils.jl")
 include("error_msg.jl")
@@ -34,10 +36,10 @@ include("printing.jl")
 include("convert.jl")
 include("md.jl")
 
-include("FMI2/eval.jl")
-include("FMI3/eval.jl")
+include("common.jl")
 include("eval.jl")
 
+include("get_set.jl")
 include("callbacks.jl")
 include("setup.jl")
 include("logging.jl")
@@ -46,32 +48,34 @@ include("snapshot.jl")
 include("valueRefs.jl")
 include("info.jl")
 
-# Requires init
+# extensions
+using PackageExtensionCompat
 function __init__()
-    @require FMISensitivity="3e748fe5-cd7f-4615-8419-3159287187d2" begin
-        import .FMISensitivity
-        include("extensions/FMISensitivity.jl")
-    end
-    @require JLD2="033835bb-8acc-5ee8-8aae-3f567f8a3819" begin
-        import .JLD2
-        include("extensions/JLD2.jl")
-    end
-    @require DataFrames="a93c6f00-e57d-5684-b7b6-d8193f3e46c0" begin
-        import .DataFrames
-        include("extensions/DataFrames.jl") 
-        @require CSV="336ed68f-0bac-5ca0-87d4-7b16caf5d00b" begin
-            import .CSV
-            include("extensions/CSV.jl")   
-        end
-    end
-    @require MAT="23992714-dd62-5051-b70f-ba57cb901cac" begin
-        import .MAT
-        include("extensions/MAT.jl")   
-    end
-    @require Plots="91a5bcdd-55d7-5caf-9e0b-520d859cae80" begin
-        import .Plots
-        include("extensions/Plots.jl")
-    end
+    @require_extensions
 end
+
+# CSV.jl
+function saveSolutionCSV end
+function loadSolutionCSV end
+
+# DataFrames.jl
+# [Note] nothing to declare
+
+# ForwardDiff.jl
+# [Note] nothing to declare
+
+# JLD2.jl
+function saveSolutionJLD2 end 
+function loadSolutionJLD2 end
+
+# MAT.jl
+function saveSolutionMAT end 
+function loadSolutionMAT end
+
+# Plots.jl
+# [Note] nothing to declare
+
+# ReverseDiff.jl
+# [Note] nothing to declare
 
 end # module FMIBase

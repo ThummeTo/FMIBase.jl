@@ -7,14 +7,15 @@
 # - high-level functions, that are useful, but not part of the FMI-spec [exported]
 
 """
-     info(fmu::FMU)
+     info(fmu)
 
-Print information about the `fmu`.
+Print information about the FMU.
 
-# Source
+# Arguments 
+- `fmu::FMU`: The FMU you are interessted in.
+
+# Further reading
 - FMISpec2.0.2 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
-- FMISpec2.0.2[p.22]: 2.1.4 Inquire Platform and Version Number of Header Files
-- FMISpec2.0.2[p.16]: 2.1.2 Platform Dependent Definitions
 """
 function info(fmu::FMU2)
     println("#################### Begin information for FMU ####################")

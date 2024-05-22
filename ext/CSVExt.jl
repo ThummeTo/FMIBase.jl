@@ -3,6 +3,10 @@
 # Licensed under the MIT license. See LICENSE file in the project root for details.
 #
 
+module CSVExt
+
+using FMIBase, CSV
+
 """
     saveSolutionCSV(solution::FMUSolution, filepath::AbstractString)
 
@@ -11,7 +15,7 @@ Saves a `solution` of an FMU in a CSV file at `filepath`.
 
 See also [`saveSolution`](@ref).
 """
-function saveSolutionCSV(solution::FMUSolution, filepath::AbstractString) 
+function FMIBase.saveSolutionCSV(solution::FMUSolution, filepath::AbstractString) 
     df = DataFrames.DataFrame(solution)
     CSV.write(filepath, df)
 end
@@ -25,8 +29,10 @@ Loads a `solution` of an FMU in a CSV file at `filepath`.
 
 See also [`loadSolution`](@ref).
 """
-function loadSolutionCSV(solution::FMUSolution, filepath::AbstractString) 
+function FMIBase.loadSolutionCSV(solution::FMUSolution, filepath::AbstractString) 
     # [ToDo]
     @assert false, "Not implemented yet, please open an issue if this is needed."
 end
 export loadSolutionCSV
+
+end # CSVExt

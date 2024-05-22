@@ -54,10 +54,10 @@ mutable struct FMU2Component{F} <: FMUInstance
     force::Bool
     threadid::Integer
     
-    loggingOn::fmi2Boolean
+    loggingOn::Bool
     instanceName::String
     continuousStatesChanged::fmi2Boolean
-    visible::fmi2Boolean
+    visible::Bool
 
     # FMI2 only
     callbackFunctions::fmi2CallbackFunctions
@@ -153,8 +153,8 @@ mutable struct FMU2Component{F} <: FMUInstance
         inst.frule_output = FMUEvaluationOutput{Float64}()
 
         # logging
-        inst.loggingOn = fmi2False
-        inst.visible = fmi2False
+        inst.loggingOn = false
+        inst.visible = false
         inst.instanceName = ""
         
         # caches
@@ -165,7 +165,7 @@ mutable struct FMU2Component{F} <: FMUInstance
         inst.z = nothing
         inst.z_prev = nothing
         
-        inst.values = Dict()
+        inst.values = Dict{fmi2ValueReference, Union{fmi2Real, fmi2Integer, fmi2Boolean}}()
         inst.x_vrs = Array{fmi2ValueReference, 1}()
         inst.ẋ_vrs = Array{fmi2ValueReference, 1}() 
         inst.u_vrs = Array{fmi2ValueReference, 1}()  
@@ -205,11 +205,12 @@ mutable struct FMU2Component{F} <: FMUInstance
         inst.default_y = EMPTY_fmi2Real
         inst.default_ec = EMPTY_fmi2Real
 
-        inst.snapshots = []
+        inst.snapshots = Vector{FMUSnapshot}()
         
         # performance (pointers to prevent repeating allocations)
         inst._enterEventMode = zeros(fmi2Boolean, 1)
         inst._terminateSimulation = zeros(fmi2Boolean, 1)
+
         inst._ptr_enterEventMode = pointer(inst._enterEventMode)
         inst._ptr_terminateSimulation = pointer(inst._terminateSimulation)
 
@@ -245,6 +246,40 @@ mutable struct FMU2Component{F} <: FMUInstance
     end
 end
 export FMU2Component
+
+# overloading get/set/haspropoerty for preallocated pointers (buffers for return values)
+
+const FMU2Component_AdditionalFields = (:enterEventMode,
+    :terminateSimulation)
+
+function Base.setproperty!(str::FMU2Component, var::Symbol, value)
+    if var ∈ FMU2Component_AdditionalFields
+        fname = Symbol("_" * String(var))
+        field = Base.getfield(str, fname)
+        field[1] = value 
+        return nothing
+    else
+        return Base.setfield!(str, var, value)
+    end
+end
+
+function Base.hasproperty(str::FMU2Component, var::Symbol)
+    if var ∈ FMU2Component_AdditionalFields
+        return true
+    else
+        return Base.hasfield(str, var)
+    end
+end
+
+function Base.getproperty(str::FMU2Component, var::Symbol)
+    if var ∈ FMU2Component_AdditionalFields
+        fname = Symbol("_" * String(var))
+        field = Base.getfield(str, fname)
+        return field[1]
+    else
+        return Base.getfield(str, var)
+    end
+end
 
 """ 
 Overload the Base.show() function for custom printing of the FMU2Component.
@@ -377,7 +412,7 @@ mutable struct FMU2 <: FMU
         inst.handleEventIndicators = nothing
 
         # parameters that need sensitivities and/or are catched by optimizers (like in FMIFlux.jl)
-        inst.default_t = -1.0
+        inst.default_t = NO_fmi2Real
         inst.default_p_refs = EMPTY_fmi2ValueReference
         inst.default_p = EMPTY_fmi2Real
         inst.default_ec = EMPTY_fmi2Real

@@ -3,6 +3,10 @@
 # Licensed under the MIT license. See LICENSE file in the project root for details.
 #
 
+module PlotsExt
+
+using FMIBase, Plots
+
 """
     Plots.plot(solution::FMUSolution; kwargs...)
 
@@ -199,3 +203,5 @@ function Plots.plot!(fig::Plots.Plot, solution::FMUSolution;
 
     return fig
 end
+
+end # PlotsExt.jl

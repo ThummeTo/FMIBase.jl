@@ -1,9 +1,10 @@
 #
-# Copyright (c) 2021 Tobias Thummerer, Lars Mikelsons, Josef Kircher
+# Copyright (c) 2024 Tobias Thummerer, Lars Mikelsons
 # Licensed under the MIT license. See LICENSE file in the project root for details.
 #
 
-import SciMLBase: ODEFunction
+import SciMLBase: ODEFunction, ODEProblem, RightRootFind
+import DiffEqCallbacks: FunctionCallingCallback, VectorContinuousCallback, IterativeCallback, SavedValues, SavingCallback
 
 function setupSolver!(fmu::FMU, tspan, kwargs)
 
@@ -48,11 +49,11 @@ function setupSolver!(fmu::FMU, tspan, kwargs)
 end
 
 # sets up the ODEProblem for simulating a ME-FMU
-function setupODEProblem(c::Union{FMUInstance, Nothing}, x0::Union{AbstractArray{fmi2Real}, Nothing}, tspan::Union{Tuple{Float64, Float64}, Nothing}=nothing; 
+function setupODEProblem(c::FMUInstance, x0::AbstractVector{<:Real}, tspan::Tuple{Float64, Float64}; 
     p=(), 
     inputFunction::Union{FMUInputFunction, Nothing}=nothing)
     
-    fx = (dx, x, p, t) -> f(dx, x, p, t; inputFunction=inputFunction)
+    fx = (dx, x, p, t) -> f(c, dx, x, p, t, inputFunction)
     ff = ODEFunction{true}(fx) # , tgrad=nothing)
     problem = ODEProblem{true}(ff, x0, tspan, p)
 
@@ -64,11 +65,18 @@ function setupODEProblem!(args...; kwargs...)
     return nothing
 end
 
-function setupCallbacks(c::FMU)
+function setupCallbacks(c::FMUInstance, recordValues, recordEventIndicators, recordEigenvalues, _inputFunction, inputValueReferences, progressMeter, t_start, t_stop, saveat)
+
+    savingValues = (length(recordValues) > 0)
+    savingEventIndicators = !isnothing(recordEventIndicators) 
+    hasInputs = (length(inputValueReferences) > 0)
+    showProgress = false # [ToDo]
+    cbs = []
+    
     if c.fmu.hasTimeEvents && c.fmu.executionConfig.handleTimeEvents
         timeEventCb = IterativeCallback((integrator) -> time_choice(c, integrator, t_start, t_stop),
-                                        (integrator) -> affectFMU!(c, integrator, 0, _inputFunction, fmusol), Float64; 
-                                        initial_affect = (c.eventInfo.nextEventTime == t_start),
+                                        (integrator) -> affectFMU!(c, integrator, 0, _inputFunction), Float64; 
+                                        initial_affect = (getNextEventTime(c) == t_start),
                                         save_positions=(false,false))
         push!(cbs, timeEventCb)
     end
@@ -76,53 +84,53 @@ function setupCallbacks(c::FMU)
     if c.fmu.hasStateEvents && c.fmu.executionConfig.handleStateEvents
 
         eventCb = VectorContinuousCallback((out, x, t, integrator) -> condition(c, out, x, t, integrator, _inputFunction),
-                                           (integrator, idx) -> affectFMU!(c, integrator, idx, _inputFunction, fmusol),
+                                           (integrator, idx) -> affectFMU!(c, integrator, idx, _inputFunction),
                                            Int64(c.fmu.modelDescription.numberOfEventIndicators);
                                            rootfind = RightRootFind,
                                            save_positions=(false,false),
-                                           interp_points=fmu.executionConfig.rootSearchInterpolationPoints)
+                                           interp_points=c.fmu.executionConfig.rootSearchInterpolationPoints)
         push!(cbs, eventCb)
     end
 
     # use step callback always if we have inputs or need event handling (or just want to see our simulation progress)
     if hasInputs || c.fmu.hasStateEvents || c.fmu.hasTimeEvents || showProgress
-        stepCb = FunctionCallingCallback((x, t, integrator) -> stepCompleted(c, x, t, integrator, _inputFunction, progressMeter, t_start, t_stop, fmusol);
+        stepCb = FunctionCallingCallback((x, t, integrator) -> stepCompleted(c, x, t, integrator, _inputFunction, progressMeter, t_start, t_stop);
                                             func_everystep = true,
                                             func_start = true)
         push!(cbs, stepCb)
     end
 
     if savingValues 
-        dtypes = collect(fmi2DataTypeForValueReference(c.fmu.modelDescription, vr) for vr in recordValues)
-        fmusol.values = SavedValues(fmi2Real, Tuple{dtypes...})
-        fmusol.valueReferences = copy(recordValues)
+        dtypes = collect(dataTypeForValueReference(c.fmu.modelDescription, vr) for vr in recordValues)
+        c.solution.values = SavedValues(getRealType(c), Tuple{dtypes...})
+        c.solution.valueReferences = copy(recordValues)
 
         savingCB = nothing
         if saveat === nothing
             savingCB = SavingCallback((u,t,integrator) -> saveValues(c, recordValues, u, t, integrator, _inputFunction), 
-                                    fmusol.values)
+                c.solution.values)
         else
             savingCB = SavingCallback((u,t,integrator) -> saveValues(c, recordValues, u, t, integrator, _inputFunction), 
-                                    fmusol.values, 
-                                    saveat=saveat)
+                c.solution.values, 
+                saveat=saveat)
         end
 
         push!(cbs, savingCB)
     end
 
     if savingEventIndicators
-        dtypes = collect(fmi2Real for ei in recordEventIndicators)
-        fmusol.eventIndicators = SavedValues(fmi2Real, Tuple{dtypes...})
-        fmusol.recordEventIndicators = copy(recordEventIndicators)
+        dtypes = collect(getRealType(c) for ei in recordEventIndicators)
+        c.solution.eventIndicators = SavedValues(getRealType(c), Tuple{dtypes...})
+        c.solution.recordEventIndicators = copy(recordEventIndicators)
 
         savingCB = nothing
         if saveat === nothing
             savingCB = SavingCallback((u,t,integrator) -> saveEventIndicators(c, recordEventIndicators, u, t, integrator, _inputFunction), 
-                                    fmusol.eventIndicators)
+                c.solution.eventIndicators)
         else
             savingCB = SavingCallback((u,t,integrator) -> saveEventIndicators(c, recordEventIndicators, u, t, integrator, _inputFunction), 
-                                    fmusol.eventIndicators, 
-                                    saveat=saveat)
+                c.solution.eventIndicators,
+                saveat=saveat)
         end
 
         push!(cbs, savingCB)
@@ -130,18 +138,20 @@ function setupCallbacks(c::FMU)
 
     if recordEigenvalues
         dtypes = collect(Float64 for _ in 1:2*length(c.fmu.modelDescription.stateValueReferences))
-        fmusol.eigenvalues = SavedValues(fmi2Real, Tuple{dtypes...})
+        c.solution.eigenvalues = SavedValues(getRealType(c), Tuple{dtypes...})
         
         savingCB = nothing
         if saveat === nothing
             savingCB = SavingCallback((u,t,integrator) -> saveEigenvalues(c, u, t, integrator, _inputFunction), 
-                                    fmusol.eigenvalues)
+            c.solution.eigenvalues)
         else
             savingCB = SavingCallback((u,t,integrator) -> saveEigenvalues(c, u, t, integrator, _inputFunction), 
-                                    fmusol.eigenvalues, 
+                                    c.solution.eigenvalues, 
                                     saveat=saveat)
         end
 
         push!(cbs, savingCB)
     end
+
+    return cbs
 end

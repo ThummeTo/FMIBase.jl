@@ -3,6 +3,10 @@
 # Licensed under the MIT license. See LICENSE file in the project root for details.
 #
 
+module DataFramesExt
+
+using FMIBase, DataFrames
+
 """
 Converts a FMUSolution to DataFrame.
 """
@@ -18,7 +22,9 @@ end
 """
 Converts a DataFrame to FMUSolution (if pattern matches).
 """
-function FMIImport.FMIBase.FMUSolution(df::DataFrames.DataFrame)
+function FMIBase.FMUSolution(df::DataFrames.DataFrame)
     # [ToDo]
     @assert false, "Not implemented yet, please open an issue if this is needed."
 end
+
+end # DataFramesExt
