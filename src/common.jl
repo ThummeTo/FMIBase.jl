@@ -18,12 +18,68 @@ end
 """
 ToDo
 """
+function getReal(c::FMU2Component, refs::AbstractArray{<:fmi2ValueReference})
+    nv = Csize_t(length(refs))
+    v = zeros(fmi2Real, nv)
+    fmi2GetReal!(c, refs, nv, v)
+    return v
+end
+function getReal(c::FMU3Instance, refs::AbstractArray{<:fmi3ValueReference})
+    nv = Csize_t(length(refs))
+    v = zeros(fmi3Float64, nv)
+    fmi3GetFloat64!(c, refs, nv, v, nv)
+    return v
+end
+
+"""
+ToDo
+"""
 function getReal!(c::FMU2Component, refs::AbstractArray{<:fmi2ValueReference}, vals::AbstractArray{<:fmi2Real})
     fmi2GetReal!(c, refs, vals)
     return nothing
 end
 function getReal!(c::FMU3Instance, refs::AbstractArray{<:fmi3ValueReference}, vals::AbstractArray{<:fmi3Float64})
     fmi3GetFloat64!(c, refs, vals)
+    return nothing
+end
+
+"""
+ToDo
+"""
+function getContinuousStates(c::FMU2Component)
+    if !c.fmu.isZeroState
+        nx = Csize_t(length(c.fmu.modelDescription.stateValueReferences))
+        x = zeros(fmi2Real, nx)
+        fmi2GetContinuousStates!(c, x, nx) 
+        return x
+    else
+        return [0.0] 
+    end
+end
+function getContinuousStates(c::FMU3Instance)
+    if !c.fmu.isZeroState
+        nx = Csize_t(length(c.fmu.modelDescription.stateValueReferences))
+        x = zeros(fmi3Float64, nx)
+        fmi3GetContinuousStates!(c, x, nx) 
+        return x
+    else
+        return [0.0] 
+    end
+end
+
+"""
+ToDo
+"""
+function getContinuousStates!(c::FMU2Component, x::AbstractArray{<:fmi2Real})
+    if !c.fmu.isZeroState
+        fmi2GetContinuousStates(c, x)  
+    end
+    return nothing
+end
+function getContinuousStates!(c::FMU3Instance, x::AbstractArray{<:fmi3Float64})
+    if !c.fmu.isZeroState
+        fmi3GetContinuousStates(c, x)
+    end
     return nothing
 end
 
@@ -98,19 +154,15 @@ ToDo
 """
 # [ToDo] Implement dx_refs to grab only specific derivatives
 function getDerivatives!(c::FMU2Component, dx::AbstractArray{<:fmi2Real}, dx_refs::AbstractArray{<:fmi2ValueReference})
-    if c.fmu.isZeroState
-        dx[:] = [1.0]
-    else
-        fmi2GetDerivatives!(c, dx)
-    end
+    @assert !c.fmu.isZeroState "getDerivatives! is not callable for zero state FMUs!"
+     
+    fmi2GetDerivatives!(c, dx)
     return nothing
 end
 function getDerivatives!(c::FMU3Instance, dx::AbstractArray{<:fmi3Float64}, dx_refs::AbstractArray{<:fmi3ValueReference})
-    if c.fmu.isZeroState
-        dx[:] = [1.0]
-    else
-        fmi3GetContinuousStateDerivatives!(c, dx)
-    end
+    @assert !c.fmu.isZeroState "getDerivatives! is not callable for zero state FMUs!"
+    
+    fmi3GetContinuousStateDerivatives!(c, dx)
     return nothing
 end
 
@@ -124,6 +176,22 @@ end
 function getOutputs!(c::FMU3Instance, y_refs::AbstractArray{<:fmi3ValueReference}, y::AbstractArray{<:fmi3Float64})
     getReal!(c, y_refs, y)
     return nothing
+end
+
+"""
+ToDo
+"""
+function getEventIndicators(c::FMU2Component)
+    ni = Csize_t(c.fmu.modelDescription.numberOfEventIndicators)
+    n = zeros(fmi2Real, ni)
+    fmi2GetEventIndicators!(c, n, ni)
+    return n
+end
+function getEventIndicators(c::FMU3Instance)
+    ni = Csize_t(c.fmu.modelDescription.numberOfEventIndicators)
+    n = zeros(fmi3Float64, ni)
+    fmi3GetEventIndicators!(c, n, ni)
+    return n
 end
 
 """
@@ -151,6 +219,18 @@ end
 """
 ToDo
 """
+function getDirectionalDerivative(c::FMU2Component, ∂f_refs::AbstractArray{<:fmi2ValueReference}, ∂x_refs::AbstractArray{<:fmi2ValueReference}, seed)
+    fmi2GetDirectionalDerivative(c, ∂f_refs, ∂x_refs, seed)
+    return nothing
+end
+function getDirectionalDerivative(c::FMU3Instance, ∂f_refs::AbstractArray{<:fmi3ValueReference}, ∂x_refs::AbstractArray{<:fmi3ValueReference}, seed)
+    fmi3GetDirectionalDerivative(c, ∂f_refs, ∂x_refs, seed)
+    return nothing
+end
+
+"""
+ToDo
+"""
 function getDirectionalDerivative!(c::FMU2Component, ∂f_refs::AbstractArray{<:fmi2ValueReference}, ∂x_refs::AbstractArray{<:fmi2ValueReference}, jvp, seed)
     fmi2GetDirectionalDerivative!(c, ∂f_refs, ∂x_refs, jvp, seed)
     return nothing
@@ -164,7 +244,7 @@ end
 ToDo
 """
 function getAdjointDerivative!(c::FMU2Component, ∂f_refs::AbstractArray{<:fmi2ValueReference}, ∂x_refs::AbstractArray{<:fmi2ValueReference}, vjp, seed)
-    @assert false, "No adjoint derivatives in FMI2!"
+    @assert false "No adjoint derivatives in FMI2!"
     return nothing
 end
 function getAdjointDerivative!(c::FMU3Instance, ∂f_refs::AbstractArray{<:fmi3ValueReference}, ∂x_refs::AbstractArray{<:fmi3ValueReference}, vjp, seed)

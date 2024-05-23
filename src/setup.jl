@@ -37,7 +37,10 @@ function setupSolver!(fmu::FMU, tspan, kwargs)
     end
 
     if !haskey(kwargs, :dt)
-        kwargs[:dt] = getDefaultStepSize(fmu)
+        dt = getDefaultStepSize(fmu)
+        if !isnothing(dt)
+            kwargs[:dt] = dt 
+        end
         # if no dt is given, pick auto-setting from DifferentialEquations.jl
     end
 
@@ -45,23 +48,21 @@ function setupSolver!(fmu::FMU, tspan, kwargs)
         kwargs[:dtmax] = (t_stop-t_start)/100.0
     end
 
-    return tspan
+    return tspan 
 end
 
 # sets up the ODEProblem for simulating a ME-FMU
 function setupODEProblem(c::FMUInstance, x0::AbstractVector{<:Real}, tspan::Tuple{Float64, Float64}; 
     p=(), 
     inputFunction::Union{FMUInputFunction, Nothing}=nothing)
-    
+
     fx = (dx, x, p, t) -> f(c, dx, x, p, t, inputFunction)
     ff = ODEFunction{true}(fx) # , tgrad=nothing)
-    problem = ODEProblem{true}(ff, x0, tspan, p)
-
-    return problem
+    return ODEProblem{true}(ff, x0, tspan, p)
 end
 
 function setupODEProblem!(args...; kwargs...)
-    c.problem, c.callbacks = setupODEProblem(args...; kwargs...)
+    c.problem = setupODEProblem(args...; kwargs...)
     return nothing
 end
 

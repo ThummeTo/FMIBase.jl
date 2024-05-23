@@ -227,7 +227,9 @@ function eval!(cRef::UInt64,
 
     # set state
     if length(x) > 0 
-        setContinuousStates(c, x)
+        if !c.fmu.isZeroState
+            setContinuousStates(c, x)
+        end
     end
 
     # set time
@@ -247,7 +249,11 @@ function eval!(cRef::UInt64,
 
     # get derivative
     if length(dx) > 0
-        getDerivatives!(c, dx, dx_refs)
+        if c.fmu.isZeroState
+            dx[1] = 1.0
+        else
+            getDerivatives!(c, dx, dx_refs)
+        end
     end
 
     # get output 

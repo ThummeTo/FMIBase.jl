@@ -9,7 +9,6 @@ using Reexport
 @reexport using FMICore
 import FMICore: Creal
 
-using Requires
 import ChainRulesCore
 import Base: show
 
@@ -46,9 +45,9 @@ include("logging.jl")
 include("sense.jl")
 include("snapshot.jl")
 include("valueRefs.jl")
-include("info.jl")
 
 # extensions
+using Requires
 using PackageExtensionCompat
 function __init__()
     @require_extensions

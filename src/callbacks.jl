@@ -85,7 +85,11 @@ function f(c::FMUInstance,
         u_refs = inputFunction.vrs
     end
 
-    c(;dx=dx, x=x, u=u, u_refs=u_refs, t=t)
+    if c.fmu.isZeroState
+        c(; u=u, u_refs=u_refs, t=t)
+    else
+        c(;dx=dx, x=x, u=u, u_refs=u_refs, t=t)
+    end
     
     return nothing
 end
