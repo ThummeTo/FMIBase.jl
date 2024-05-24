@@ -104,14 +104,12 @@ function apply!(c::FMUInstance, s::FMUSnapshot;
     
     # continuous state
     if !isnothing(x_c)
-        #fmi2SetContinuousStates(c.fmu.cSetContinuousStates, c.compAddr, x_c, Csize_t(length(x_c)))
-        setStates(c, x_c)
+        setContinuousStates(c, x_c)
         c.x = copy(x_c)
     end
 
     # discrete state
     if !isnothing(x_d)
-        #fmi2SetReal(c.fmu.cSetReal, c.compAddr, c.fmu.modelDescription.discreteStateValueReferences, x_d, Csize_t(length(x_d)))
         setDiscreteStates(c, x_d)
         c.x_d = copy(x_d)
     end

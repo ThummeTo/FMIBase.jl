@@ -269,11 +269,18 @@ function getFMUstate(c::FMU3Instance)
 end
 
 """
-ToDo
+
+    getFMUstate!(inst, state)
+
+Copies the current FMU-state of the instance `inst` (like a memory copy) to the address `state`.
+
+# Arguments 
+- `inst` ∈ (FMU2Component, FMI3Instance): the FMU instance
+- `state` ∈ (Ref{fmi2FMUstate}, Ref{fmi3FMUState}): the FMU state reference
 """
 function getFMUstate!(c::FMU2Component, state::Ref{fmi2FMUstate})
     if c.fmu.modelDescription.modelExchange.canGetAndSetFMUstate || c.fmu.modelDescription.coSimulation.canGetAndSetFMUstate
-        return fmi2GetFMUstate!(c.fmu.cGetFMUstate, c.compAddr, state)
+        return fmi2GetFMUstate!(c.fmu.cGetFMUstate, c.addr, state)
     end
     return nothing
 end
@@ -286,7 +293,7 @@ ToDo
 """
 function setFMUstate!(c::FMU2Component, state::fmi2FMUstate)
     if c.fmu.modelDescription.modelExchange.canGetAndSetFMUstate || c.fmu.modelDescription.coSimulation.canGetAndSetFMUstate
-        return fmi2SetFMUstate(c.fmu.cSetFMUstate, c.compAddr, state)
+        return fmi2SetFMUstate(c.fmu.cSetFMUstate, c.addr, state)
     end
     return nothing
 end
@@ -298,11 +305,11 @@ end
 ToDo
 """
 function freeFMUstate!(c::FMU2Component, state::Ref{fmi2FMUstate})
-    fmi2FreeFMUstate!(c.fmu.cFreeFMUstate, c.compAddr, state)
+    fmi2FreeFMUstate(c.fmu.cFreeFMUstate, c.addr, state)
     return nothing 
 end
 function freeFMUstate!(c::FMU3Instance, state::Ref{fmi3FMUState})
-    @assert false, "Not implemented yet. Please open an issue." # [TODO]
+    @assert false "Not implemented yet. Please open an issue." # [TODO]
 end
 
 """

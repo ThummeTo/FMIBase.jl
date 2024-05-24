@@ -7,6 +7,11 @@
 # if FMISensitivity is not loaded, these functions dispatch to neutral statements,
 # if FMISensitivity is loaded, these functions are extended.
 
+# check if some AD-primitives are in there 
+function issense(e)
+    return isdual(e) || istracked(e)
+end
+
 # check if scalar/vector is ForwardDiff.Dual
 function isdual(e)
     return false 

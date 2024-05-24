@@ -181,7 +181,7 @@ mutable struct FMUSnapshot{E, C, D, I, S}
 
         n_x_c = Csize_t(length(c.fmu.modelDescription.stateValueReferences))
         x_c = zeros(Float64, n_x_c)
-        fmi2GetContinuousStates!(c.fmu.cGetContinuousStates, c.compAddr, x_c, n_x_c)
+        fmi2GetContinuousStates!(c.fmu.cGetContinuousStates, c.addr, x_c, n_x_c)
         x_d = nothing # ToDo
 
         E = typeof(eventInfo)
