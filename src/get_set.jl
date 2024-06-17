@@ -19,7 +19,7 @@ Retrieves values for the refernces `vrs` and stores them in `dst`
 function getValue!(comp::FMU2Component, vrs::fmi2ValueReferenceFormat, dstArray::AbstractArray) # [ToDo] implement via array views!
     vrs = prepareValueReference(comp, vrs)
 
-    @assert length(vrs) == length(dstArray) "fmi2Get!(...): Number of value references doesn't match number of `dstArray` elements."
+    @assert length(vrs) == length(dstArray) "getValue!(...): Number of value references doesn't match number of `dstArray` elements."
 
     retcodes = collect(fmi2StatusOK for i in 1:length(vrs)) 
 
@@ -43,13 +43,13 @@ function getValue!(comp::FMU2Component, vrs::fmi2ValueReferenceFormat, dstArray:
         elseif mv.Boolean != nothing
             #@assert isa(dstArray[i], Union{Real, Bool}) "fmi2Get!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Bool`, is `$(typeof(dstArray[i]))`."
             values = zeros(fmi2Boolean, num)
-            fmi2GetBoolean(comp, [vr], num, values)
+            fmi2GetBoolean!(comp, [vr], num, values)
             dstArray[i] = values[1]
         elseif mv.String != nothing
             #@assert isa(dstArray[i], String) "fmi2Get!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `String`, is `$(typeof(dstArray[i]))`."
-            values = zeros(fmi2String, num)
+            values = Vector{fmi2String}(undef, num)
             fmi2GetString!(comp, [vr], num, values)
-            dstArray[i] = values[1]
+            dstArray[i] = unsafe_string(values[1])
         elseif mv.Enumeration != nothing
             @warn "getValue!(...): Currently not implemented for fmi2Enum."
         else
@@ -62,7 +62,7 @@ end
 function getValue!(inst::FMU3Instance, vrs::fmi3ValueReferenceFormat, dstArray::Array)
     vrs = prepareValueReference(inst, vrs)
 
-    @assert length(vrs) == length(dstArray) "fmi3Get!(...): Number of value references doesn't match number of `dstArray` elements."
+    @assert length(vrs) == length(dstArray) "getValue!(...): Number of value references doesn't match number of `dstArray` elements."
 
     retcodes = collect(fmi3StatusOK for i in 1:length(vrs))  
 
@@ -131,12 +131,12 @@ function getValue!(inst::FMU3Instance, vrs::fmi3ValueReferenceFormat, dstArray::
             dstArray[i] = values[1]
         elseif isa(mv, FMICore.fmi3VariableString)
             #@assert isa(dstArray[i], String) "fmi3Get!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `String`, is `$(typeof(dstArray[i]))`."
-            values = zeros(fmi3String, num)
+            values = Vector{fmi3String}(undef, num)
             fmi3GetString!(inst, [vr], num, values, num)
-            dstArray[i] = values[1]
+            dstArray[i] = unsafe_string(values[1])
         elseif isa(mv, FMICore.fmi3VariableBinary)
             #@assert isa(dstArray[i], String) "fmi3Get!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `String`, is `$(typeof(dstArray[i]))`."
-            values = zeros(fmi3Binary, num)
+            values = Vector{fmi3Binary}(undef, num)
             fmi3GetBinary!(inst, [vr], num, values, num)
             dstArray[i] = values[1]
         elseif isa(mv, FMICore.fmi3VariableEnumeration)
@@ -177,7 +177,7 @@ end
 export getValue
 
 """
-    setValue(comp::FMU2Component,
+    setValue(component,
                 vrs::fmi2ValueReferenceFormat,
                 srcArray::AbstractArray;
                 filter=nothing)
@@ -185,7 +185,7 @@ export getValue
 Stores the specific value of `fmi2ScalarVariable` containing the modelVariables with the identical fmi2ValueReference and returns an array that indicates the Status.
 
 # Arguments
-- `comp::FMU2Component`: Mutable struct represents an instantiated instance of an FMU in the FMI 2.0.2 Standard.
+- `comp::FMUInstance` (FMU2Component or FMU3Instance): Mutable struct represents an instantiated instance of an FMU in the FMI 2 or 3.
 - `vrs::fmi2ValueReferenceFormat`: wildcards for how a user can pass a fmi[X]ValueReference
 - `srcArray::AbstractArray`: Stores the specific value of `fmi2ScalarVariable` containing the modelVariables with the identical fmi2ValueReference to the input variable vr (vr = vrs[i]). `srcArray` has the same length as `vrs`.
 

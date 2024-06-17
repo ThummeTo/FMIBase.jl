@@ -5,7 +5,8 @@
 [*FMIBase.jl*](https://github.com/ThummeTo/FMIBase.jl) provides the foundation for the Julia packages [*FMIImport.jl*](https://github.com/ThummeTo/FMIImport.jl) and [*FMIExport.jl*](https://github.com/ThummeTo/FMIExport.jl).
 
 [![Dev Docs](https://img.shields.io/badge/docs-dev-blue.svg)](https://ThummeTo.github.io/FMI.jl/dev)
-[![Run Tests](https://github.com/ThummeTo/FMIBase.jl/actions/workflows/Test.yml/badge.svg)](https://github.com/ThummeTo/FMIBase.jl/actions/workflows/Test.yml)
+[![Test (latest)](https://github.com/ThummeTo/FMIBase.jl/actions/workflows/TestLatest.yml/badge.svg)](https://github.com/ThummeTo/FMIBase.jl/actions/workflows/TestLatest.yml)
+[![Test (LTS)](https://github.com/ThummeTo/FMIBase.jl/actions/workflows/TestLTS.yml/badge.svg)](https://github.com/ThummeTo/FMIBase.jl/actions/workflows/TestLTS.yml)
 [![Run PkgEval](https://github.com/ThummeTo/FMIBase.jl/actions/workflows/Eval.yml/badge.svg)](https://github.com/ThummeTo/FMIBase.jl/actions/workflows/Eval.yml)
 [![Coverage](https://codecov.io/gh/ThummeTo/FMIBase.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/ThummeTo/FMIBase.jl)
 
