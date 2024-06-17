@@ -34,6 +34,7 @@ PlotsExt = ["Plots"]
 ReverseDiffExt = ["ReverseDiff"]
 
 [compat]
+CSV = "0.10"
 ChainRulesCore = "1.20 - 1.23"
 DataFrames = "1"
 DiffEqCallbacks = "2.0 - 3.6"
