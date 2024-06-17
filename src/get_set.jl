@@ -43,7 +43,7 @@ function getValue!(comp::FMU2Component, vrs::fmi2ValueReferenceFormat, dstArray:
         elseif mv.Boolean != nothing
             #@assert isa(dstArray[i], Union{Real, Bool}) "fmi2Get!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Bool`, is `$(typeof(dstArray[i]))`."
             values = zeros(fmi2Boolean, num)
-            fmi2GetBoolean(comp, [vr], num, values)
+            fmi2GetBoolean!(comp, [vr], num, values)
             dstArray[i] = values[1]
         elseif mv.String != nothing
             #@assert isa(dstArray[i], String) "fmi2Get!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `String`, is `$(typeof(dstArray[i]))`."
