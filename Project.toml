@@ -35,6 +35,7 @@ ReverseDiffExt = ["ReverseDiff"]
 
 [compat]
 ChainRulesCore = "1.20 - 1.23"
+DataFrames = "1"
 DiffEqCallbacks = "2.0 - 3.6"
 EzXML = "1.1 - 1.2"
 FMICore = "1.0.1"
