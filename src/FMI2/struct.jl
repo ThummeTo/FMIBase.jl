@@ -138,7 +138,7 @@ mutable struct FMU2Component{F} <: FMUInstance
         inst.cRef = UInt64(pointer_from_objref(inst))
         inst.state = fmi2ComponentStateInstantiated
         inst.t = NO_fmi2Real
-        inst.t_offset = 0.0
+        inst.t_offset = fmi2Real(0.0)
         inst.problem = nothing
         inst.type = nothing
         inst.threadid = Threads.threadid()
