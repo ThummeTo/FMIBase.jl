@@ -149,7 +149,7 @@ mutable struct FMU3Instance{F} <: FMUInstance
         inst.cRef = UInt64(pointer_from_objref(inst))
         inst.state = fmi3InstanceStateInstantiated
         inst.t = NO_fmi3Float64
-        inst.t_offset = 0.0
+        inst.t_offset = fmi3Float64(0.0)
         inst.problem = nothing
         inst.type = nothing
         inst.threadid = Threads.threadid()
