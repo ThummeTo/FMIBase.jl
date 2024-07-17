@@ -53,7 +53,7 @@ function getContinuousStates(c::FMU2Component)
         fmi2GetContinuousStates!(c, x, nx) 
         return x
     else
-        return [0.0] 
+        return zeros(fmi2Real, 1) 
     end
 end
 function getContinuousStates(c::FMU3Instance)
@@ -63,7 +63,7 @@ function getContinuousStates(c::FMU3Instance)
         fmi3GetContinuousStates!(c, x, nx) 
         return x
     else
-        return [0.0] 
+        return zeros(fmi3Float64, 1)
     end
 end
 
