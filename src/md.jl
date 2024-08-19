@@ -479,7 +479,7 @@ Returns a dictionary `Dict(fmi2ValueReference, Array{String})` of parameterValue
 # Returns
 - `dict::Dict{fmi2ValueReference, Array{String}}`: Returns a dictionary that constructs a hash table with keys of type fmi2ValueReference and values of type Array{String}. So returns a dict with (vrs, names of parameters).
 
-See also [`fmi2GetValueReferencesAndNames`](@ref).
+See also [`getValueReferencesAndNames`](@ref).
 """
 getParameterValueReferencesAndNames(md::fmiModelDescription) = getValueReferencesAndNames(md; vrs=md.parameterValueReferences)
 getParameterValueReferencesAndNames(fmu::FMU) = getParameterValueReferencesAndNames(fmu.modelDescription)
@@ -551,7 +551,7 @@ Returns a dictionary `Dict(fmi2ValueReference, Array{String})` of derivative val
 
 # Returns
 - `dict::Dict{fmi2ValueReference, Array{String}}`: Returns a dictionary that constructs a hash table with keys of type fmi2ValueReference and values of type Array{String}. So returns a dict with (vrs, names of derivatives)
-See also [`fmi2GetValueReferencesAndNames`](@ref)
+See also [`getValueReferencesAndNames`](@ref)
 """
 getDerivateValueReferencesAndNames(md::fmiModelDescription) = getValueReferencesAndNames(md; vrs=md.derivativeValueReferences)
 getDerivateValueReferencesAndNames(fmu::FMU) = getDerivateValueReferencesAndNames(fmu.modelDescription)
