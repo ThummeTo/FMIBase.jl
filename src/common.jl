@@ -70,6 +70,30 @@ end
 """
 ToDo
 """
+function getNominalsOfContinuousStates(c::FMU2Component)
+    if !c.fmu.isZeroState
+        nx = Csize_t(length(c.fmu.modelDescription.stateValueReferences))
+        x = zeros(fmi2Real, nx)
+        fmi2GetNominalsOfContinuousStates!(c, x, nx) 
+        return x
+    else
+        return zeros(fmi2Real, 1) 
+    end
+end
+function getNominalsOfContinuousStates(c::FMU3Instance)
+    if !c.fmu.isZeroState
+        nx = Csize_t(length(c.fmu.modelDescription.stateValueReferences))
+        x = zeros(fmi3Float64, nx)
+        fmi3GetNominalsOfContinuousStates!(c, x, nx) 
+        return x
+    else
+        return zeros(fmi3Float64, 1)
+    end
+end
+
+"""
+ToDo
+"""
 function getContinuousStates!(c::FMU2Component, x::AbstractArray{<:fmi2Real})
     if !c.fmu.isZeroState
         fmi2GetContinuousStates(c, x)  

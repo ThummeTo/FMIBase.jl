@@ -275,4 +275,16 @@ function eval!(cRef::UInt64,
 
     return c.eval_output
 end
-
+eval!(cRef::UInt64, 
+    dx::AbstractVector{Float64},
+    dx_refs::AbstractVector{<:fmiValueReference},
+    y::AbstractVector{Float64},
+    y_refs::AbstractVector{<:fmiValueReference},
+    x::AbstractVector{Float64}, 
+    u::AbstractVector{Float64},
+    u_refs::AbstractVector{<:fmiValueReference},
+    p::AbstractVector{Float64},
+    p_refs::AbstractVector{<:fmiValueReference},
+    ec::AbstractVector{Float64}, 
+    ec_idcs::AbstractVector{<:fmiValueReference},
+    t::Int64) = eval!(cRef, dx, dx_refs, y, y_refs, x, u, u_refs, p, p_refs, ec, ec_idcs, Float64(t))

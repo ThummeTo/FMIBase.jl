@@ -55,6 +55,8 @@ const NO_fmi2Real = typemin(fmi2Real)
 const NO_fmi3Float64 = typemin(fmi3Float64)
 getNotSetReal(::FMU2) = NO_fmi2Real
 getNotSetReal(::FMU3) = NO_fmi3Float64
+isSetReal(::FMU2, val::Real) = true
+isSetReal(::FMU3, val::Real) = true
 isSetReal(::FMU2, val::fmi2Real) = (val != NO_fmi2Real)
 isSetReal(::FMU3, val::fmi3Float64) = (val != NO_fmi3Float64)
 

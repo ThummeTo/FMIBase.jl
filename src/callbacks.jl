@@ -274,7 +274,7 @@ function affectFMU!(c::FMU2Component, integrator, idx, inputFunction)
 
     if isTrue(c.eventInfo.valuesOfContinuousStatesChanged)
         left_x = integrator.u
-        right_x = fmi2GetContinuousStates(c)
+        right_x = getContinuousStates(c)
         @debug "affectFMU!(...): Handled event at t=$(integrator.t), new state is $(right_x)"
         integrator.u = right_x
 
@@ -285,7 +285,7 @@ function affectFMU!(c::FMU2Component, integrator, idx, inputFunction)
     end
 
     if isTrue(c.eventInfo.nominalsOfContinuousStatesChanged)
-        x_nom = fmi2GetNominalsOfContinuousStates(c)
+        x_nom = getNominalsOfContinuousStates(c)
     end
 
     ignore_derivatives() do 

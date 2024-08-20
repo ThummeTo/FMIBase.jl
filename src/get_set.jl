@@ -52,6 +52,7 @@ function getValue!(comp::FMU2Component, vrs::fmi2ValueReferenceFormat, dstArray:
             dstArray[i] = unsafe_string(values[1])
         elseif mv.Enumeration != nothing
             @warn "getValue!(...): Currently not implemented for fmi2Enum."
+            dstArray[i] = 0 # so it isn't undef
         else
             @assert isa(dstArray[i], Real) "fmi2Get!(...): Unknown data type for value reference `$(vr)` at index $(i), is `$(mv.datatype.datatype)`."
         end
@@ -141,6 +142,7 @@ function getValue!(inst::FMU3Instance, vrs::fmi3ValueReferenceFormat, dstArray::
             dstArray[i] = values[1]
         elseif isa(mv, FMICore.fmi3VariableEnumeration)
             @warn "fmi3Get!(...): Currently not implemented for fmi3Enum."
+            dstArray[i] = 0 # so it isn't undef
         else 
             @assert isa(dstArray[i], Real) "fmi3Get!(...): Unknown data type for value reference `$(vr)` at index $(i), is `$(mv.datatype.datatype)`."
         end
