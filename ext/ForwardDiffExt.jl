@@ -8,10 +8,10 @@ module ForwardDiffExt
 using FMIBase, ForwardDiff
 
 # check if scalar/vector is ForwardDiff.Dual
-function FMIBase.isdual(e::ForwardDiff.Dual{T, V, N}) where {T, V, N}
+function FMIBase.isdual(e::ForwardDiff.Dual{T,V,N}) where {T,V,N}
     return true
 end
-function FMIBase.isdual(e::AbstractVector{<:ForwardDiff.Dual{T, V, N}}) where {T, V, N}
+function FMIBase.isdual(e::AbstractVector{<:ForwardDiff.Dual{T,V,N}}) where {T,V,N}
     return true
 end
 

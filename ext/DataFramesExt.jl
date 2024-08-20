@@ -10,10 +10,15 @@ using FMIBase, DataFrames
 """
 Converts a FMUSolution to DataFrame.
 """
-function DataFrames.DataFrame(solution::FMUSolution) 
-    df = DataFrames.DataFrame(time=solution.values.t)
-    for i in 1:length(solution.values.saveval[1])
-        df[!, Symbol(valueReferenceToString(solution.component.fmu, solution.valueReferences[i]))]=[val[i] for val in solution.values.saveval]
+function DataFrames.DataFrame(solution::FMUSolution)
+    df = DataFrames.DataFrame(time = solution.values.t)
+    for i = 1:length(solution.values.saveval[1])
+        df[
+            !,
+            Symbol(
+                valueReferenceToString(solution.component.fmu, solution.valueReferences[i]),
+            ),
+        ] = [val[i] for val in solution.values.saveval]
     end
     # [ToDo] add states!
     return df

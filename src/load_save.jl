@@ -13,12 +13,12 @@ For JLD2 the `keyword` is used as key.
 
 See also [`saveSolutionCSV`](@ref), [`saveSolutionMAT`](@ref), [`saveSolutionJLD2`](@ref), [`loadSolutionJLD2`](@ref).
 """
-function saveSolution(solution::FMUSolution, filepath::AbstractString; keyword="solution")
+function saveSolution(solution::FMUSolution, filepath::AbstractString; keyword = "solution")
     ending = split(filepath, ".")[2]
     if ending == "mat"
         saveSolutionMAT(solution, filepath)
     elseif ending == "jld2"
-        saveSolutionJLD2(solution, filepath; keyword="solution")
+        saveSolutionJLD2(solution, filepath; keyword = "solution")
     elseif ending == "csv"
         saveSolutionCSV(solution, filepath)
     else
@@ -37,12 +37,12 @@ For JLD2 the `keyword` is used as key.
 
 See also [`saveSolutionCSV`](@ref), [`saveSolutionMAT`](@ref), [`saveSolutionJLD2`](@ref), [`loadSolutionJLD2`](@ref).
 """
-function loadSolution(filepath::AbstractString; keyword="solution")
+function loadSolution(filepath::AbstractString; keyword = "solution")
     ending = split(filepath, ".")[2]
     if ending == "mat"
         return loadSolutionMAT(filepath)
     elseif ending == "jld2"
-        return loadSolutionJLD2(filepath; keyword="solution")
+        return loadSolutionJLD2(filepath; keyword = "solution")
     elseif ending == "csv"
         return loadSolutionCSV(filepath)
     else

@@ -8,7 +8,7 @@
 
 Converts a typename to type, for example `"Float64"` (::String) to `fmi3Float64` (::DataType).
 """
-function stringToDataType(::fmi3ModelDescription, typename::Union{String, SubString})
+function stringToDataType(::fmi3ModelDescription, typename::Union{String,SubString})
     if typename == "Float32"
         return fmi3Float32
     elseif typename == "Float64"
@@ -41,7 +41,7 @@ function stringToDataType(::fmi3ModelDescription, typename::Union{String, SubStr
         @assert false "Unknown datatype `$(typename)`."
     end
 end
-function stringToDataType(::fmi2ModelDescription, typename::Union{String, SubString})
+function stringToDataType(::fmi2ModelDescription, typename::Union{String,SubString})
     if typename == "Real"
         return fmi2Real
     elseif typename == "Integer"
@@ -51,7 +51,7 @@ function stringToDataType(::fmi2ModelDescription, typename::Union{String, SubStr
     elseif typename == "Enumeration"
         return fmi2Enumeration
     elseif typename == "String"
-        return fmi2String 
+        return fmi2String
     else
         @assert false "Unknown datatype `$(typename)`."
     end
@@ -79,8 +79,10 @@ function stringToValueReference(md::fmiModelDescription, name::String)
     end
     reference
 end
-stringToValueReference(md::fmiModelDescription, names::AbstractVector{String}) = broadcast(stringToValueReference, (md,), names)
-stringToValueReference(fmu::FMU, name::Union{String, AbstractVector{String}}) = stringToValueReference(fmu.modelDescription, name)
+stringToValueReference(md::fmiModelDescription, names::AbstractVector{String}) =
+    broadcast(stringToValueReference, (md,), names)
+stringToValueReference(fmu::FMU, name::Union{String,AbstractVector{String}}) =
+    stringToValueReference(fmu.modelDescription, name)
 export stringToValueReference
 
 """
@@ -102,7 +104,8 @@ function modelVariablesForValueReference(md::fmiModelDescription, vr::fmiValueRe
     end
     return ar
 end
-modelVariablesForValueReference(fmu::FMU, vr::fmiValueReference) = modelVariablesForValueReference(fmu.modelDescription, vr)
+modelVariablesForValueReference(fmu::FMU, vr::fmiValueReference) =
+    modelVariablesForValueReference(fmu.modelDescription, vr)
 export modelVariablesForValueReference
 
 # [ToDo]: check if this is needed in FMI3, too.
@@ -132,19 +135,19 @@ function dataTypeForValueReference(md::fmi2ModelDescription, vr::fmi2ValueRefere
 end
 function dataTypeForValueReference(md::fmi3ModelDescription, vr::fmi3ValueReference)
     mv = modelVariablesForValueReference(md, vr)[1]
-    if isa(mv, FMICore.fmi3VariableFloat32) 
+    if isa(mv, FMICore.fmi3VariableFloat32)
         return fmi3Float32
-    elseif isa(mv, FMICore.fmi3VariableFloat64) 
+    elseif isa(mv, FMICore.fmi3VariableFloat64)
         return fmi3Float64
-    elseif isa(mv, FMICore.fmi3VariableInt8) 
+    elseif isa(mv, FMICore.fmi3VariableInt8)
         return fmi3Int8
-    elseif isa(mv, FMICore.fmi3VariableInt16) 
+    elseif isa(mv, FMICore.fmi3VariableInt16)
         return fmi3Int16
-    elseif isa(mv, FMICore.fmi3VariableInt32) 
+    elseif isa(mv, FMICore.fmi3VariableInt32)
         return fmi3Int32
-    elseif isa(mv, FMICore.fmi3VariableInt64)  
+    elseif isa(mv, FMICore.fmi3VariableInt64)
         return fmi3Int64
-    elseif isa(mv, FMICore.fmi3VariableUInt8) 
+    elseif isa(mv, FMICore.fmi3VariableUInt8)
         return fmi3UInt8
     elseif isa(mv, FMICore.fmi3VariableUInt16)
         return fmi3UInt16
@@ -152,7 +155,7 @@ function dataTypeForValueReference(md::fmi3ModelDescription, vr::fmi3ValueRefere
         return fmi3UInt32
     elseif isa(mv, FMICore.fmi3VariableUInt64)
         return fmi3UInt64
-    elseif isa(mv, FMICore.fmi3VariableBoolean) 
+    elseif isa(mv, FMICore.fmi3VariableBoolean)
         return fmi3Boolean
     elseif isa(mv, FMICore.fmi3VariableString)
         return fmi3String
@@ -160,12 +163,13 @@ function dataTypeForValueReference(md::fmi3ModelDescription, vr::fmi3ValueRefere
         return fmi3Binary
     elseif isa(mv, FMICore.fmi3VariableEnumeration)
         @warn "dataTypeForValueReference(...): Currently not implemented for fmi3Enum."
-    else 
+    else
         @assert false "dataTypeForValueReference(...): Unknown data type for value reference `$(vr)`."
     end
     return nothing
 end
-dataTypeForValueReference(fmu::FMU, vr::fmiValueReference) = dataTypeForValueReference(fmu.modelDescription, vr)
+dataTypeForValueReference(fmu::FMU, vr::fmiValueReference) =
+    dataTypeForValueReference(fmu.modelDescription, vr)
 export dataTypeForValueReference
 
 """
@@ -179,10 +183,12 @@ reference ∈ (fmi2ValueReference, fmi3ValueReference, Integer
 Returns the string identifier for a give value reference.
 """
 function valueReferenceToString(md::fmiModelDescription, reference::fmiValueReference)
-    [k for (k,v) in md.stringValueReferences if v == reference]
+    [k for (k, v) in md.stringValueReferences if v == reference]
 end
-valueReferenceToString(md::fmiModelDescription, reference::Integer) = valueReferenceToString(md, fmiValueReference(reference))
-valueReferenceToString(fmu::FMU, reference::Union{fmiValueReference, Integer}) = valueReferenceToString(fmu.modelDescription, reference)
+valueReferenceToString(md::fmiModelDescription, reference::Integer) =
+    valueReferenceToString(md, fmiValueReference(reference))
+valueReferenceToString(fmu::FMU, reference::Union{fmiValueReference,Integer}) =
+    valueReferenceToString(fmu.modelDescription, reference)
 export valueReferenceToString
 
 """
@@ -191,7 +197,7 @@ export valueReferenceToString
 
 Converts `fmi2Status` `status` into a String ("OK", "Warning", "Discard", "Error", "Fatal", "Pending").
 """
-function statusToString(::FMI2Struct, status::Union{fmi2Status, Integer})
+function statusToString(::FMI2Struct, status::Union{fmi2Status,Integer})
     if status == fmi2StatusOK
         return "OK"
     elseif status == fmi2StatusWarning
@@ -208,7 +214,7 @@ function statusToString(::FMI2Struct, status::Union{fmi2Status, Integer})
         @assert false "fmi2StatusToString($(status)): Unknown FMU status `$(status)`."
     end
 end
-function statusToString(::FMI3Struct, status::Union{fmi3Status, Integer})
+function statusToString(::FMI3Struct, status::Union{fmi3Status,Integer})
     if status == fmi3StatusOK
         return "OK"
     elseif status == fmi3StatusWarning
@@ -257,20 +263,20 @@ function stringToStatus(::FMI2Struct, s::AbstractString)
         return fmi2StatusError
     elseif s == "Fatal"
         return fmi2StatusFatal
-    elseif s == "Pending" 
+    elseif s == "Pending"
         return fmi2StatusPending
     else
         @assert false "fmi2StatusToString($(s)): Unknown FMU status `$(s)`."
     end
 end
 function stringToStatus(::FMI3Struct, s::AbstractString)
-    if s == "OK" 
+    if s == "OK"
         return fmi3StatusOK
     elseif s == "Warning"
         return fmi3StatusWarning
-    elseif s == "Discard" 
+    elseif s == "Discard"
         return fmi3StatusDiscard
-    elseif s == "Error" 
+    elseif s == "Error"
         return fmi3StatusError
     elseif s == "Fatal"
         return fmi3StatusFatal
@@ -299,7 +305,7 @@ function causalityToString(::FMI2Struct, c::fmi2Causality)
         return "local"
     elseif c == fmi2CausalityIndependent
         return "independent"
-    else 
+    else
         @assert false "fmi2CausalityToString($(c)): Unknown causality."
     end
 end
@@ -318,7 +324,7 @@ function causalityToString(::FMI3Struct, c::fmi3Causality)
         return "independent"
     elseif c == fmi3CausalityStructuralParameter
         return "structuralParameter"
-    else 
+    else
         @assert false "fmi3CausalityToString(...): Unknown causality."
     end
 end
@@ -343,7 +349,7 @@ function stringToCausality(::FMI2Struct, s::AbstractString)
         return fmi2CausalityLocal
     elseif s == "independent"
         return fmi2CausalityIndependent
-    else 
+    else
         @assert false "fmi2StringToCausality($(s)): Unknown causality."
     end
 end
@@ -362,7 +368,7 @@ function stringToCausality(::FMI3Struct, s::AbstractString)
         return fmi3CausalityIndependent
     elseif s == "structuralParameter"
         return fmi3CausalityStructuralParameter
-    else 
+    else
         @assert false "fmi3StringToCausality($(s)): Unknown causality."
     end
 end
@@ -385,7 +391,7 @@ function variabilityToString(::FMI2Struct, c::fmi2Variability)
         return "discrete"
     elseif c == fmi2VariabilityContinuous
         return "continuous"
-    else 
+    else
         @assert false "fmi2VariabilityToString($(c)): Unknown variability."
     end
 end
@@ -400,7 +406,7 @@ function variabilityToString(::FMI3Struct, c::fmi3Variability)
         return "discrete"
     elseif c == fmi3VariabilityContinuous
         return "continuous"
-    else 
+    else
         @assert false "fmi3VariabilityToString(...): Unknown variability."
     end
 end
@@ -423,7 +429,7 @@ function stringToVariability(::FMI2Struct, s::AbstractString)
         return fmi2VariabilityDiscrete
     elseif s == "continuous"
         return fmi2VariabilityContinuous
-    else 
+    else
         @assert false "fmi2StringToVariability($(s)): Unknown variability."
     end
 end
@@ -438,7 +444,7 @@ function stringToVariability(::FMI3Struct, s::AbstractString)
         return fmi3VariabilityDiscrete
     elseif s == "continuous"
         return fmi3VariabilityContinuous
-    else 
+    else
         @assert false "fmi3StringToVariability($(s)): Unknown variability."
     end
 end
@@ -457,7 +463,7 @@ function initialToString(::FMI2Struct, c::fmi2Initial)
         return "exact"
     elseif c == fmi2InitialCalculated
         return "calculated"
-    else 
+    else
         @assert false "fmi2InitialToString($(c)): Unknown initial."
     end
 end
@@ -468,7 +474,7 @@ function initialToString(::FMI3Struct, c::fmi3Initial)
         return "exact"
     elseif c == fmi3InitialCalculated
         return "calculated"
-    else 
+    else
         @assert false "fmi3InitialToString(...): Unknown initial."
     end
 end
@@ -487,7 +493,7 @@ function stringToInitial(::FMI2Struct, s::AbstractString)
         return fmi2InitialExact
     elseif s == "calculated"
         return fmi2InitialCalculated
-    else 
+    else
         @assert false "fmi2StringToInitial($(s)): Unknown initial."
     end
 end
@@ -498,7 +504,7 @@ function stringToInitial(::FMI3Struct, s::AbstractString)
         return fmi3InitialExact
     elseif s == "calculated"
         return fmi3InitialCalculated
-    else 
+    else
         @assert false "fmi3StringToInitial($(s)): Unknown initial."
     end
 end
@@ -521,7 +527,7 @@ function dependencyKindToString(::FMI2Struct, dk::fmi2DependencyKind)
         return "tunable"
     elseif dk == fmi2DependencyKindDiscrete
         return "discrete"
-    else 
+    else
         @assert false "fmi2DependencyKindToString($(c)): Unknown dependency kind."
     end
 end
@@ -538,7 +544,7 @@ function dependencyKindToString(::FMI3Struct, c::fmi3DependencyKind)
         return "discrete"
     elseif c == fmi3DependencyKindDependent
         return "dependent"
-    else 
+    else
         @assert false "fmi3DependencyKindToString(...): Unknown dependencyKind."
     end
 end
@@ -561,7 +567,7 @@ function stringToDependencyKind(::FMI2Struct, s::AbstractString)
         return fmi2DependencyKindTunable
     elseif s == "discrete"
         return fmi2DependencyKindDiscrete
-    else 
+    else
         @assert false "fmi2StringToDependencyKind($(s)): Unknown dependency kind."
     end
 end
@@ -578,7 +584,7 @@ function stringToDependencyKind(::FMI3Struct, s::AbstractString)
         return fmi3DependencyKindDiscrete
     elseif s == "dependent"
         return fmi3DependencyKindDependent
-    else 
+    else
         @assert false "fmi3StringToDependencyKind($(s)): Unknown dependencyKind."
     end
 end
@@ -594,7 +600,7 @@ function variableNamingConventionToString(::FMI3Struct, c::fmi3VariableNamingCon
         return "flat"
     elseif c == fmi3VariableNamingConventionStructured
         return "structured"
-    else 
+    else
         @assert false "fmi3VariableNamingConventionToString(...): Unknown variableNamingConvention."
     end
 end
@@ -610,7 +616,7 @@ function stringToVariableNamingConvention(::FMI3Struct, s::AbstractString)
         return fmi3VariableNamingConventionFlat
     elseif s == "structured"
         return fmi3VariableNamingConventionStructured
-    else 
+    else
         @assert false "stringToVariableNamingConvention($(s)): Unknown variableNamingConvention."
     end
 end
@@ -628,7 +634,7 @@ function typeToString(::FMI3Struct, c::fmi3Type)
         return "modelExchange"
     elseif c == fmi3TypeScheduledExecution
         return "scheduledExecution"
-    else 
+    else
         @assert false "fmi3TypeToString(...): Unknown type."
     end
 end
@@ -646,7 +652,7 @@ function stringToType(::FMI3Struct, s::AbstractString)
         return fmi3TypeModelExchange
     elseif s == "scheduledExecution"
         return fmi3TypeScheduledExecution
-    else 
+    else
         @assert false "fmi3StringToInitial($(s)): Unknown type."
     end
 end
@@ -664,7 +670,7 @@ function intervalQualifierToString(::FMI3Struct, c::fmi3IntervalQualifier)
         return "intervalUnchanged"
     elseif c == fmi3IntervalQualifierIntervalChanged
         return "intervalChanged"
-    else 
+    else
         @assert false "fmi3IntervalQualifierToString(...): Unknown intervalQualifier."
     end
 end
@@ -682,7 +688,7 @@ function stringToIntervalQualifier(::FMI3Struct, s::AbstractString)
         return fmi3IntervalQualifierIntervalUnchanged
     elseif s == "intervalChanged"
         return fmi3IntervalQualifierIntervalChanged
-    else 
+    else
         @assert false "fmi3StringToIntervalQualifier($(s)): Unknown intervalQualifier."
     end
 end

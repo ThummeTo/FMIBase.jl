@@ -3,24 +3,36 @@
 # Licensed under the MIT license. See LICENSE file in the project root for details.
 #
 
-mutable struct FMUEvaluationOutput{T} <: AbstractArray{Float64, 1} 
+mutable struct FMUEvaluationOutput{T} <: AbstractArray{Float64,1}
     dx::AbstractArray{T,1}
     y::AbstractArray{T,1}
     ec::AbstractArray{T,1}
 
-    function FMUEvaluationOutput{T}(dx::AbstractArray, y::AbstractArray, ec::AbstractArray) where {T}
+    function FMUEvaluationOutput{T}(
+        dx::AbstractArray,
+        y::AbstractArray,
+        ec::AbstractArray,
+    ) where {T}
         return new{T}(dx, y, ec)
     end
 
-    function FMUEvaluationOutput(dx::AbstractArray{T}, y::AbstractArray{T}, ec::AbstractArray{T}) where {T}
+    function FMUEvaluationOutput(
+        dx::AbstractArray{T},
+        y::AbstractArray{T},
+        ec::AbstractArray{T},
+    ) where {T}
         return FMUEvaluationOutput{T}(dx, y, ec)
     end
 
-    function FMUEvaluationOutput{T}(; initType::DataType=T) where {T}
-        return FMUEvaluationOutput{T}(Array{initType,1}(), Array{initType,1}(), Array{initType,1}())
+    function FMUEvaluationOutput{T}(; initType::DataType = T) where {T}
+        return FMUEvaluationOutput{T}(
+            Array{initType,1}(),
+            Array{initType,1}(),
+            Array{initType,1}(),
+        )
     end
 
-    function FMUEvaluationOutput() 
+    function FMUEvaluationOutput()
         return FMUEvaluationOutput{fmi2Real}(EMPTY_fmi2Real, EMPTY_fmi2Real, EMPTY_fmi2Real)
     end
 end
@@ -37,9 +49,9 @@ end
 
 function Base.length(out::FMUEvaluationOutput)
     len_dx = length(out.dx)
-    len_y  = length(out.y)
-    len_ec = length(out.ec) 
-    return len_dx+len_y+len_ec
+    len_y = length(out.y)
+    len_ec = length(out.ec)
+    return len_dx + len_y + len_ec
 end
 
 function Base.getindex(out::FMUEvaluationOutput, ind::Int)
@@ -50,13 +62,13 @@ function Base.getindex(out::FMUEvaluationOutput, ind::Int)
         return out.dx[ind]
     end
     ind -= len_dx
-    
-    len_y  = length(out.y)
+
+    len_y = length(out.y)
     if ind <= len_y
         return out.y[ind]
     end
     ind -= len_y
-    
+
     len_ec = length(out.ec)
     if ind <= len_ec
         return out.ec[ind]
@@ -72,15 +84,15 @@ function Base.getindex(out::FMUEvaluationOutput, ind::UnitRange)
 end
 
 function Base.setindex!(out::FMUEvaluationOutput, v, index::Int)
-    
+
     @assert !isa(v, Int64) "setindex! on Int64 not allowed!"
-    
+
     len_dx = length(out.dx)
-    if index <= len_dx 
+    if index <= len_dx
         return setindex!(out.dx, v, index)
     end
-    index -= len_dx 
-    
+    index -= len_dx
+
     len_y = length(out.y)
     if index <= len_y
         return setindex!(out.y, v, index)
@@ -92,7 +104,7 @@ function Base.setindex!(out::FMUEvaluationOutput, v, index::Int)
         return setindex!(out.ec, v, index)
     end
     index -= len_ec
-    
+
     @assert false "`setindex!` for index $(ind+len_y+len_dx+len_ec) out of bounds [$(length(out))]."
 end
 
@@ -118,14 +130,14 @@ mutable struct FMUADOutput{T} <: AbstractArray{Real,1}
     len_ec::Int
 
     show_dx::Bool
-    show_y::Bool 
+    show_y::Bool
     show_ec::Bool
 
-    function FMUADOutput{T}(; initType::DataType=T) where {T}
+    function FMUADOutput{T}(; initType::DataType = T) where {T}
         return new{T}(Array{initType,1}(), 0, 0, 0, true, true, false)
     end
 
-    function FMUADOutput() 
+    function FMUADOutput()
         return FMUADOutput{fmi2Real}()
     end
 end
@@ -146,11 +158,11 @@ end
 
 function Base.getproperty(out::FMUADOutput, var::Symbol)
 
-    if var == :dx 
+    if var == :dx
         return @view(out.buffer[1:out.len_dx])
-    elseif var == :y 
+    elseif var == :y
         return @view(out.buffer[out.len_dx+1:out.len_dx+out.len_y])
-    elseif var == :ec 
+    elseif var == :ec
         return @view(out.buffer[out.len_dx+out.len_y+1:end])
     else
         return Base.getfield(out, var)
@@ -159,9 +171,9 @@ end
 
 function Base.length(out::FMUADOutput)
     len_dx = out.show_dx ? out.len_dx : 0
-    len_y  = out.show_y  ? out.len_y  : 0
+    len_y = out.show_y ? out.len_y : 0
     len_ec = out.show_ec ? out.len_ec : 0
-    return len_dx+len_y+len_ec
+    return len_dx + len_y + len_ec
 end
 
 function Base.getindex(out::FMUADOutput, ind::Int)
@@ -173,7 +185,7 @@ function Base.getindex(out::FMUADOutput, ind::UnitRange)
     return collect(Base.getindex(out, i) for i in ind)
 end
 
-function Base.setindex!(out::FMUADOutput, v, index::Int) 
+function Base.setindex!(out::FMUADOutput, v, index::Int)
     return setindex!(out.buffer, v, index)
 end
 
@@ -186,23 +198,36 @@ function Base.IndexStyle(::FMUADOutput)
 end
 
 function Base.unaliascopy(out::FMUADOutput)
-    return FMUADOutput(copy(out.buffer), out.len_dx, out.len_y, out.len_ec, out.show_dx, out.show_y, out.show_ec)
+    return FMUADOutput(
+        copy(out.buffer),
+        out.len_dx,
+        out.len_y,
+        out.len_ec,
+        out.show_dx,
+        out.show_y,
+        out.show_ec,
+    )
 end
 
 #####
 
 mutable struct FMUEvaluationInput <: AbstractVector{Real}
-    
+
     x::AbstractArray{<:Real}
     u::AbstractVector{<:Real}
     p::AbstractVector{<:Real}
     t::Real
 
-    function FMUEvaluationInput(x::AbstractArray{<:Real}, u::AbstractArray{<:Real}, p::AbstractArray{<:Real}, t::Real) 
+    function FMUEvaluationInput(
+        x::AbstractArray{<:Real},
+        u::AbstractArray{<:Real},
+        p::AbstractArray{<:Real},
+        t::Real,
+    )
         return new(x, u, p, t)
     end
 
-    function FMUEvaluationInput() 
+    function FMUEvaluationInput()
         return FMUEvaluationInput(EMPTY_fmi2Real, EMPTY_fmi2Real, EMPTY_fmi2Real, 0.0)
     end
 end

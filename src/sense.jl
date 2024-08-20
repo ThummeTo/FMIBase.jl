@@ -14,7 +14,7 @@ end
 
 # check if scalar/vector is ForwardDiff.Dual
 function isdual(e)
-    return false 
+    return false
 end
 function isdual(e::Tuple)
     return any(isdual.(e))
@@ -22,7 +22,7 @@ end
 
 # check if scalar/vector is ForwardDiff.Dual
 function istracked(e)
-    return false 
+    return false
 end
 function istracked(e::Tuple)
     return any(istracked.(e))
@@ -37,7 +37,7 @@ function undual(e::AbstractArray{fmi2Real})
 end
 function undual(e::Tuple)
     if !isdual(e)
-        return e 
+        return e
     end
     return undual.(e)
 end
@@ -57,7 +57,7 @@ function untrack(e::AbstractArray{fmi2Real})
 end
 function untrack(e::Tuple)
     if !istracked(e)
-        return e 
+        return e
     end
     return untrack.(e)
 end
@@ -77,7 +77,7 @@ function unsense(e::AbstractArray{fmi2Real})
 end
 function unsense(e::Tuple)
     if !isdual(e) && !istracked(e)
-        return e 
+        return e
     end
     return unsense.(e)
 end
@@ -89,7 +89,7 @@ function unsense(e)
 end
 
 # makes copied Reals from ForwardDiff/ReverseDiff.TrackedXXX scalar/vector
-function unsense_copy(e) 
+function unsense_copy(e)
     return unsense(e) # inherit, most `unsense` dispatches are allocating anyway
 end
 function unsense_copy(e::AbstractArray{fmi2Real})
@@ -102,12 +102,12 @@ function sense_setindex!(A, x, i)
 end
 
 # VJP/JVP methods in FMISensitivity
-function check_invalidate!(vr, jac::Nothing) 
+function check_invalidate!(vr, jac::Nothing)
     return
 end
 
 function invalidate!(jac::Nothing)
-    return 
+    return
 end
 
 function uncolor!(jac::Nothing)

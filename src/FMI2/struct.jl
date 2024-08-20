@@ -44,16 +44,16 @@ mutable struct FMU2Component{F} <: FMUInstance
     addr::fmi2Component
     cRef::UInt64
 
-    fmu::F 
+    fmu::F
     state::fmi2ComponentState
     componentEnvironment::FMU2ComponentEnvironment
-    type::Union{fmi2Type, Nothing}
-    
-    problem # ToDo: ODEProblem, but this is not a dependency of FMICore.jl nor FMIImport.jl ...
+    type::Union{fmi2Type,Nothing}
+
+    problem::Any # ToDo: ODEProblem, but this is not a dependency of FMICore.jl nor FMIImport.jl ...
     solution::FMUSolution
     force::Bool
     threadid::Integer
-    
+
     loggingOn::Bool
     instanceName::String
     continuousStatesChanged::fmi2Boolean
@@ -61,56 +61,56 @@ mutable struct FMU2Component{F} <: FMUInstance
 
     # FMI2 only
     callbackFunctions::fmi2CallbackFunctions
-    eventInfo::Union{fmi2EventInfo, Nothing}
-    
+    eventInfo::Union{fmi2EventInfo,Nothing}
+
     # caches
     t::fmi2Real             # the system time
     t_offset::fmi2Real      # time offset between simulation environment and FMU
-    x::Union{Array{fmi2Real, 1}, Nothing}   # the system states (or sometimes u)
-    x_d::Union{Array{Union{fmi2Real, fmi2Integer, fmi2Boolean}, 1}, Nothing}   # the system discrete states
-    ẋ::Union{Array{fmi2Real, 1}, Nothing}   # the system state derivative (or sometimes u̇)
-    ẍ::Union{Array{fmi2Real, 1}, Nothing}   # the system state second derivative
+    x::Union{Array{fmi2Real,1},Nothing}   # the system states (or sometimes u)
+    x_d::Union{Array{Union{fmi2Real,fmi2Integer,fmi2Boolean},1},Nothing}   # the system discrete states
+    ẋ::Union{Array{fmi2Real,1},Nothing}   # the system state derivative (or sometimes u̇)
+    ẍ::Union{Array{fmi2Real,1},Nothing}   # the system state second derivative
     #u::Union{Array{fmi2Real, 1}, Nothing}  # the system inputs
     #y::Union{Array{fmi2Real, 1}, Nothing}  # the system outputs
     #p::Union{Array{fmi2Real, 1}, Nothing}  # the system parameters
-    z::Union{Array{fmi2Real, 1}, Nothing}   # the system event indicators
-    z_prev::Union{Array{fmi2Real, 1}, Nothing}   # the last system event indicators
+    z::Union{Array{fmi2Real,1},Nothing}   # the system event indicators
+    z_prev::Union{Array{fmi2Real,1},Nothing}   # the last system event indicators
 
-    values::Dict{fmi2ValueReference, Union{fmi2Real, fmi2Integer, fmi2Boolean}}    
+    values::Dict{fmi2ValueReference,Union{fmi2Real,fmi2Integer,fmi2Boolean}}
 
-    x_vrs::Array{fmi2ValueReference, 1}   # the system state value references 
-    ẋ_vrs::Array{fmi2ValueReference, 1}   # the system state derivative value references
-    u_vrs::Array{fmi2ValueReference, 1}   # the system input value references
-    y_vrs::Array{fmi2ValueReference, 1}   # the system output value references
-    p_vrs::Array{fmi2ValueReference, 1}   # the system parameter value references
+    x_vrs::Array{fmi2ValueReference,1}   # the system state value references 
+    ẋ_vrs::Array{fmi2ValueReference,1}   # the system state derivative value references
+    u_vrs::Array{fmi2ValueReference,1}   # the system input value references
+    y_vrs::Array{fmi2ValueReference,1}   # the system output value references
+    p_vrs::Array{fmi2ValueReference,1}   # the system parameter value references
 
     # sensitivities
-    ∂ẋ_∂x #::Union{J, Nothing}
-    ∂ẋ_∂u #::Union{J, Nothing}
-    ∂ẋ_∂p #::Union{J, Nothing}
-    ∂ẋ_∂t #::Union{G, Nothing}
+    ∂ẋ_∂x::Any #::Union{J, Nothing}
+    ∂ẋ_∂u::Any #::Union{J, Nothing}
+    ∂ẋ_∂p::Any #::Union{J, Nothing}
+    ∂ẋ_∂t::Any #::Union{G, Nothing}
 
-    ∂y_∂x #::Union{J, Nothing}
-    ∂y_∂u #::Union{J, Nothing}
-    ∂y_∂p #::Union{J, Nothing}
-    ∂y_∂t #::Union{G, Nothing}
+    ∂y_∂x::Any #::Union{J, Nothing}
+    ∂y_∂u::Any #::Union{J, Nothing}
+    ∂y_∂p::Any #::Union{J, Nothing}
+    ∂y_∂t::Any #::Union{G, Nothing}
 
-    ∂e_∂x #::Union{J, Nothing}
-    ∂e_∂u #::Union{J, Nothing}
-    ∂e_∂p #::Union{J, Nothing}
-    ∂e_∂t #::Union{G, Nothing}
+    ∂e_∂x::Any #::Union{J, Nothing}
+    ∂e_∂u::Any #::Union{J, Nothing}
+    ∂e_∂p::Any #::Union{J, Nothing}
+    ∂e_∂t::Any #::Union{G, Nothing}
 
-    ∂xr_∂xl #::Union{J, Nothing}
+    ∂xr_∂xl::Any #::Union{J, Nothing}
 
     # performance (pointers to prevent repeating allocations)
-    _enterEventMode::Array{fmi2Boolean, 1}
+    _enterEventMode::Array{fmi2Boolean,1}
     _ptr_enterEventMode::Ptr{fmi2Boolean}
-    _terminateSimulation::Array{fmi2Boolean, 1}
+    _terminateSimulation::Array{fmi2Boolean,1}
     _ptr_terminateSimulation::Ptr{fmi2Boolean}
 
     # misc
-    progressMeter           # progress plot
-    output::FMUADOutput 
+    progressMeter::Any           # progress plot
+    output::FMUADOutput
     rrule_input::FMUEvaluationInput     # input buffer (for rrules)
     eval_output::FMUEvaluationOutput   # output buffer with multiple arrays that behaves like a single array (to allow for single value return functions, necessary for propper AD)
     frule_output::FMUEvaluationOutput
@@ -147,7 +147,7 @@ mutable struct FMU2Component{F} <: FMUInstance
         inst.eventInfo = fmi2EventInfo()
 
         # AD
-        inst.output = FMUADOutput{Real}(; initType=Float64)
+        inst.output = FMUADOutput{Real}(; initType = Float64)
         inst.eval_output = FMUEvaluationOutput{Float64}()
         inst.rrule_input = FMUEvaluationInput()
         inst.frule_output = FMUEvaluationOutput{Float64}()
@@ -156,7 +156,7 @@ mutable struct FMU2Component{F} <: FMUInstance
         inst.loggingOn = false
         inst.visible = false
         inst.instanceName = ""
-        
+
         # caches
         inst.x = nothing
         inst.x_d = nothing
@@ -164,13 +164,13 @@ mutable struct FMU2Component{F} <: FMUInstance
         inst.ẍ = nothing
         inst.z = nothing
         inst.z_prev = nothing
-        
-        inst.values = Dict{fmi2ValueReference, Union{fmi2Real, fmi2Integer, fmi2Boolean}}()
-        inst.x_vrs = Array{fmi2ValueReference, 1}()
-        inst.ẋ_vrs = Array{fmi2ValueReference, 1}() 
-        inst.u_vrs = Array{fmi2ValueReference, 1}()  
-        inst.y_vrs = Array{fmi2ValueReference, 1}()  
-        inst.p_vrs = Array{fmi2ValueReference, 1}() 
+
+        inst.values = Dict{fmi2ValueReference,Union{fmi2Real,fmi2Integer,fmi2Boolean}}()
+        inst.x_vrs = Array{fmi2ValueReference,1}()
+        inst.ẋ_vrs = Array{fmi2ValueReference,1}()
+        inst.u_vrs = Array{fmi2ValueReference,1}()
+        inst.y_vrs = Array{fmi2ValueReference,1}()
+        inst.p_vrs = Array{fmi2ValueReference,1}()
 
         # sensitivities
         inst.∂ẋ_∂x = nothing
@@ -206,7 +206,7 @@ mutable struct FMU2Component{F} <: FMUInstance
         inst.default_ec = EMPTY_fmi2Real
 
         inst.snapshots = Vector{FMUSnapshot}()
-        
+
         # performance (pointers to prevent repeating allocations)
         inst._enterEventMode = zeros(fmi2Boolean, 1)
         inst._terminateSimulation = zeros(fmi2Boolean, 1)
@@ -221,19 +221,38 @@ mutable struct FMU2Component{F} <: FMUInstance
         inst = FMU2Component{F}()
         inst.fmu = fmu
 
-        inst.default_t          = inst.fmu.default_t
-        inst.default_p_refs     = inst.fmu.default_p_refs   === EMPTY_fmi2ValueReference    ? inst.fmu.default_p_refs   : copy(inst.fmu.default_p_refs)
-        inst.default_p          = inst.fmu.default_p        === EMPTY_fmi2Real              ? inst.fmu.default_p        : copy(inst.fmu.default_p)
-        inst.default_ec         = inst.fmu.default_ec       === EMPTY_fmi2Real              ? inst.fmu.default_ec       : copy(inst.fmu.default_ec)
-        inst.default_ec_idcs    = inst.fmu.default_ec_idcs  === EMPTY_fmi2ValueReference    ? inst.fmu.default_ec_idcs  : copy(inst.fmu.default_ec_idcs)
-        inst.default_u          = inst.fmu.default_u        === EMPTY_fmi2Real              ? inst.fmu.default_u        : copy(inst.fmu.default_u)
-        inst.default_y          = inst.fmu.default_y        === EMPTY_fmi2Real              ? inst.fmu.default_y        : copy(inst.fmu.default_y)
-        inst.default_y_refs     = inst.fmu.default_y_refs   === EMPTY_fmi2ValueReference    ? inst.fmu.default_y_refs   : copy(inst.fmu.default_y_refs)
-        inst.default_dx         = inst.fmu.default_dx       === EMPTY_fmi2Real              ? inst.fmu.default_dx       : copy(inst.fmu.default_dx)
-        inst.default_dx_refs    = inst.fmu.default_dx_refs  === EMPTY_fmi2ValueReference    ? inst.fmu.default_dx_refs  : copy(inst.fmu.default_dx_refs)
+        inst.default_t = inst.fmu.default_t
+        inst.default_p_refs =
+            inst.fmu.default_p_refs === EMPTY_fmi2ValueReference ? inst.fmu.default_p_refs :
+            copy(inst.fmu.default_p_refs)
+        inst.default_p =
+            inst.fmu.default_p === EMPTY_fmi2Real ? inst.fmu.default_p :
+            copy(inst.fmu.default_p)
+        inst.default_ec =
+            inst.fmu.default_ec === EMPTY_fmi2Real ? inst.fmu.default_ec :
+            copy(inst.fmu.default_ec)
+        inst.default_ec_idcs =
+            inst.fmu.default_ec_idcs === EMPTY_fmi2ValueReference ?
+            inst.fmu.default_ec_idcs : copy(inst.fmu.default_ec_idcs)
+        inst.default_u =
+            inst.fmu.default_u === EMPTY_fmi2Real ? inst.fmu.default_u :
+            copy(inst.fmu.default_u)
+        inst.default_y =
+            inst.fmu.default_y === EMPTY_fmi2Real ? inst.fmu.default_y :
+            copy(inst.fmu.default_y)
+        inst.default_y_refs =
+            inst.fmu.default_y_refs === EMPTY_fmi2ValueReference ? inst.fmu.default_y_refs :
+            copy(inst.fmu.default_y_refs)
+        inst.default_dx =
+            inst.fmu.default_dx === EMPTY_fmi2Real ? inst.fmu.default_dx :
+            copy(inst.fmu.default_dx)
+        inst.default_dx_refs =
+            inst.fmu.default_dx_refs === EMPTY_fmi2ValueReference ?
+            inst.fmu.default_dx_refs : copy(inst.fmu.default_dx_refs)
 
         # event handling 
-        inst.eventIndicatorBuffer = zeros(fmi2Real, fmu.modelDescription.numberOfEventIndicators)
+        inst.eventIndicatorBuffer =
+            zeros(fmi2Real, fmu.modelDescription.numberOfEventIndicators)
 
         return inst
     end
@@ -241,7 +260,7 @@ mutable struct FMU2Component{F} <: FMUInstance
     function FMU2Component(addr::fmi2Component, fmu::F) where {F}
         inst = FMU2Component(fmu)
         inst.addr = addr
-       
+
         return inst
     end
 end
@@ -249,14 +268,13 @@ export FMU2Component
 
 # overloading get/set/haspropoerty for preallocated pointers (buffers for return values)
 
-const FMU2Component_AdditionalFields = (:enterEventMode,
-    :terminateSimulation)
+const FMU2Component_AdditionalFields = (:enterEventMode, :terminateSimulation)
 
 function Base.setproperty!(str::FMU2Component, var::Symbol, value)
     if var ∈ FMU2Component_AdditionalFields
         fname = Symbol("_" * String(var))
         field = Base.getfield(str, fname)
-        field[1] = value 
+        field[1] = value
         return nothing
     else
         return Base.setfield!(str, var, value)
@@ -284,14 +302,15 @@ end
 """ 
 Overload the Base.show() function for custom printing of the FMU2Component.
 """
-Base.show(io::IO, c::FMU2Component) = print(io,
-"FMU:            $(c.fmu.modelDescription.modelName)
-InstanceName:   $(isdefined(c, :instanceName) ? c.instanceName : "[not defined]")
-Address:        $(c.addr)
-State:          $(c.state)
-Logging:        $(c.loggingOn)
-FMU time:       $(c.t)
-FMU states:     $(c.x)"
+Base.show(io::IO, c::FMU2Component) = print(
+    io,
+    "FMU:            $(c.fmu.modelDescription.modelName)
+    InstanceName:   $(isdefined(c, :instanceName) ? c.instanceName : "[not defined]")
+    Address:        $(c.addr)
+    State:          $(c.state)
+    Logging:        $(c.loggingOn)
+    FMU time:       $(c.t)
+    FMU states:     $(c.x)",
 )
 
 """
@@ -304,10 +323,10 @@ mutable struct FMU2 <: FMU
     logLevel::FMULogLevel
 
     modelDescription::fmi2ModelDescription
-   
+
     type::fmi2Type
-    instances::Vector{FMU2Component} 
-    
+    instances::Vector{FMU2Component}
+
     # c-functions
     cInstantiate::Ptr{Cvoid}
     cGetTypesPlatform::Ptr{Cvoid}
@@ -367,20 +386,20 @@ mutable struct FMU2 <: FMU
     executionConfig::FMUExecutionConfiguration
 
     # events
-    hasStateEvents::Union{Bool, Nothing}
-    hasTimeEvents::Union{Bool, Nothing} 
+    hasStateEvents::Union{Bool,Nothing}
+    hasTimeEvents::Union{Bool,Nothing}
     isZeroState::Bool
 
     # c-libraries
     libHandle::Ptr{Nothing}
     callbackLibHandle::Ptr{Nothing} # for external callbacks
-    cFunctionPtrs::Dict{String, Ptr{Nothing}}
+    cFunctionPtrs::Dict{String,Ptr{Nothing}}
 
     # multi-threading
-    threadInstances::Dict{Integer, Union{FMU2Component, Nothing}}
+    threadInstances::Dict{Integer,Union{FMU2Component,Nothing}}
 
     # indices of event indicators to be handled, if `nothing` all are handled
-    handleEventIndicators::Union{Vector{fmi2ValueReference}, Nothing}   
+    handleEventIndicators::Union{Vector{fmi2ValueReference},Nothing}
 
     # parameters that need sensitivities and/or are catched by optimizers (like in FMIFlux.jl)
     default_t::Real
@@ -395,19 +414,19 @@ mutable struct FMU2 <: FMU
     default_y_refs::AbstractVector{<:fmi2ValueReference}
 
     # Constructor
-    function FMU2(logLevel::FMULogLevel=FMULogLevelWarn) 
+    function FMU2(logLevel::FMULogLevel = FMULogLevelWarn)
         inst = new()
         inst.instances = Vector{FMU2Component}()
         inst.callbackLibHandle = C_NULL
         inst.modelName = ""
         inst.logLevel = logLevel
 
-        inst.hasStateEvents = nothing 
+        inst.hasStateEvents = nothing
         inst.hasTimeEvents = nothing
 
         inst.executionConfig = FMU_EXECUTION_CONFIGURATION_NO_RESET
-        inst.threadInstances = Dict{Integer, Union{FMU2Component, Nothing}}()
-        inst.cFunctionPtrs = Dict{String, Ptr{Nothing}}()
+        inst.threadInstances = Dict{Integer,Union{FMU2Component,Nothing}}()
+        inst.cFunctionPtrs = Dict{String,Ptr{Nothing}}()
 
         inst.handleEventIndicators = nothing
 
@@ -423,15 +442,15 @@ mutable struct FMU2 <: FMU
         inst.default_dx = EMPTY_fmi2Real
         inst.default_dx_refs = EMPTY_fmi2ValueReference
 
-        return inst 
+        return inst
     end
 end
 export FMU2
 
 function Base.hasproperty(f::FMU2, var::Symbol)
     if var == :components
-        return true 
-    else 
+        return true
+    else
         return Base.hasfield(f, var)
     end
 end
@@ -439,7 +458,7 @@ end
 function Base.getproperty(f::FMU2, var::Symbol)
     if var == :components
         return Base.getfield(f, :instances)
-    else 
+    else
         return Base.getfield(f, var)
     end
 end
@@ -447,7 +466,7 @@ end
 function Base.setproperty!(f::FMU2, var::Symbol, val)
     if var == :components
         return Base.setfield!(f, :instances, val)
-    else 
+    else
         return Base.setfield!(f, var, val)
     end
 end
@@ -455,6 +474,6 @@ end
 """ 
 Overload the Base.show() function for custom printing of the FMU2.
 """
-function Base.show(io::IO, fmu::FMU2) 
+function Base.show(io::IO, fmu::FMU2)
     print(io, "Model name:\t$(fmu.modelDescription.modelName)\nType:\t\t$(fmu.type)")
 end

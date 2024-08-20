@@ -20,15 +20,22 @@ Receives one or an array of value references in an arbitrary format (see fmi2Val
 """
 prepareValueReference(md::fmiModelDescription, vr::fmiValueReference) = [vr]
 prepareValueReference(md::fmiModelDescription, vr::AbstractVector{fmiValueReference}) = vr
-prepareValueReference(md::fmiModelDescription, vr::String) = [stringToValueReference(md, vr)]
-prepareValueReference(md::fmiModelDescription, vr::AbstractVector{String}) = stringToValueReference(md, vr)
+prepareValueReference(md::fmiModelDescription, vr::String) =
+    [stringToValueReference(md, vr)]
+prepareValueReference(md::fmiModelDescription, vr::AbstractVector{String}) =
+    stringToValueReference(md, vr)
 prepareValueReference(md::fmiModelDescription, vr::Nothing) = fmiValueReference[]
-prepareValueReference(md::fmiModelDescription, vr::AbstractVector{<:Integer}) = fmiValueReference.(vr)
+prepareValueReference(md::fmiModelDescription, vr::AbstractVector{<:Integer}) =
+    fmiValueReference.(vr)
 prepareValueReference(md::fmiModelDescription, vr::Integer) = [fmiValueReference(vr)]
-prepareValueReference(fmu::FMU2, vr::fmi2ValueReferenceFormat) = prepareValueReference(fmu.modelDescription, vr)
-prepareValueReference(comp::FMU2Component, vr::fmi2ValueReferenceFormat) = prepareValueReference(comp.fmu.modelDescription, vr)
-prepareValueReference(fmu::FMU3, vr::fmi3ValueReferenceFormat) = prepareValueReference(fmu.modelDescription, vr)
-prepareValueReference(comp::FMU3Instance, vr::fmi3ValueReferenceFormat) = prepareValueReference(comp.fmu.modelDescription, vr)
+prepareValueReference(fmu::FMU2, vr::fmi2ValueReferenceFormat) =
+    prepareValueReference(fmu.modelDescription, vr)
+prepareValueReference(comp::FMU2Component, vr::fmi2ValueReferenceFormat) =
+    prepareValueReference(comp.fmu.modelDescription, vr)
+prepareValueReference(fmu::FMU3, vr::fmi3ValueReferenceFormat) =
+    prepareValueReference(fmu.modelDescription, vr)
+prepareValueReference(comp::FMU3Instance, vr::fmi3ValueReferenceFormat) =
+    prepareValueReference(comp.fmu.modelDescription, vr)
 function prepareValueReference(md::fmiModelDescription, vr::Symbol)
     if vr == :states
         return md.stateValueReferences

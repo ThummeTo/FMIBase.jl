@@ -64,11 +64,11 @@ function loadSolutionCSV end
 # [Note] nothing to declare
 
 # JLD2.jl
-function saveSolutionJLD2 end 
+function saveSolutionJLD2 end
 function loadSolutionJLD2 end
 
 # MAT.jl
-function saveSolutionMAT end 
+function saveSolutionMAT end
 function loadSolutionMAT end
 
 # Plots.jl

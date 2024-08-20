@@ -45,9 +45,9 @@ mutable struct FMU3Instance{F} <: FMUInstance
     fmu::F
     state::fmi3InstanceState
     instanceEnvironment::FMU3InstanceEnvironment
-    type::Union{fmi3Type, Nothing}
+    type::Union{fmi3Type,Nothing}
 
-    problem
+    problem::Any
     solution::FMUSolution
     force::Bool
     threadid::Integer
@@ -60,50 +60,50 @@ mutable struct FMU3Instance{F} <: FMUInstance
     # caches
     t::fmi3Float64             # the system time
     t_offset::fmi3Float64      # time offset between simulation environment and FMU
-    x::Union{Array{fmi3Float64, 1}, Nothing}   # the system states (or sometimes u)
-    x_d::Union{Array{Union{fmi3Float64, fmi3Int64, fmi3Boolean}, 1}, Nothing}   # the system discrete states, [TODO]: Extend to all data types
-    ẋ::Union{Array{fmi3Float64, 1}, Nothing}   # the system state derivative (or sometimes u̇)
-    ẍ::Union{Array{fmi3Float64, 1}, Nothing}   # the system state second derivative
+    x::Union{Array{fmi3Float64,1},Nothing}   # the system states (or sometimes u)
+    x_d::Union{Array{Union{fmi3Float64,fmi3Int64,fmi3Boolean},1},Nothing}   # the system discrete states, [TODO]: Extend to all data types
+    ẋ::Union{Array{fmi3Float64,1},Nothing}   # the system state derivative (or sometimes u̇)
+    ẍ::Union{Array{fmi3Float64,1},Nothing}   # the system state second derivative
     #u::Array{fmi3Float64, 1}   # the system inputs
     #y::Array{fmi3Float64, 1}   # the system outputs
     #p::Array{fmi3Float64, 1}   # the system parameters
-    z::Union{Array{fmi3Float64, 1}, Nothing}   # the system event indicators
-    z_prev::Union{Nothing, Array{fmi3Float64, 1}}   # the last system event indicators
+    z::Union{Array{fmi3Float64,1},Nothing}   # the system event indicators
+    z_prev::Union{Nothing,Array{fmi3Float64,1}}   # the last system event indicators
 
-    values::Dict{fmi3ValueReference, Union{fmi3Float64, fmi3Int64, fmi3Boolean}} # [TODO]: Extend to all data types
+    values::Dict{fmi3ValueReference,Union{fmi3Float64,fmi3Int64,fmi3Boolean}} # [TODO]: Extend to all data types
 
-    x_vrs::Array{fmi3ValueReference, 1}   # the system state value references 
-    ẋ_vrs::Array{fmi3ValueReference, 1}   # the system state derivative value references
-    u_vrs::Array{fmi3ValueReference, 1}   # the system input value references
-    y_vrs::Array{fmi3ValueReference, 1}   # the system output value references
-    p_vrs::Array{fmi3ValueReference, 1}   # the system parameter value references
+    x_vrs::Array{fmi3ValueReference,1}   # the system state value references 
+    ẋ_vrs::Array{fmi3ValueReference,1}   # the system state derivative value references
+    u_vrs::Array{fmi3ValueReference,1}   # the system input value references
+    y_vrs::Array{fmi3ValueReference,1}   # the system output value references
+    p_vrs::Array{fmi3ValueReference,1}   # the system parameter value references
 
     # sensitivities
-    ∂ẋ_∂x #::Union{J, Nothing}
-    ∂ẋ_∂u #::Union{J, Nothing}
-    ∂ẋ_∂p #::Union{J, Nothing}
-    ∂ẋ_∂t #::Union{G, Nothing}
+    ∂ẋ_∂x::Any #::Union{J, Nothing}
+    ∂ẋ_∂u::Any #::Union{J, Nothing}
+    ∂ẋ_∂p::Any #::Union{J, Nothing}
+    ∂ẋ_∂t::Any #::Union{G, Nothing}
 
-    ∂y_∂x #::Union{J, Nothing}
-    ∂y_∂u #::Union{J, Nothing}
-    ∂y_∂p #::Union{J, Nothing}
-    ∂y_∂t #::Union{G, Nothing}
+    ∂y_∂x::Any #::Union{J, Nothing}
+    ∂y_∂u::Any #::Union{J, Nothing}
+    ∂y_∂p::Any #::Union{J, Nothing}
+    ∂y_∂t::Any #::Union{G, Nothing}
 
-    ∂e_∂x #::Union{J, Nothing}
-    ∂e_∂u #::Union{J, Nothing}
-    ∂e_∂p #::Union{J, Nothing}
-    ∂e_∂t #::Union{G, Nothing}
+    ∂e_∂x::Any #::Union{J, Nothing}
+    ∂e_∂u::Any #::Union{J, Nothing}
+    ∂e_∂p::Any #::Union{J, Nothing}
+    ∂e_∂t::Any #::Union{G, Nothing}
 
-    ∂xr_∂xl #::Union{J, Nothing}
+    ∂xr_∂xl::Any #::Union{J, Nothing}
 
     # misc
-    progressMeter           # progress plot
-    output::FMUADOutput 
+    progressMeter::Any           # progress plot
+    output::FMUADOutput
     rrule_input::FMUEvaluationInput     # input buffer (for rrules)
     eval_output::FMUEvaluationOutput   # output buffer with multiple arrays that behaves like a single array (to allow for single value return functions, necessary for propper AD)
     frule_output::FMUEvaluationOutput
     eventIndicatorBuffer::AbstractArray{<:fmi3Float64}
-    
+
     # custom (deprecated)
     rootsFound::Array{fmi3Int32}
     stateEvent::fmi3Boolean
@@ -124,13 +124,13 @@ mutable struct FMU3Instance{F} <: FMUInstance
     default_ec::AbstractVector{<:Real}
 
     # performance (pointers to prevent repeating allocations)
-    _enterEventMode::Array{fmi3Boolean, 1}
-    _discreteStatesNeedUpdate::Array{fmi3Boolean, 1}
-    _terminateSimulation::Array{fmi3Boolean, 1}
-    _nominalsOfContinuousStatesChanged::Array{fmi3Boolean, 1}
-    _valuesOfContinuousStatesChanged::Array{fmi3Boolean, 1}
-    _nextEventTimeDefined::Array{fmi3Boolean, 1}
-    _nextEventTime::Array{fmi3Float64, 1}
+    _enterEventMode::Array{fmi3Boolean,1}
+    _discreteStatesNeedUpdate::Array{fmi3Boolean,1}
+    _terminateSimulation::Array{fmi3Boolean,1}
+    _nominalsOfContinuousStatesChanged::Array{fmi3Boolean,1}
+    _valuesOfContinuousStatesChanged::Array{fmi3Boolean,1}
+    _nextEventTimeDefined::Array{fmi3Boolean,1}
+    _nextEventTime::Array{fmi3Float64,1}
 
     _ptr_enterEventMode::Ptr{fmi3Boolean}
     _ptr_discreteStatesNeedUpdate::Ptr{fmi3Boolean}
@@ -166,13 +166,15 @@ mutable struct FMU3Instance{F} <: FMUInstance
         inst._ptr_enterEventMode = pointer(inst._enterEventMode)
         inst._ptr_discreteStatesNeedUpdate = pointer(inst._discreteStatesNeedUpdate)
         inst._ptr_terminateSimulation = pointer(inst._terminateSimulation)
-        inst._ptr_nominalsOfContinuousStatesChanged = pointer(inst._nominalsOfContinuousStatesChanged)
-        inst._ptr_valuesOfContinuousStatesChanged = pointer(inst._valuesOfContinuousStatesChanged)
+        inst._ptr_nominalsOfContinuousStatesChanged =
+            pointer(inst._nominalsOfContinuousStatesChanged)
+        inst._ptr_valuesOfContinuousStatesChanged =
+            pointer(inst._valuesOfContinuousStatesChanged)
         inst._ptr_nextEventTimeDefined = pointer(inst._nextEventTimeDefined)
         inst._ptr_nextEventTime = pointer(inst._nextEventTime)
-        
+
         # AD
-        inst.output = FMUADOutput{Real}(; initType=Float64)
+        inst.output = FMUADOutput{Real}(; initType = Float64)
         inst.eval_output = FMUEvaluationOutput{Float64}()
         inst.rrule_input = FMUEvaluationInput()
         inst.frule_output = FMUEvaluationOutput{Float64}()
@@ -190,12 +192,12 @@ mutable struct FMU3Instance{F} <: FMUInstance
         inst.z = nothing
         inst.z_prev = nothing
 
-        inst.values = Dict{fmi3ValueReference, Union{fmi3Float64, fmi3Int64, fmi3Boolean}}()
-        inst.x_vrs = Array{fmi3ValueReference, 1}()
-        inst.ẋ_vrs = Array{fmi3ValueReference, 1}() 
-        inst.u_vrs = Array{fmi3ValueReference, 1}()  
-        inst.y_vrs = Array{fmi3ValueReference, 1}()  
-        inst.p_vrs = Array{fmi3ValueReference, 1}() 
+        inst.values = Dict{fmi3ValueReference,Union{fmi3Float64,fmi3Int64,fmi3Boolean}}()
+        inst.x_vrs = Array{fmi3ValueReference,1}()
+        inst.ẋ_vrs = Array{fmi3ValueReference,1}()
+        inst.u_vrs = Array{fmi3ValueReference,1}()
+        inst.y_vrs = Array{fmi3ValueReference,1}()
+        inst.p_vrs = Array{fmi3ValueReference,1}()
 
         # sensitivities
         inst.∂ẋ_∂x = nothing
@@ -239,16 +241,34 @@ mutable struct FMU3Instance{F} <: FMUInstance
         inst = FMU3Instance{F}()
         inst.fmu = fmu
 
-        inst.default_t          = inst.fmu.default_t
-        inst.default_p_refs     = inst.fmu.default_p_refs   === EMPTY_fmi3ValueReference    ? inst.fmu.default_p_refs   : copy(inst.fmu.default_p_refs)
-        inst.default_p          = inst.fmu.default_p        === EMPTY_fmi3Float64           ? inst.fmu.default_p        : copy(inst.fmu.default_p)
-        inst.default_ec         = inst.fmu.default_ec       === EMPTY_fmi3Float64           ? inst.fmu.default_ec       : copy(inst.fmu.default_ec)
-        inst.default_ec_idcs    = inst.fmu.default_ec_idcs  === EMPTY_fmi3ValueReference    ? inst.fmu.default_ec_idcs  : copy(inst.fmu.default_ec_idcs)
-        inst.default_u          = inst.fmu.default_u        === EMPTY_fmi3Float64           ? inst.fmu.default_u        : copy(inst.fmu.default_u)
-        inst.default_y          = inst.fmu.default_y        === EMPTY_fmi3Float64           ? inst.fmu.default_y        : copy(inst.fmu.default_y)
-        inst.default_y_refs     = inst.fmu.default_y_refs   === EMPTY_fmi3ValueReference    ? inst.fmu.default_y_refs   : copy(inst.fmu.default_y_refs)
-        inst.default_dx         = inst.fmu.default_dx       === EMPTY_fmi3Float64           ? inst.fmu.default_dx       : copy(inst.fmu.default_dx)
-        inst.default_dx_refs    = inst.fmu.default_dx_refs  === EMPTY_fmi3ValueReference    ? inst.fmu.default_dx_refs  : copy(inst.fmu.default_dx_refs)
+        inst.default_t = inst.fmu.default_t
+        inst.default_p_refs =
+            inst.fmu.default_p_refs === EMPTY_fmi3ValueReference ? inst.fmu.default_p_refs :
+            copy(inst.fmu.default_p_refs)
+        inst.default_p =
+            inst.fmu.default_p === EMPTY_fmi3Float64 ? inst.fmu.default_p :
+            copy(inst.fmu.default_p)
+        inst.default_ec =
+            inst.fmu.default_ec === EMPTY_fmi3Float64 ? inst.fmu.default_ec :
+            copy(inst.fmu.default_ec)
+        inst.default_ec_idcs =
+            inst.fmu.default_ec_idcs === EMPTY_fmi3ValueReference ?
+            inst.fmu.default_ec_idcs : copy(inst.fmu.default_ec_idcs)
+        inst.default_u =
+            inst.fmu.default_u === EMPTY_fmi3Float64 ? inst.fmu.default_u :
+            copy(inst.fmu.default_u)
+        inst.default_y =
+            inst.fmu.default_y === EMPTY_fmi3Float64 ? inst.fmu.default_y :
+            copy(inst.fmu.default_y)
+        inst.default_y_refs =
+            inst.fmu.default_y_refs === EMPTY_fmi3ValueReference ? inst.fmu.default_y_refs :
+            copy(inst.fmu.default_y_refs)
+        inst.default_dx =
+            inst.fmu.default_dx === EMPTY_fmi3Float64 ? inst.fmu.default_dx :
+            copy(inst.fmu.default_dx)
+        inst.default_dx_refs =
+            inst.fmu.default_dx_refs === EMPTY_fmi3ValueReference ?
+            inst.fmu.default_dx_refs : copy(inst.fmu.default_dx_refs)
 
         return inst
     end
@@ -256,7 +276,7 @@ mutable struct FMU3Instance{F} <: FMUInstance
     function FMU3Instance(addr::fmi3Instance, fmu::F) where {F}
         inst = FMU3Instance(fmu)
         inst.addr = addr
-       
+
         return inst
     end
 
@@ -265,19 +285,21 @@ export FMU3Instance
 
 # overloading get/set/haspropoerty for preallocated pointers (buffers for return values)
 
-const FMU3Instance_AdditionalFields = (:enterEventMode,
-    :discreteStatesNeedUpdate, 
-    :terminateSimulation, 
-    :nominalsOfContinuousStatesChanged, 
+const FMU3Instance_AdditionalFields = (
+    :enterEventMode,
+    :discreteStatesNeedUpdate,
+    :terminateSimulation,
+    :nominalsOfContinuousStatesChanged,
     :valuesOfContinuousStatesChanged,
     :nextEventTimeDefined,
-    :nextEventTime)
+    :nextEventTime,
+)
 
 function Base.setproperty!(str::FMU3Instance, var::Symbol, value)
     if var ∈ FMU3Instance_AdditionalFields
         fname = Symbol("_" * String(var))
         field = Base.getfield(str, fname)
-        field[1] = value 
+        field[1] = value
         return nothing
     else
         return Base.setfield!(str, var, value)
@@ -305,14 +327,15 @@ end
 """ 
 Overload the Base.show() function for custom printing of the FMU3Instance.
 """
-Base.show(io::IO, c::FMU3Instance) = print(io,
-"FMU:            $(c.fmu.modelDescription.modelName)
-InstanceName:   $(isdefined(c, :instanceName) ? c.instanceName : "[not defined]")
-Address:        $(c.addr)
-State:          $(c.state)
-Logging:        $(c.loggingOn)
-FMU time:       $(c.t)
-FMU states:     $(c.x)"
+Base.show(io::IO, c::FMU3Instance) = print(
+    io,
+    "FMU:            $(c.fmu.modelDescription.modelName)
+    InstanceName:   $(isdefined(c, :instanceName) ? c.instanceName : "[not defined]")
+    Address:        $(c.addr)
+    State:          $(c.state)
+    Logging:        $(c.loggingOn)
+    FMU time:       $(c.t)
+    FMU states:     $(c.x)",
 )
 
 """
@@ -329,7 +352,7 @@ mutable struct FMU3 <: FMU
     modelDescription::fmi3ModelDescription
 
     type::fmi3Type
-    instances::Vector{FMU3Instance}   
+    instances::Vector{FMU3Instance}
 
     # c-functions
     cInstantiateModelExchange::Ptr{Cvoid}
@@ -420,20 +443,20 @@ mutable struct FMU3 <: FMU
     executionConfig::FMUExecutionConfiguration
 
     # events
-    hasStateEvents::Union{Bool, Nothing} 
-    hasTimeEvents::Union{Bool, Nothing} 
+    hasStateEvents::Union{Bool,Nothing}
+    hasTimeEvents::Union{Bool,Nothing}
     isZeroState::Bool
 
     # c-libraries
     libHandle::Ptr{Nothing}
     # [Note] no callbackLibHandle in FMI3
-    cFunctionPtrs::Dict{String, Ptr{Nothing}}
+    cFunctionPtrs::Dict{String,Ptr{Nothing}}
 
     # multi-threading
-    threadInstances::Dict{Integer, Union{FMU3Instance, Nothing}}
+    threadInstances::Dict{Integer,Union{FMU3Instance,Nothing}}
 
     # indices of event indicators to be handled, if `nothing` all are handled
-    handleEventIndicators::Union{Vector{fmi3ValueReference}, Nothing} 
+    handleEventIndicators::Union{Vector{fmi3ValueReference},Nothing}
 
     # parameters that need sensitivities and/or are catched by optimizers (like in FMIFlux.jl)
     default_t::Real
@@ -448,18 +471,18 @@ mutable struct FMU3 <: FMU
     default_y_refs::AbstractVector{<:fmi3ValueReference}
 
     # Constructor
-    function FMU3(logLevel::FMULogLevel=FMULogLevelWarn)  
+    function FMU3(logLevel::FMULogLevel = FMULogLevelWarn)
         inst = new()
         inst.instances = []
         inst.modelName = ""
         inst.logLevel = logLevel
 
-        inst.hasStateEvents = nothing 
+        inst.hasStateEvents = nothing
         inst.hasTimeEvents = nothing
 
         inst.executionConfig = FMU_EXECUTION_CONFIGURATION_NO_RESET
-        inst.threadInstances = Dict{Integer, Union{FMU2Component, Nothing}}()
-        inst.cFunctionPtrs = Dict{String, Ptr{Nothing}}()
+        inst.threadInstances = Dict{Integer,Union{FMU2Component,Nothing}}()
+        inst.cFunctionPtrs = Dict{String,Ptr{Nothing}}()
 
         inst.handleEventIndicators = nothing
 
@@ -475,13 +498,14 @@ mutable struct FMU3 <: FMU
         inst.default_dx = EMPTY_fmi3Float64
         inst.default_dx_refs = EMPTY_fmi3ValueReference
 
-        return inst 
+        return inst
     end
 end
 export FMU3
 
 """ Overload the Base.show() function for custom printing of the FMU3"""
-Base.show(io::IO, fmu::FMU3) = print(io,
-"Model name:       $(fmu.modelName)
-Type:              $(fmu.type)"
+Base.show(io::IO, fmu::FMU3) = print(
+    io,
+    "Model name:       $(fmu.modelName)
+    Type:              $(fmu.type)",
 )

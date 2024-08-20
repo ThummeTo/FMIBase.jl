@@ -6,9 +6,9 @@
 using PkgEval
 using FMIBase
 
-config = Configuration(; julia="1.10");
+config = Configuration(; julia = "1.10");
 
-package = Package(; name="FMIBase");
+package = Package(; name = "FMIBase");
 
 @info "PkgEval"
 result = evaluate([config], [package])
