@@ -8,7 +8,7 @@
 
 A wildcard for FMI2 related structs, namely `Union{FMU2, fmi2ModelDescription, FMU2Component}`.
 """
-FMI2Struct = Union{FMU2, fmi2ModelDescription, FMU2Component}
+FMI2Struct = Union{FMU2,fmi2ModelDescription,FMU2Component}
 export FMI2Struct
 
 """
@@ -16,17 +16,35 @@ export FMI2Struct
 
 A wildcard for FMI3 related structs, namely `Union{FMU3, fmi3ModelDescription, FMU3Instance}`.
 """
-FMI3Struct = Union{FMU3, fmi3ModelDescription, FMU3Instance}
+FMI3Struct = Union{FMU3,fmi3ModelDescription,FMU3Instance}
 export FMI3Struct
 
 # fortunately, fmi2ValueReference and fmi3ValueReference are the same, so we can define a wildcard:
-const fmiValueReference = Union{fmi2ValueReference, fmi2ValueReference} # this will reduce to 
+const fmiValueReference = Union{fmi2ValueReference,fmi2ValueReference} # this will reduce to 
 export fmiValueReference
 
 # wildcards for how a user can pass a fmi2ValueReference | fmi3ValueReference
-const fmi2ValueReferenceFormat = Union{Nothing, String, AbstractArray{String,1}, fmi2ValueReference, AbstractArray{fmi2ValueReference,1}, Int64, AbstractArray{Int64,1}, Symbol} 
-const fmi3ValueReferenceFormat = Union{Nothing, String, AbstractArray{String,1}, fmi3ValueReference, AbstractArray{fmi3ValueReference,1}, Int64, AbstractArray{Int64,1}, Symbol} 
-const fmiValueReferenceFormat = Union{fmi2ValueReferenceFormat, fmi3ValueReferenceFormat}
+const fmi2ValueReferenceFormat = Union{
+    Nothing,
+    String,
+    AbstractArray{String,1},
+    fmi2ValueReference,
+    AbstractArray{fmi2ValueReference,1},
+    Int64,
+    AbstractArray{Int64,1},
+    Symbol,
+}
+const fmi3ValueReferenceFormat = Union{
+    Nothing,
+    String,
+    AbstractArray{String,1},
+    fmi3ValueReference,
+    AbstractArray{fmi3ValueReference,1},
+    Int64,
+    AbstractArray{Int64,1},
+    Symbol,
+}
+const fmiValueReferenceFormat = Union{fmi2ValueReferenceFormat,fmi3ValueReferenceFormat}
 export fmiValueReferenceFormat, fmi2ValueReferenceFormat, fmi3ValueReferenceFormat
 
 # default "empty" array values for function calls (to safe allocations)
@@ -55,6 +73,8 @@ const NO_fmi2Real = typemin(fmi2Real)
 const NO_fmi3Float64 = typemin(fmi3Float64)
 getNotSetReal(::FMU2) = NO_fmi2Real
 getNotSetReal(::FMU3) = NO_fmi3Float64
+isSetReal(::FMU2, val::Real) = true
+isSetReal(::FMU3, val::Real) = true
 isSetReal(::FMU2, val::fmi2Real) = (val != NO_fmi2Real)
 isSetReal(::FMU3, val::fmi3Float64) = (val != NO_fmi3Float64)
 
@@ -71,8 +91,8 @@ isTrue(val::fmi3Boolean) = (val == fmi3True)
 
 # continuousTimeMode 
 isContinuousTimeMode(c::FMU2Component) = (c.state == fmi2ComponentStateContinuousTimeMode)
-isContinuousTimeMode(c::FMU3Instance)  = (c.state == fmi3InstanceStateContinuousTimeMode)
+isContinuousTimeMode(c::FMU3Instance) = (c.state == fmi3InstanceStateContinuousTimeMode)
 
 # event mode
 isEventMode(c::FMU2Component) = (c.state == fmi2ComponentStateEventMode)
-isEventMode(c::FMU3Instance)  = (c.state == fmi3InstanceStateEventMode)
+isEventMode(c::FMU3Instance) = (c.state == fmi3InstanceStateEventMode)

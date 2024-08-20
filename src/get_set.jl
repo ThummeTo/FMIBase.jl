@@ -16,14 +16,18 @@ Retrieves values for the refernces `vrs` and stores them in `dst`
 # Returns
 - `retcodes::Array{fmi2Status}`: Returns an array of length length(vrs) with Type `fmi2Status`. Type `fmi2Status` is an enumeration and indicates the success of the function call.
 """
-function getValue!(comp::FMU2Component, vrs::fmi2ValueReferenceFormat, dstArray::AbstractArray) # [ToDo] implement via array views!
+function getValue!(
+    comp::FMU2Component,
+    vrs::fmi2ValueReferenceFormat,
+    dstArray::AbstractArray,
+) # [ToDo] implement via array views!
     vrs = prepareValueReference(comp, vrs)
 
     @assert length(vrs) == length(dstArray) "getValue!(...): Number of value references doesn't match number of `dstArray` elements."
 
-    retcodes = collect(fmi2StatusOK for i in 1:length(vrs)) 
+    retcodes = collect(fmi2StatusOK for i = 1:length(vrs))
 
-    for i in 1:length(vrs)
+    for i = 1:length(vrs)
         vr = vrs[i]
         mv = modelVariablesForValueReference(comp.fmu.modelDescription, vr)
         mv = mv[1]
@@ -52,6 +56,7 @@ function getValue!(comp::FMU2Component, vrs::fmi2ValueReferenceFormat, dstArray:
             dstArray[i] = unsafe_string(values[1])
         elseif mv.Enumeration != nothing
             @warn "getValue!(...): Currently not implemented for fmi2Enum."
+            dstArray[i] = 0 # so it isn't undef
         else
             @assert isa(dstArray[i], Real) "fmi2Get!(...): Unknown data type for value reference `$(vr)` at index $(i), is `$(mv.datatype.datatype)`."
         end
@@ -64,9 +69,9 @@ function getValue!(inst::FMU3Instance, vrs::fmi3ValueReferenceFormat, dstArray::
 
     @assert length(vrs) == length(dstArray) "getValue!(...): Number of value references doesn't match number of `dstArray` elements."
 
-    retcodes = collect(fmi3StatusOK for i in 1:length(vrs))  
+    retcodes = collect(fmi3StatusOK for i = 1:length(vrs))
 
-    for i in 1:length(vrs)
+    for i = 1:length(vrs)
         vr = vrs[i]
         mv = modelVariablesForValueReference(inst.fmu.modelDescription, vr)
         mv = mv[1]
@@ -74,37 +79,37 @@ function getValue!(inst::FMU3Instance, vrs::fmi3ValueReferenceFormat, dstArray::
         num = Csize_t(1)
 
         # TODO change if dataytype is elimnated
-        if isa(mv, FMICore.fmi3VariableFloat32) 
+        if isa(mv, FMICore.fmi3VariableFloat32)
             #@assert isa(dstArray[i], Real) "fmi3Get!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Real`, is `$(typeof(dstArray[i]))`."
             values = zeros(fmi3Float32, num)
             fmi3GetFloat32!(inst, [vr], num, values, num)
             dstArray[i] = values[1]
-        elseif isa(mv, FMICore.fmi3VariableFloat64) 
+        elseif isa(mv, FMICore.fmi3VariableFloat64)
             #@assert isa(dstArray[i], Union{Real, Integer}) "fmi3Get!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(dstArray[i]))`."
             values = zeros(fmi3Float64, num)
             fmi3GetFloat64!(inst, [vr], num, values, num)
             dstArray[i] = values[1]
-        elseif isa(mv, FMICore.fmi3VariableInt8) 
+        elseif isa(mv, FMICore.fmi3VariableInt8)
             #@assert isa(dstArray[i], Union{Real, Integer}) "fmi3Get!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(dstArray[i]))`."
             values = zeros(fmi3Int8, num)
             fmi3GetInt8!(inst, [vr], num, values, num)
             dstArray[i] = values[1]
-        elseif isa(mv, FMICore.fmi3VariableInt16) 
+        elseif isa(mv, FMICore.fmi3VariableInt16)
             #@assert isa(dstArray[i], Union{Real, Integer}) "fmi3Get!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(dstArray[i]))`."
             values = zeros(fmi3Int16, num)
             fmi3GetInt16!(inst, [vr], num, values, num)
             dstArray[i] = values[1]
-        elseif isa(mv, FMICore.fmi3VariableInt32) 
+        elseif isa(mv, FMICore.fmi3VariableInt32)
             #@assert isa(dstArray[i], Union{Real, Integer}) "fmi3Get!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(dstArray[i]))`."
             values = zeros(fmi3Int32, num)
             fmi3GetInt32!(inst, [vr], num, values, num)
             dstArray[i] = values[1]
-        elseif isa(mv, FMICore.fmi3VariableInt64)  
+        elseif isa(mv, FMICore.fmi3VariableInt64)
             #@assert isa(dstArray[i], Union{Real, Integer}) "fmi3Get!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(dstArray[i]))`."
             values = zeros(fmi3Int64, num)
             fmi3GetInt64!(inst, [vr], num, values, num)
             dstArray[i] = values[1]
-        elseif isa(mv, FMICore.fmi3VariableUInt8) 
+        elseif isa(mv, FMICore.fmi3VariableUInt8)
             #@assert isa(dstArray[i], Union{Real, Integer}) "fmi3Get!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(dstArray[i]))`."
             values = zeros(fmi3UInt8, num)
             fmi3GetUInt8!(inst, [vr], num, values, num)
@@ -124,7 +129,7 @@ function getValue!(inst::FMU3Instance, vrs::fmi3ValueReferenceFormat, dstArray::
             values = zeros(fmi3UInt64, num)
             fmi3GetUInt64!(inst, [vr], num, values, num)
             dstArray[i] = values[1]
-        elseif isa(mv, FMICore.fmi3VariableBoolean) 
+        elseif isa(mv, FMICore.fmi3VariableBoolean)
             #@assert isa(dstArray[i], Union{Real, Bool}) "fmi3Get!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Bool`, is `$(typeof(dstArray[i]))`."
             values = zeros(fmi3Boolean, num)
             fmi3GetBoolean!(inst, [vr], num, values, num)
@@ -141,7 +146,8 @@ function getValue!(inst::FMU3Instance, vrs::fmi3ValueReferenceFormat, dstArray::
             dstArray[i] = values[1]
         elseif isa(mv, FMICore.fmi3VariableEnumeration)
             @warn "fmi3Get!(...): Currently not implemented for fmi3Enum."
-        else 
+            dstArray[i] = 0 # so it isn't undef
+        else
             @assert isa(dstArray[i], Real) "fmi3Get!(...): Unknown data type for value reference `$(vr)` at index $(i), is `$(mv.datatype.datatype)`."
         end
     end
@@ -195,14 +201,19 @@ Stores the specific value of `fmi2ScalarVariable` containing the modelVariables 
 # Returns
 - `retcodes::Array{fmi2Status}`: Returns an array of length length(vrs) with Type `fmi2Status`. Type `fmi2Status` is an enumeration and indicates the success of the function call.
 """
-function setValue(comp::FMU2Component, vrs::fmi2ValueReferenceFormat, srcArray::AbstractArray; filter=nothing)
+function setValue(
+    comp::FMU2Component,
+    vrs::fmi2ValueReferenceFormat,
+    srcArray::AbstractArray;
+    filter = nothing,
+)
     vrs = prepareValueReference(comp, vrs)
 
     @assert length(vrs) == length(srcArray) "setValue(...): Number of value references [$(length(vrs))] doesn't match number of `srcArray` elements [$(length(srcArray))]."
 
-    retcodes = collect(fmi2StatusOK for i in 1:length(vrs))
+    retcodes = collect(fmi2StatusOK for i = 1:length(vrs))
 
-    for i in 1:length(vrs)
+    for i = 1:length(vrs)
         vr = vrs[i]
         mv = modelVariablesForValueReference(comp.fmu.modelDescription, vr)
         mv = mv[1]
@@ -215,11 +226,11 @@ function setValue(comp::FMU2Component, vrs::fmi2ValueReferenceFormat, srcArray::
                 retcodes[i] = fmi2SetReal(comp, vr, srcArray[i])
             elseif !isnothing(mv.Integer)
 
-                @assert isa(srcArray[i], Union{Real, Integer}) "setValue(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(srcArray[i]))`."
+                @assert isa(srcArray[i], Union{Real,Integer}) "setValue(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(srcArray[i]))`."
                 retcodes[i] = fmi2SetInteger(comp, vr, Integer(srcArray[i]))
             elseif !isnothing(mv.Boolean)
 
-                @assert isa(srcArray[i], Union{Real, Bool}) "setValue(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Bool`, is `$(typeof(srcArray[i]))`."
+                @assert isa(srcArray[i], Union{Real,Bool}) "setValue(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Bool`, is `$(typeof(srcArray[i]))`."
                 retcodes[i] = fmi2SetBoolean(comp, vr, Bool(srcArray[i]))
             elseif !isnothing(mv.String)
 
@@ -227,7 +238,7 @@ function setValue(comp::FMU2Component, vrs::fmi2ValueReferenceFormat, srcArray::
                 retcodes[i] = fmi2SetString(comp, vr, srcArray[i])
             elseif !isnothing(mv.Enumeration)
 
-                @assert isa(srcArray[i], Union{Real, Integer}) "setValue(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Enumeration` (`Integer`), is `$(typeof(srcArray[i]))`."
+                @assert isa(srcArray[i], Union{Real,Integer}) "setValue(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Enumeration` (`Integer`), is `$(typeof(srcArray[i]))`."
                 retcodes[i] = fmi2SetInteger(comp, vr, Integer(srcArray[i]))
             else
                 @assert false "setValue(...): Unknown data type for value reference `$(vr)` at index $(i), is `$(mv.datatype.datatype)`."
@@ -238,64 +249,69 @@ function setValue(comp::FMU2Component, vrs::fmi2ValueReferenceFormat, srcArray::
 
     return retcodes
 end
-function setValue(inst::FMU3Instance, vrs::fmi3ValueReferenceFormat, srcArray::Array; filter=nothing)
+function setValue(
+    inst::FMU3Instance,
+    vrs::fmi3ValueReferenceFormat,
+    srcArray::Array;
+    filter = nothing,
+)
 
     vrs = prepareValueReference(inst, vrs)
 
     @assert length(vrs) == length(srcArray) "setValue(...): Number of value references doesn't match number of `srcArray` elements."
 
-    retcodes = collect(fmi3StatusOK for i in 1:length(vrs))
+    retcodes = collect(fmi3StatusOK for i = 1:length(vrs))
 
-    for i in 1:length(vrs)
-       
+    for i = 1:length(vrs)
+
         vr = vrs[i]
         mv = modelVariablesForValueReference(inst.fmu.modelDescription, vr)
         mv = mv[1]
 
         if isnothing(filter) || filter(mv)
 
-            if isa(mv, FMICore.fmi3VariableFloat32) 
+            if isa(mv, FMICore.fmi3VariableFloat32)
                 #@assert isa(dstArray[i], Real) "fmi3Set!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Real`, is `$(typeof(dstArray[i]))`."
                 fmi3SetFloat32(inst, vr, srcArray[i])
             elseif isa(mv, FMICore.fmi3VariableFloat64)
                 #@assert isa(dstArray[i], Union{Real, Integer}) "fmi3Set!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(dstArray[i]))`."
                 fmi3SetFloat64(inst, vr, srcArray[i])
-            elseif isa(mv, FMICore.fmi3VariableInt8) 
+            elseif isa(mv, FMICore.fmi3VariableInt8)
                 #@assert isa(dstArray[i], Union{Real, Integer}) "fmi3Set!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(dstArray[i]))`."
                 fmi3SetInt8(inst, vr, Integer(srcArray[i]))
-            elseif isa(mv, FMICore.fmi3VariableInt16) 
+            elseif isa(mv, FMICore.fmi3VariableInt16)
                 #@assert isa(dstArray[i], Union{Real, Integer}) "fmi3Set!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(dstArray[i]))`."
                 fmi3SetInt16(inst, vr, Integer(srcArray[i]))
-            elseif isa(mv, FMICore.fmi3VariableInt32) 
+            elseif isa(mv, FMICore.fmi3VariableInt32)
                 #@assert isa(dstArray[i], Union{Real, Integer}) "fmi3Set!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(dstArray[i]))`."
                 fmi3SetInt32(inst, vr, Int32(srcArray[i]))
-            elseif isa(mv, FMICore.fmi3VariableInt64) 
+            elseif isa(mv, FMICore.fmi3VariableInt64)
                 #@assert isa(dstArray[i], Union{Real, Integer}) "fmi3Set!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(dstArray[i]))`."
                 fmi3SetInt64(inst, vr, Integer(srcArray[i]))
-            elseif isa(mv, FMICore.fmi3VariableUInt8) 
+            elseif isa(mv, FMICore.fmi3VariableUInt8)
                 #@assert isa(dstArray[i], Union{Real, Integer}) "fmi3Set!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(dstArray[i]))`."
                 fmi3SetUInt8(inst, vr, Integer(srcArray[i]))
-            elseif isa(mv, FMICore.fmi3VariableUInt16) 
+            elseif isa(mv, FMICore.fmi3VariableUInt16)
                 #@assert isa(dstArray[i], Union{Real, Integer}) "fmi3Set!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(dstArray[i]))`."
                 fmi3SetUInt16(inst, vr, Integer(srcArray[i]))
-            elseif isa(mv, FMICore.fmi3VariableUInt32) 
+            elseif isa(mv, FMICore.fmi3VariableUInt32)
                 #@assert isa(dstArray[i], Union{Real, Integer}) "fmi3Set!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(dstArray[i]))`."
                 fmi3SetUInt32(inst, vr, Integer(srcArray[i]))
-            elseif isa(mv, FMICore.fmi3VariableUInt64) 
+            elseif isa(mv, FMICore.fmi3VariableUInt64)
                 #@assert isa(dstArray[i], Union{Real, Integer}) "fmi3Set!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(dstArray[i]))`."
                 fmi3SetUInt64(inst, vr, Integer(srcArray[i]))
-            elseif isa(mv, FMICore.fmi3VariableBoolean) 
+            elseif isa(mv, FMICore.fmi3VariableBoolean)
                 #@assert isa(dstArray[i], Union{Real, Bool}) "fmi3Set!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Bool`, is `$(typeof(dstArray[i]))`."
                 fmi3SetBoolean(inst, vr, Bool(srcArray[i]))
-            elseif isa(mv, FMICore.fmi3VariableString) 
+            elseif isa(mv, FMICore.fmi3VariableString)
                 #@assert isa(dstArray[i], String) "fmi3Set!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `String`, is `$(typeof(dstArray[i]))`."
                 fmi3SetString(inst, vr, srcArray[i])
-            elseif isa(mv, FMICore.fmi3VariableBinary) 
+            elseif isa(mv, FMICore.fmi3VariableBinary)
                 #@assert isa(dstArray[i], String) "fmi3Set!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `String`, is `$(typeof(dstArray[i]))`."
                 fmi3SetBinary(inst, vr, Csize_t(length(srcArray[i])), pointer(srcArray[i])) # TODO fix this
             elseif isa(mv, FMICore.fmi3VariableEnumeration)
                 @warn "fmi3Set!(...): Currently not implemented for fmi3Enum."
-            else 
+            else
                 @assert false "setValue(...): Unknown data type for value reference `$(vr)` at index $(i), is `$(typeof(mv))`."
             end
 
@@ -315,7 +331,10 @@ Set a new (discrete) state vector and reinitialize chaching of variables that de
 # Arguments
 [ToDo]
 """
-function setDiscreteStates(c::FMU2Component, xd::AbstractArray{Union{fmi2Real, fmi2Integer, fmi2Boolean}})
+function setDiscreteStates(
+    c::FMU2Component,
+    xd::AbstractArray{Union{fmi2Real,fmi2Integer,fmi2Boolean}},
+)
 
     if length(c.fmu.modelDescription.discreteStateValueReferences) <= 0
         return fmi2StatusOK
@@ -338,7 +357,10 @@ Sets a new (discrete) state vector (in-place).
 - `c::FMU2Component`
 - `xd::AbstractArray{Union{fmi2Real, fmi2Integer, fmi2Boolean}}`
 """
-function getDiscreteStates!(c::FMU2Component, xd::AbstractArray{Union{fmi2Real, fmi2Integer, fmi2Boolean}})
+function getDiscreteStates!(
+    c::FMU2Component,
+    xd::AbstractArray{Union{fmi2Real,fmi2Integer,fmi2Boolean}},
+)
 
     if length(c.fmu.modelDescription.discreteStateValueReferences) <= 0
         return fmi2StatusOK
@@ -363,7 +385,7 @@ Sets a new (discrete) state vector (out-of-place).
 function getDiscreteStates(c::FMU2Component)
 
     ndx = length(c.fmu.modelDescription.discreteStateValueReferences)
-    xd = Vector{Union{fmi2Real, fmi2Integer, fmi2Boolean}}()
+    xd = Vector{Union{fmi2Real,fmi2Integer,fmi2Boolean}}()
     getDiscreteStates!(c, xd)
     return xd
 end

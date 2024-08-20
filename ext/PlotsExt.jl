@@ -16,7 +16,7 @@ Plots the `solution` of a FMU simulation and returns the corresponding figure.
 See also [`plot!`](@ref)
 """
 function Plots.plot(solution::FMUSolution; kwargs...)
-    fig = Plots.plot(; xlabel="t [s]")
+    fig = Plots.plot(; xlabel = "t [s]")
     fmiPlot!(fig, solution; kwargs...)
     return fig
 end
@@ -48,15 +48,18 @@ Plots the `solution` of a FMU simulation into `fig` and returns the figure again
 
 See also [`fmiPlot`](@ref)
 """
-function Plots.plot!(fig::Plots.Plot, solution::FMUSolution; 
-    states::Union{Bool, Nothing}=nothing,
-    values::Union{Bool, Nothing}=nothing,
-    stateEvents::Union{Bool, Nothing}=nothing,
-    timeEvents::Union{Bool, Nothing}=nothing,
-    stateIndices=nothing,
-    valueIndices=nothing,
-    maxLabelLength=64,
-    plotkwargs...)
+function Plots.plot!(
+    fig::Plots.Plot,
+    solution::FMUSolution;
+    states::Union{Bool,Nothing} = nothing,
+    values::Union{Bool,Nothing} = nothing,
+    stateEvents::Union{Bool,Nothing} = nothing,
+    timeEvents::Union{Bool,Nothing} = nothing,
+    stateIndices = nothing,
+    valueIndices = nothing,
+    maxLabelLength = 64,
+    plotkwargs...,
+)
 
     component = solution.instance
 
@@ -108,7 +111,7 @@ function Plots.plot!(fig::Plots.Plot, solution::FMUSolution;
         end
     end
 
-    if stateIndices === nothing 
+    if stateIndices === nothing
         stateIndices = 1:length(component.fmu.modelDescription.stateValueReferences)
     end
 
@@ -126,7 +129,7 @@ function Plots.plot!(fig::Plots.Plot, solution::FMUSolution;
         t = collect(unsense(e) for e in solution.states.t)
         numValues = length(solution.states.u[1])
 
-        for v in 1:numValues
+        for v = 1:numValues
             if v ∈ stateIndices
                 vr = component.fmu.modelDescription.stateValueReferences[v]
                 vrNames = fmi2ValueReferenceToString(component.fmu, vr)
@@ -144,7 +147,7 @@ function Plots.plot!(fig::Plots.Plot, solution::FMUSolution;
                     label = "..." * label[labelLength-maxLabelLength:end]
                 end
 
-                Plots.plot!(fig, t, vals; label=label, plotkwargs...)
+                Plots.plot!(fig, t, vals; label = label, plotkwargs...)
             end
         end
     end
@@ -154,16 +157,17 @@ function Plots.plot!(fig::Plots.Plot, solution::FMUSolution;
         t = collect(unsense(e) for e in solution.values.t)
         numValues = length(solution.values.saveval[1])
 
-        for v in 1:numValues
+        for v = 1:numValues
             if v ∈ valueIndices
                 vr = "[unknown]"
                 vrName = "[unknown]"
-                if solution.valueReferences != nothing && v <= length(solution.valueReferences)
+                if solution.valueReferences != nothing &&
+                   v <= length(solution.valueReferences)
                     vr = solution.valueReferences[v]
                     vrNames = fmi2ValueReferenceToString(component.fmu, vr)
                     vrName = length(vrNames) > 0 ? vrNames[1] : "?"
                 end
-    
+
                 vals = collect(unsense(data[v]) for data in solution.values.saveval)
 
                 plot_min = min(plot_min, vals...)
@@ -176,7 +180,7 @@ function Plots.plot!(fig::Plots.Plot, solution::FMUSolution;
                     label = "..." * label[labelLength-maxLabelLength:end]
                 end
 
-                Plots.plot!(fig, t, vals; label=label, plotkwargs...)
+                Plots.plot!(fig, t, vals; label = label, plotkwargs...)
             end
         end
     end
@@ -185,7 +189,14 @@ function Plots.plot!(fig::Plots.Plot, solution::FMUSolution;
         first = true
         for e in solution.events
             if e.indicator > 0
-                Plots.plot!(fig, [e.t, e.t], [plot_min, plot_max]; label=(first ? "State event(s)" : nothing), style=:dash, color=:blue)
+                Plots.plot!(
+                    fig,
+                    [e.t, e.t],
+                    [plot_min, plot_max];
+                    label = (first ? "State event(s)" : nothing),
+                    style = :dash,
+                    color = :blue,
+                )
                 first = false
             end
         end
@@ -195,7 +206,14 @@ function Plots.plot!(fig::Plots.Plot, solution::FMUSolution;
         first = true
         for e in solution.events
             if e.indicator == 0
-                Plots.plot!(fig, [e.t, e.t], [plot_min, plot_max]; label=(first ? "Time event(s)" : nothing), style=:dash, color=:red)
+                Plots.plot!(
+                    fig,
+                    [e.t, e.t],
+                    [plot_min, plot_max];
+                    label = (first ? "Time event(s)" : nothing),
+                    style = :dash,
+                    color = :red,
+                )
                 first = false
             end
         end

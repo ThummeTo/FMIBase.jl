@@ -8,13 +8,13 @@ module ReverseDiffExt
 using FMIBase, ReverseDiff
 
 # check if scalar/vector is ReverseDiff.TrackedReal
-function FMIBase.istracked(e::ReverseDiff.TrackedReal) 
+function FMIBase.istracked(e::ReverseDiff.TrackedReal)
     return true
 end
-function FMIBase.istracked(e::AbstractVector{<:ReverseDiff.TrackedReal}) 
+function FMIBase.istracked(e::AbstractVector{<:ReverseDiff.TrackedReal})
     return true
 end
-function FMIBase.istracked(e::ReverseDiff.TrackedArray) 
+function FMIBase.istracked(e::ReverseDiff.TrackedArray)
     return true
 end
 

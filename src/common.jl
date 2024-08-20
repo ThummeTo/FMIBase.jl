@@ -6,13 +6,23 @@
 """
 ToDo
 """
-function setReal(c::FMU2Component, refs::AbstractArray{<:fmi2ValueReference}, vals::AbstractArray{<:fmi2Real}; kwargs...)
+function setReal(
+    c::FMU2Component,
+    refs::AbstractArray{<:fmi2ValueReference},
+    vals::AbstractArray{<:fmi2Real};
+    kwargs...,
+)
     fmi2SetReal(c, refs, vals; kwargs...)
-    return nothing 
+    return nothing
 end
-function setReal(c::FMU3Instance, refs::AbstractArray{<:fmi3ValueReference}, vals::AbstractArray{<:fmi3Float64}; kwargs...)
+function setReal(
+    c::FMU3Instance,
+    refs::AbstractArray{<:fmi3ValueReference},
+    vals::AbstractArray{<:fmi3Float64};
+    kwargs...,
+)
     fmi3SetFloat64(c, refs, vals; kwargs...)
-    return nothing 
+    return nothing
 end
 
 """
@@ -34,11 +44,19 @@ end
 """
 ToDo
 """
-function getReal!(c::FMU2Component, refs::AbstractArray{<:fmi2ValueReference}, vals::AbstractArray{<:fmi2Real})
+function getReal!(
+    c::FMU2Component,
+    refs::AbstractArray{<:fmi2ValueReference},
+    vals::AbstractArray{<:fmi2Real},
+)
     fmi2GetReal!(c, refs, vals)
     return nothing
 end
-function getReal!(c::FMU3Instance, refs::AbstractArray{<:fmi3ValueReference}, vals::AbstractArray{<:fmi3Float64})
+function getReal!(
+    c::FMU3Instance,
+    refs::AbstractArray{<:fmi3ValueReference},
+    vals::AbstractArray{<:fmi3Float64},
+)
     fmi3GetFloat64!(c, refs, vals)
     return nothing
 end
@@ -50,17 +68,41 @@ function getContinuousStates(c::FMU2Component)
     if !c.fmu.isZeroState
         nx = Csize_t(length(c.fmu.modelDescription.stateValueReferences))
         x = zeros(fmi2Real, nx)
-        fmi2GetContinuousStates!(c, x, nx) 
+        fmi2GetContinuousStates!(c, x, nx)
         return x
     else
-        return zeros(fmi2Real, 1) 
+        return zeros(fmi2Real, 1)
     end
 end
 function getContinuousStates(c::FMU3Instance)
     if !c.fmu.isZeroState
         nx = Csize_t(length(c.fmu.modelDescription.stateValueReferences))
         x = zeros(fmi3Float64, nx)
-        fmi3GetContinuousStates!(c, x, nx) 
+        fmi3GetContinuousStates!(c, x, nx)
+        return x
+    else
+        return zeros(fmi3Float64, 1)
+    end
+end
+
+"""
+ToDo
+"""
+function getNominalsOfContinuousStates(c::FMU2Component)
+    if !c.fmu.isZeroState
+        nx = Csize_t(length(c.fmu.modelDescription.stateValueReferences))
+        x = zeros(fmi2Real, nx)
+        fmi2GetNominalsOfContinuousStates!(c, x, nx)
+        return x
+    else
+        return zeros(fmi2Real, 1)
+    end
+end
+function getNominalsOfContinuousStates(c::FMU3Instance)
+    if !c.fmu.isZeroState
+        nx = Csize_t(length(c.fmu.modelDescription.stateValueReferences))
+        x = zeros(fmi3Float64, nx)
+        fmi3GetNominalsOfContinuousStates!(c, x, nx)
         return x
     else
         return zeros(fmi3Float64, 1)
@@ -72,7 +114,7 @@ ToDo
 """
 function getContinuousStates!(c::FMU2Component, x::AbstractArray{<:fmi2Real})
     if !c.fmu.isZeroState
-        fmi2GetContinuousStates(c, x)  
+        fmi2GetContinuousStates(c, x)
     end
     return nothing
 end
@@ -127,41 +169,65 @@ end
 ToDo
 """
 # [ToDo] Allow for non-real inputs!
-function setInputs(c::FMU2Component, u_refs::AbstractArray{<:fmi2ValueReference}, u::AbstractArray{<:fmi2Real})
+function setInputs(
+    c::FMU2Component,
+    u_refs::AbstractArray{<:fmi2ValueReference},
+    u::AbstractArray{<:fmi2Real},
+)
     setReal(c, u_refs, u)
-    return nothing 
+    return nothing
 end
-function setInputs(c::FMU3Instance, u_refs::AbstractArray{<:fmi3ValueReference}, u::AbstractArray{<:fmi3Float64})
+function setInputs(
+    c::FMU3Instance,
+    u_refs::AbstractArray{<:fmi3ValueReference},
+    u::AbstractArray{<:fmi3Float64},
+)
     setReal(c, u_refs, u)
-    return nothing 
+    return nothing
 end
 
 """
 ToDo
 """
 # [ToDo] Allow for non-real parameter!
-function setParameters(c::FMU2Component, p_refs::AbstractArray{<:fmi2ValueReference}, p::AbstractArray{<:fmi2Real})
+function setParameters(
+    c::FMU2Component,
+    p_refs::AbstractArray{<:fmi2ValueReference},
+    p::AbstractArray{<:fmi2Real},
+)
     setReal(c, p_refs, p)
-    return nothing 
+    return nothing
 end
-function setParameters(c::FMU3Instance, p_refs::AbstractArray{<:fmi3ValueReference}, p::AbstractArray{<:fmi3Float64})
+function setParameters(
+    c::FMU3Instance,
+    p_refs::AbstractArray{<:fmi3ValueReference},
+    p::AbstractArray{<:fmi3Float64},
+)
     setReal(c, p_refs, p)
-    return nothing 
+    return nothing
 end
 
 """
 ToDo
 """
 # [ToDo] Implement dx_refs to grab only specific derivatives
-function getDerivatives!(c::FMU2Component, dx::AbstractArray{<:fmi2Real}, dx_refs::AbstractArray{<:fmi2ValueReference})
+function getDerivatives!(
+    c::FMU2Component,
+    dx::AbstractArray{<:fmi2Real},
+    dx_refs::AbstractArray{<:fmi2ValueReference},
+)
     @assert !c.fmu.isZeroState "getDerivatives! is not callable for zero state FMUs!"
-     
+
     fmi2GetDerivatives!(c, dx)
     return nothing
 end
-function getDerivatives!(c::FMU3Instance, dx::AbstractArray{<:fmi3Float64}, dx_refs::AbstractArray{<:fmi3ValueReference})
+function getDerivatives!(
+    c::FMU3Instance,
+    dx::AbstractArray{<:fmi3Float64},
+    dx_refs::AbstractArray{<:fmi3ValueReference},
+)
     @assert !c.fmu.isZeroState "getDerivatives! is not callable for zero state FMUs!"
-    
+
     fmi3GetContinuousStateDerivatives!(c, dx)
     return nothing
 end
@@ -169,11 +235,19 @@ end
 """
 ToDo
 """
-function getOutputs!(c::FMU2Component, y_refs::AbstractArray{<:fmi2ValueReference}, y::AbstractArray{<:fmi2Real})
+function getOutputs!(
+    c::FMU2Component,
+    y_refs::AbstractArray{<:fmi2ValueReference},
+    y::AbstractArray{<:fmi2Real},
+)
     getReal!(c, y_refs, y)
     return nothing
 end
-function getOutputs!(c::FMU3Instance, y_refs::AbstractArray{<:fmi3ValueReference}, y::AbstractArray{<:fmi3Float64})
+function getOutputs!(
+    c::FMU3Instance,
+    y_refs::AbstractArray{<:fmi3ValueReference},
+    y::AbstractArray{<:fmi3Float64},
+)
     getReal!(c, y_refs, y)
     return nothing
 end
@@ -197,8 +271,13 @@ end
 """
 ToDo
 """
-function getEventIndicators!(c::FMU2Component, ec::AbstractArray{<:fmi2Real}, ec_idcs::AbstractArray{<:fmi2ValueReference})
-    if length(ec_idcs) == c.fmu.modelDescription.numberOfEventIndicators || length(ec_idcs) == 0 # pick ALL event indicators
+function getEventIndicators!(
+    c::FMU2Component,
+    ec::AbstractArray{<:fmi2Real},
+    ec_idcs::AbstractArray{<:fmi2ValueReference},
+)
+    if length(ec_idcs) == c.fmu.modelDescription.numberOfEventIndicators ||
+       length(ec_idcs) == 0 # pick ALL event indicators
         fmi2GetEventIndicators!(c, ec)
     else # pick only some specific ones
         fmi2GetEventIndicators!(c, c.eventIndicatorBuffer)
@@ -206,11 +285,20 @@ function getEventIndicators!(c::FMU2Component, ec::AbstractArray{<:fmi2Real}, ec
     end
     return nothing
 end
-function getEventIndicators!(c::FMU3Instance, ec::AbstractArray{<:fmi3Float64}, ec_idcs::AbstractArray{<:fmi3ValueReference})
-    if length(ec_idcs) == c.fmu.modelDescription.numberOfEventIndicators || length(ec_idcs) == 0 # pick ALL event indicators
-        fmi3GetEventIndicators!(c, ec, c.fmu.modelDescription.numberOfEventIndicators) 
+function getEventIndicators!(
+    c::FMU3Instance,
+    ec::AbstractArray{<:fmi3Float64},
+    ec_idcs::AbstractArray{<:fmi3ValueReference},
+)
+    if length(ec_idcs) == c.fmu.modelDescription.numberOfEventIndicators ||
+       length(ec_idcs) == 0 # pick ALL event indicators
+        fmi3GetEventIndicators!(c, ec, c.fmu.modelDescription.numberOfEventIndicators)
     else # pick only some specific ones
-        fmi3GetEventIndicators!(c, c.eventIndicatorBuffer, c.fmu.modelDescription.numberOfEventIndicators) 
+        fmi3GetEventIndicators!(
+            c,
+            c.eventIndicatorBuffer,
+            c.fmu.modelDescription.numberOfEventIndicators,
+        )
         ec[:] = c.eventIndicatorBuffer[ec_idcs]
     end
     return nothing
@@ -219,11 +307,21 @@ end
 """
 ToDo
 """
-function getDirectionalDerivative(c::FMU2Component, ∂f_refs::AbstractArray{<:fmi2ValueReference}, ∂x_refs::AbstractArray{<:fmi2ValueReference}, seed)
+function getDirectionalDerivative(
+    c::FMU2Component,
+    ∂f_refs::AbstractArray{<:fmi2ValueReference},
+    ∂x_refs::AbstractArray{<:fmi2ValueReference},
+    seed,
+)
     fmi2GetDirectionalDerivative(c, ∂f_refs, ∂x_refs, seed)
     return nothing
 end
-function getDirectionalDerivative(c::FMU3Instance, ∂f_refs::AbstractArray{<:fmi3ValueReference}, ∂x_refs::AbstractArray{<:fmi3ValueReference}, seed)
+function getDirectionalDerivative(
+    c::FMU3Instance,
+    ∂f_refs::AbstractArray{<:fmi3ValueReference},
+    ∂x_refs::AbstractArray{<:fmi3ValueReference},
+    seed,
+)
     fmi3GetDirectionalDerivative(c, ∂f_refs, ∂x_refs, seed)
     return nothing
 end
@@ -231,11 +329,23 @@ end
 """
 ToDo
 """
-function getDirectionalDerivative!(c::FMU2Component, ∂f_refs::AbstractArray{<:fmi2ValueReference}, ∂x_refs::AbstractArray{<:fmi2ValueReference}, jvp, seed)
+function getDirectionalDerivative!(
+    c::FMU2Component,
+    ∂f_refs::AbstractArray{<:fmi2ValueReference},
+    ∂x_refs::AbstractArray{<:fmi2ValueReference},
+    jvp,
+    seed,
+)
     fmi2GetDirectionalDerivative!(c, ∂f_refs, ∂x_refs, jvp, seed)
     return nothing
 end
-function getDirectionalDerivative!(c::FMU3Instance, ∂f_refs::AbstractArray{<:fmi3ValueReference}, ∂x_refs::AbstractArray{<:fmi3ValueReference}, jvp, seed)
+function getDirectionalDerivative!(
+    c::FMU3Instance,
+    ∂f_refs::AbstractArray{<:fmi3ValueReference},
+    ∂x_refs::AbstractArray{<:fmi3ValueReference},
+    jvp,
+    seed,
+)
     fmi3GetDirectionalDerivative!(c, ∂f_refs, ∂x_refs, jvp, seed)
     return nothing
 end
@@ -243,11 +353,23 @@ end
 """
 ToDo
 """
-function getAdjointDerivative!(c::FMU2Component, ∂f_refs::AbstractArray{<:fmi2ValueReference}, ∂x_refs::AbstractArray{<:fmi2ValueReference}, vjp, seed)
+function getAdjointDerivative!(
+    c::FMU2Component,
+    ∂f_refs::AbstractArray{<:fmi2ValueReference},
+    ∂x_refs::AbstractArray{<:fmi2ValueReference},
+    vjp,
+    seed,
+)
     @assert false "No adjoint derivatives in FMI2!"
     return nothing
 end
-function getAdjointDerivative!(c::FMU3Instance, ∂f_refs::AbstractArray{<:fmi3ValueReference}, ∂x_refs::AbstractArray{<:fmi3ValueReference}, vjp, seed)
+function getAdjointDerivative!(
+    c::FMU3Instance,
+    ∂f_refs::AbstractArray{<:fmi3ValueReference},
+    ∂x_refs::AbstractArray{<:fmi3ValueReference},
+    vjp,
+    seed,
+)
     fmi3GetAdjointDerivative!(c, ∂f_refs, ∂x_refs, vjp, seed)
     return nothing
 end
@@ -279,7 +401,8 @@ Copies the current FMU-state of the instance `inst` (like a memory copy) to the 
 - `state` ∈ (Ref{fmi2FMUstate}, Ref{fmi3FMUState}): the FMU state reference
 """
 function getFMUstate!(c::FMU2Component, state::Ref{fmi2FMUstate})
-    if c.fmu.modelDescription.modelExchange.canGetAndSetFMUstate || c.fmu.modelDescription.coSimulation.canGetAndSetFMUstate
+    if c.fmu.modelDescription.modelExchange.canGetAndSetFMUstate ||
+       c.fmu.modelDescription.coSimulation.canGetAndSetFMUstate
         return fmi2GetFMUstate!(c.fmu.cGetFMUstate, c.addr, state)
     end
     return nothing
@@ -292,7 +415,8 @@ end
 ToDo
 """
 function setFMUstate!(c::FMU2Component, state::fmi2FMUstate)
-    if c.fmu.modelDescription.modelExchange.canGetAndSetFMUstate || c.fmu.modelDescription.coSimulation.canGetAndSetFMUstate
+    if c.fmu.modelDescription.modelExchange.canGetAndSetFMUstate ||
+       c.fmu.modelDescription.coSimulation.canGetAndSetFMUstate
         return fmi2SetFMUstate(c.fmu.cSetFMUstate, c.addr, state)
     end
     return nothing
@@ -306,7 +430,7 @@ ToDo
 """
 function freeFMUstate!(c::FMU2Component, state::Ref{fmi2FMUstate})
     fmi2FreeFMUstate(c.fmu.cFreeFMUstate, c.addr, state)
-    return nothing 
+    return nothing
 end
 function freeFMUstate!(c::FMU3Instance, state::Ref{fmi3FMUState})
     @assert false "Not implemented yet. Please open an issue." # [TODO]
@@ -327,10 +451,10 @@ Performs a co-simulation step with the FMU.
 # Returns
 - FMI2 or FMI3 return code
 """
-function doStep(c::FMU2Component, dt::Real; currentCommunicationPoint::Real=c.t)
-    fmi2DoStep(c, dt; currentCommunicationPoint=currentCommunicationPoint)
+function doStep(c::FMU2Component, dt::Real; currentCommunicationPoint::Real = c.t)
+    fmi2DoStep(c, dt; currentCommunicationPoint = currentCommunicationPoint)
 end
-function doStep(c::FMU3Instance, dt::Real; currentCommunicationPoint::Real=c.t)
+function doStep(c::FMU3Instance, dt::Real; currentCommunicationPoint::Real = c.t)
     fmi3DoStep!(c, currentCommunicationPoint, dt)
 end
 

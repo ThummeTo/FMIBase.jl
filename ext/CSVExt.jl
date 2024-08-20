@@ -15,7 +15,7 @@ Saves a `solution` of an FMU in a CSV file at `filepath`.
 
 See also [`saveSolution`](@ref).
 """
-function FMIBase.saveSolutionCSV(solution::FMUSolution, filepath::AbstractString) 
+function FMIBase.saveSolutionCSV(solution::FMUSolution, filepath::AbstractString)
     df = DataFrames.DataFrame(solution)
     CSV.write(filepath, df)
 end
@@ -29,7 +29,7 @@ Loads a `solution` of an FMU in a CSV file at `filepath`.
 
 See also [`loadSolution`](@ref).
 """
-function FMIBase.loadSolutionCSV(solution::FMUSolution, filepath::AbstractString) 
+function FMIBase.loadSolutionCSV(solution::FMUSolution, filepath::AbstractString)
     # [ToDo]
     @assert false, "Not implemented yet, please open an issue if this is needed."
 end

@@ -15,7 +15,7 @@ Saves a `solution` of an FMU under dictionary `keyword` in a MAT file at `filepa
     
 See also [`saveSolution`](@ref).
 """
-function FMIBase.saveSolutionMAT(solution::FMUSolution, filepath::AbstractString) 
+function FMIBase.saveSolutionMAT(solution::FMUSolution, filepath::AbstractString)
     # [ToDo]
     @assert false, "Not implemented yet, please open an issue if this is needed."
 end
@@ -29,7 +29,7 @@ Loads a `solution` of an FMU in a MAT file at `filepath`.
 
 See also [`loadSolution`](@ref).
 """
-function FMIBase.loadSolutionMAT(solution::FMUSolution, filepath::AbstractString) 
+function FMIBase.loadSolutionMAT(solution::FMUSolution, filepath::AbstractString)
     # [ToDo]
     @assert false, "Not implemented yet, please open an issue if this is needed."
 end

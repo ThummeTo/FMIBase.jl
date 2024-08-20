@@ -9,6 +9,7 @@
 [![Test (LTS)](https://github.com/ThummeTo/FMIBase.jl/actions/workflows/TestLTS.yml/badge.svg)](https://github.com/ThummeTo/FMIBase.jl/actions/workflows/TestLTS.yml)
 [![Run PkgEval](https://github.com/ThummeTo/FMIBase.jl/actions/workflows/Eval.yml/badge.svg)](https://github.com/ThummeTo/FMIBase.jl/actions/workflows/Eval.yml)
 [![Coverage](https://codecov.io/gh/ThummeTo/FMIBase.jl/branch/main/graph/badge.svg)](https://codecov.io/gh/ThummeTo/FMIBase.jl)
+[![SciML Code Style](https://img.shields.io/static/v1?label=code%20style&message=SciML&color=9558b2&labelColor=389826)](https://github.com/SciML/SciMLStyle)
 
 ## How can I use FMIBase.jl?
 **Please note:** [*FMIBase.jl*](https://github.com/ThummeTo/FMIBase.jl) is not meant to be used as it is, but as part of [*FMI.jl*](https://github.com/ThummeTo/FMI.jl), [*FMIImport.jl*](https://github.com/ThummeTo/FMIImport.jl), [*FMIExport.jl*](https://github.com/ThummeTo/FMIExport.jl) and [*FMIFlux.jl*](https://github.com/ThummeTo/FMIFlux.jl). However you can install [*FMIBase.jl*](https://github.com/ThummeTo/FMIBase.jl) by following these steps.

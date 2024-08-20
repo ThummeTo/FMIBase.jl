@@ -7,16 +7,18 @@ import ProgressMeter
 using SciMLBase: u_modified!
 
 # returns the event indicators for an FMU
-function condition(c::FMUInstance, out, x, t, integrator, inputFunction) 
+function condition(c::FMUInstance, out, x, t, integrator, inputFunction)
     condition!(c, out, x, t, inputFunction)
     return nothing
 end
 
-function condition!(c::FMUInstance, 
+function condition!(
+    c::FMUInstance,
     ec,
-    x::AbstractArray{<:Real}, 
+    x::AbstractArray{<:Real},
     t::Real,
-    inputFunction::Union{Nothing, FMUInputFunction})
+    inputFunction::Union{Nothing,FMUInputFunction},
+)
 
     c.solution.evals_condition += 1
 
@@ -27,14 +29,14 @@ function condition!(c::FMUInstance,
         u_refs = inputFunction.vrs
     end
 
-    c(;x=x, u=u, u_refs=u_refs, t=t, ec=ec)
-    
+    c(; x = x, u = u, u_refs = u_refs, t = t, ec = ec)
+
     return nothing
 end
 
 # Read next time event from FMU and provide it to the integrator 
-function time_choice(c::FMU2Component, integrator, tStart, tStop) 
-    
+function time_choice(c::FMU2Component, integrator, tStart, tStop)
+
     c.solution.evals_timechoice += 1
 
     if isTrue(c.eventInfo.nextEventTimeDefined)
@@ -44,14 +46,14 @@ function time_choice(c::FMU2Component, integrator, tStart, tStop)
         else
             # the time event is outside the simulation range!
             @debug "Next time event @$(c.eventInfo.nextEventTime)s is outside simulation time range ($(tStart), $(tStop)), skipping."
-            return nothing 
+            return nothing
         end
     else
         return nothing
     end
 end
-function time_choice(c::FMU3Instance, integrator, tStart, tStop) 
-    
+function time_choice(c::FMU3Instance, integrator, tStart, tStop)
+
     c.solution.evals_timechoice += 1
 
     if isTrue(c.nextEventTimeDefined)
@@ -61,7 +63,7 @@ function time_choice(c::FMU3Instance, integrator, tStart, tStop)
         else
             # the time event is outside the simulation range!
             @debug "Next time event @$(c.nextEventTime)s is outside simulation time range ($(tStart), $(tStop)), skipping."
-            return nothing 
+            return nothing
         end
     else
         return nothing
@@ -69,12 +71,14 @@ function time_choice(c::FMU3Instance, integrator, tStart, tStop)
 end
 
 # f evaluation (IP)
-function f(c::FMUInstance, 
+function f(
+    c::FMUInstance,
     dx::AbstractArray{<:Real},
-    x::AbstractArray{<:Real}, 
+    x::AbstractArray{<:Real},
     p::Tuple,
     t::Real,
-    inputFunction::Union{Nothing, FMUInputFunction})
+    inputFunction::Union{Nothing,FMUInputFunction},
+)
 
     c.solution.evals_fx_inplace += 1
 
@@ -86,20 +90,22 @@ function f(c::FMUInstance,
     end
 
     if c.fmu.isZeroState
-        c(; u=u, u_refs=u_refs, t=t)
+        c(; u = u, u_refs = u_refs, t = t)
     else
-        c(;dx=dx, x=x, u=u, u_refs=u_refs, t=t)
+        c(; dx = dx, x = x, u = u, u_refs = u_refs, t = t)
     end
-    
+
     return nothing
 end
 
 # f evaluation (OOP)
-function f(c::FMUInstance, 
-    x::AbstractArray{<:Real}, 
+function f(
+    c::FMUInstance,
+    x::AbstractArray{<:Real},
     p::Tuple,
     t::Real,
-    inputFunction::Union{Nothing, FMUInputFunction})
+    inputFunction::Union{Nothing,FMUInputFunction},
+)
 
     c.solution.evals_fx_outofplace += 1
 
@@ -108,16 +114,19 @@ function f(c::FMUInstance,
     f(c, dx, x, p, t)
 
     # correct statisitics, because fx-call above -> this was in fact an out-of-place evaluation
-    c.solution.evals_fx_inplace -= 1 
+    c.solution.evals_fx_inplace -= 1
 
     return dx
 end
 
 # just set state, time, etc. no getter
-function f_set(c::FMUInstance, 
-    x::AbstractArray{<:Real}, 
+function f_set(
+    c::FMUInstance,
+    x::AbstractArray{<:Real},
     t::Real,
-    inputFunction::Union{Nothing, FMUInputFunction}; force::Bool=false)
+    inputFunction::Union{Nothing,FMUInputFunction};
+    force::Bool = false,
+)
 
     u = getEmptyReal(c)
     u_refs = getEmptyValueReference(c)
@@ -129,7 +138,7 @@ function f_set(c::FMUInstance,
     oldForce = c.force
     c.force = force
 
-    c(;x=x, u=u, u_refs=u_refs, t=t)
+    c(; x = x, u = u, u_refs = u_refs, t = t)
 
     c.force = oldForce
 
@@ -144,12 +153,19 @@ function saveValues(c::FMUInstance, recordValues, x, t, integrator, inputFunctio
     c.solution.evals_savevalues += 1
 
     f_set(c, x, t, inputFunction)
-    
+
     # ToDo: Replace by inplace statement!
     return (getValue(c, recordValues)...,)
 end
 
-function saveEventIndicators(c::FMUInstance, recordEventIndicators, x, t, integrator, inputFunction)
+function saveEventIndicators(
+    c::FMUInstance,
+    recordEventIndicators,
+    x,
+    t,
+    integrator,
+    inputFunction,
+)
 
     @assert isContinuousTimeMode(c) "saveEventIndicators(...):\n" * ERR_MSG_CONT_TIME_MODE
 
@@ -175,25 +191,34 @@ function saveEigenvalues(c::FMUInstance, x, t, integrator, inputFunction)
     eigs = eigvals(A)
 
     vals = []
-    for e in eigs 
+    for e in eigs
         push!(vals, real(e))
         push!(vals, imag(e))
     end
-    
+
     # ToDo: Replace by inplace statement!
     return (vals...,)
 end
 
 
 # Does one step in the simulation.
-function stepCompleted(c::FMU2Component, x, t, integrator, inputFunction, progressMeter, tStart, tStop)
+function stepCompleted(
+    c::FMU2Component,
+    x,
+    t,
+    integrator,
+    inputFunction,
+    progressMeter,
+    tStart,
+    tStop,
+)
 
     @assert isContinuousTimeMode(c) "stepCompleted(...):\n" * ERR_MSG_CONT_TIME_MODE
-    
+
     c.solution.evals_stepcompleted += 1
 
     if !isnothing(progressMeter)
-        stat = 1000.0*(t-tStart)/(tStop-tStart)
+        stat = 1000.0 * (t - tStart) / (tStop - tStart)
         if !isnan(stat)
             stat = floor(Integer, stat)
             ProgressMeter.update!(progressMeter, stat)
@@ -201,11 +226,13 @@ function stepCompleted(c::FMU2Component, x, t, integrator, inputFunction, progre
     end
 
     noSetFMUStatePriorToCurrentPoint = fmi2True
-    status = fmi2CompletedIntegratorStep!(c,
+    status = fmi2CompletedIntegratorStep!(
+        c,
         noSetFMUStatePriorToCurrentPoint,
         c._ptr_enterEventMode,
-        c._ptr_terminateSimulation)
-    
+        c._ptr_terminateSimulation,
+    )
+
     if isTrue(c.terminateSimulation)
         @error "stepCompleted(...): FMU requested termination!"
     end
@@ -220,14 +247,23 @@ function stepCompleted(c::FMU2Component, x, t, integrator, inputFunction, progre
         end
     end
 end
-function stepCompleted(c::FMU3Instance, x, t, integrator, inputFunction, progressMeter, tStart, tStop)
+function stepCompleted(
+    c::FMU3Instance,
+    x,
+    t,
+    integrator,
+    inputFunction,
+    progressMeter,
+    tStart,
+    tStop,
+)
 
     @assert isContinuousTimeMode(c) "stepCompleted(...):\n" * ERR_MSG_CONT_TIME_MODE
-    
+
     c.solution.evals_stepcompleted += 1
 
     if !isnothing(progressMeter)
-        stat = 1000.0*(t-tStart)/(tStop-tStart)
+        stat = 1000.0 * (t - tStart) / (tStop - tStart)
         if !isnan(stat)
             stat = floor(Integer, stat)
             ProgressMeter.update!(progressMeter, stat)
@@ -235,11 +271,13 @@ function stepCompleted(c::FMU3Instance, x, t, integrator, inputFunction, progres
     end
 
     noSetFMUStatePriorToCurrentPoint = fmi3True
-    status = fmi3CompletedIntegratorStep!(c,
+    status = fmi3CompletedIntegratorStep!(
+        c,
         noSetFMUStatePriorToCurrentPoint,
         c._ptr_enterEventMode,
-        c._ptr_terminateSimulation)
-    
+        c._ptr_terminateSimulation,
+    )
+
     if isTrue(c.terminateSimulation)
         @error "stepCompleted(...): FMU requested termination!"
     end
@@ -262,54 +300,61 @@ function affectFMU!(c::FMU2Component, integrator, idx, inputFunction)
     c.solution.evals_affect += 1
 
     # there are fx-evaluations before the event is handled, reset the FMU state to the current integrator step
-    f_set(c, integrator.u, integrator.t, inputFunction; force=true)
+    f_set(c, integrator.u, integrator.t, inputFunction; force = true)
 
     fmi2EnterEventMode(c)
 
     # Event found - handle it
     handleEvents(c)
 
-    left_x = nothing 
+    left_x = nothing
     right_x = nothing
 
     if isTrue(c.eventInfo.valuesOfContinuousStatesChanged)
         left_x = integrator.u
-        right_x = fmi2GetContinuousStates(c)
+        right_x = getContinuousStates(c)
         @debug "affectFMU!(...): Handled event at t=$(integrator.t), new state is $(right_x)"
         integrator.u = right_x
 
         u_modified!(integrator, true)
-    else 
+    else
         u_modified!(integrator, false)
         @debug "affectFMU!(...): Handled event at t=$(integrator.t), no new state."
     end
 
     if isTrue(c.eventInfo.nominalsOfContinuousStatesChanged)
-        x_nom = fmi2GetNominalsOfContinuousStates(c)
+        x_nom = getNominalsOfContinuousStates(c)
     end
 
-    ignore_derivatives() do 
+    ignore_derivatives() do
         if idx != -1 # -1 no event, 0, time event, >=1 state event with indicator
             e = FMUEvent(integrator.t, UInt64(idx), left_x, right_x)
             push!(c.solution.events, e)
         end
-    end 
+    end
 
     #fmi2EnterContinuousTimeMode(c)
 end
 function affectFMU!(c::FMU3Instance, integrator, idx, inputFunction)
-    
-    @assert isContinuousTimeMode(c) "affectFMU!(...): Must be in continuous time mode!"
-    
-    # there are fx-evaluations before the event is handled, reset the FMU state to the current integrator step
-    f_set(c, integrator.u, integrator.t, inputFunction; force=true)
 
-    fmi3EnterEventMode(c, c.stepEvent, c.stateEvent, c.rootsFound, Csize_t(c.fmu.modelDescription.numberOfEventIndicators), c.timeEvent) # [todo] this is actually not an inplace operation!
-    
+    @assert isContinuousTimeMode(c) "affectFMU!(...): Must be in continuous time mode!"
+
+    # there are fx-evaluations before the event is handled, reset the FMU state to the current integrator step
+    f_set(c, integrator.u, integrator.t, inputFunction; force = true)
+
+    fmi3EnterEventMode(
+        c,
+        c.stepEvent,
+        c.stateEvent,
+        c.rootsFound,
+        Csize_t(c.fmu.modelDescription.numberOfEventIndicators),
+        c.timeEvent,
+    ) # [todo] this is actually not an inplace operation!
+
     # Event found - handle it
     handleEvents(c)
 
-    left_x = nothing 
+    left_x = nothing
     right_x = nothing
 
     if c.valuesOfContinuousStatesChanged == fmi3True
@@ -320,7 +365,7 @@ function affectFMU!(c::FMU3Instance, integrator, idx, inputFunction)
 
         u_modified!(integrator, true)
         #set_proposed_dt!(integrator, 1e-10)
-    else 
+    else
         u_modified!(integrator, false)
         @debug "affectFMU!(...): Handled event at t=$(integrator.t), no new state."
     end
@@ -329,12 +374,12 @@ function affectFMU!(c::FMU3Instance, integrator, idx, inputFunction)
         x_nom = fmi3GetNominalsOfContinuousStates(c)
     end
 
-    ignore_derivatives() do 
+    ignore_derivatives() do
         if idx != -1 # -1 no event, 0, time event, >=1 state event with indicator
             e = FMUEvent(integrator.t, UInt64(idx), left_x, right_x)
             push!(c.solution.events, e)
         end
-    end 
+    end
 
     #fmi3EnterContinuousTimeMode(c)
 end
@@ -346,13 +391,13 @@ function handleEvents(c::FMU2Component)
     @assert isEventMode(c) "handleEvents(...): Must be in event mode!"
 
     # invalidate all cached jacobians/gradients 
-    invalidate!(c.∂ẋ_∂x) 
+    invalidate!(c.∂ẋ_∂x)
     invalidate!(c.∂ẋ_∂u)
-    invalidate!(c.∂ẋ_∂p)  
-    invalidate!(c.∂y_∂x) 
+    invalidate!(c.∂ẋ_∂p)
+    invalidate!(c.∂y_∂x)
     invalidate!(c.∂y_∂u)
     invalidate!(c.∂y_∂p)
-    invalidate!(c.∂e_∂x) 
+    invalidate!(c.∂e_∂x)
     invalidate!(c.∂e_∂u)
     invalidate!(c.∂e_∂p)
     invalidate!(c.∂ẋ_∂t)
@@ -408,13 +453,13 @@ function handleEvents(c::FMU3Instance)
     @assert isEventMode(c) "handleEvents(...): Must be in event mode!"
 
     # invalidate all cached jacobians/gradients 
-    invalidate!(c.∂ẋ_∂x) 
+    invalidate!(c.∂ẋ_∂x)
     invalidate!(c.∂ẋ_∂u)
-    invalidate!(c.∂ẋ_∂p)  
-    invalidate!(c.∂y_∂x) 
+    invalidate!(c.∂ẋ_∂p)
+    invalidate!(c.∂y_∂x)
     invalidate!(c.∂y_∂u)
     invalidate!(c.∂y_∂p)
-    invalidate!(c.∂e_∂x) 
+    invalidate!(c.∂e_∂x)
     invalidate!(c.∂e_∂u)
     invalidate!(c.∂e_∂p)
     invalidate!(c.∂ẋ_∂t)
@@ -429,13 +474,15 @@ function handleEvents(c::FMU3Instance)
     numCalls = 0
     while isTrue(c.discreteStatesNeedUpdate)
         numCalls += 1
-        fmi3UpdateDiscreteStates(c,
-            c._ptr_discreteStatesNeedUpdate, 
-            c._ptr_terminateSimulation, 
-            c._ptr_nominalsOfContinuousStatesChanged, 
-            c._ptr_valuesOfContinuousStatesChanged, 
-            c._ptr_nextEventTimeDefined, 
-            c._ptr_nextEventTime)
+        fmi3UpdateDiscreteStates(
+            c,
+            c._ptr_discreteStatesNeedUpdate,
+            c._ptr_terminateSimulation,
+            c._ptr_nominalsOfContinuousStatesChanged,
+            c._ptr_valuesOfContinuousStatesChanged,
+            c._ptr_nextEventTimeDefined,
+            c._ptr_nextEventTime,
+        )
 
         if isTrue(c.terminateSimulation)
             @error "handleEvents(...): FMU throws `terminateSimulation`!"

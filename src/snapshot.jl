@@ -8,11 +8,11 @@ function getFMUstate!(c::FMUInstance, s::Ref{Nothing})
 end
 
 function setFMUstate!(c::FMUInstance, state::Nothing)
-    return nothing 
+    return nothing
 end
 
 function freeFMUstate!(c::FMUInstance, state::Ref{Nothing})
-    return nothing 
+    return nothing
 end
 
 function snapshot!(c::FMUInstance)
@@ -26,17 +26,17 @@ function snapshot!(sol::FMUSolution)
 end
 export snapshot!
 
-function snapshot_if_needed!(obj::Union{FMUInstance, FMUSolution}, t::Real; atol=1e-8)
-    if !hasSnapshot(obj, t; atol=atol)
+function snapshot_if_needed!(obj::Union{FMUInstance,FMUSolution}, t::Real; atol = 1e-8)
+    if !hasSnapshot(obj, t; atol = atol)
         snapshot!(obj)
     end
 end
 export snapshot_if_needed!
 
-function hasSnapshot(c::Union{FMUInstance, FMUSolution}, t::Float64; atol=0.0)
+function hasSnapshot(c::Union{FMUInstance,FMUSolution}, t::Float64; atol = 0.0)
     for snapshot in c.snapshots
-        if abs(snapshot.t-t) <= atol 
-            return true 
+        if abs(snapshot.t - t) <= atol
+            return true
         end
     end
     return false
@@ -46,7 +46,7 @@ function getSnapshot(c::FMUInstance, t::Float64; kwargs...)
     return getSnapshot(c.fmu, t; kwargs...)
 end
 
-function getSnapshot(c::Union{FMU, FMUSolution}, t::Float64; exact::Bool=false, atol=0.0) 
+function getSnapshot(c::Union{FMU,FMUSolution}, t::Float64; exact::Bool = false, atol = 0.0)
     # [Note] only take exact fit if we are at 0, otherwise take the next left, 
     #        because we are saving snapshots for the right root of events.
 
@@ -55,8 +55,8 @@ function getSnapshot(c::Union{FMU, FMUSolution}, t::Float64; exact::Bool=false, 
 
     left = c.snapshots[1]
     # right = c.snapshots[1]
-    
-    if exact  
+
+    if exact
         for snapshot in c.snapshots
             if abs(snapshot.t - t) <= atol
                 return snapshot
@@ -65,7 +65,7 @@ function getSnapshot(c::Union{FMU, FMUSolution}, t::Float64; exact::Bool=false, 
         return nothing
     else
         for snapshot in c.snapshots
-            if snapshot.t < (t-atol) && snapshot.t > (left.t+atol)
+            if snapshot.t < (t - atol) && snapshot.t > (left.t + atol)
                 left = snapshot
             end
             # if snapshot.t > t && snapshot.t < right.t
@@ -85,15 +85,21 @@ function update!(c::FMUInstance, s::FMUSnapshot)
     s.instance = c
 
     getFMUstate!(c, Ref(s.fmuState))
-   
-    s.x_c = isnothing(c.x)   ? nothing : copy(c.x) 
+
+    s.x_c = isnothing(c.x) ? nothing : copy(c.x)
     s.x_d = isnothing(c.x_d) ? nothing : copy(c.x_d)
     return nothing
 end
 export update!
 
-function apply!(c::FMUInstance, s::FMUSnapshot; 
-                t=s.t, x_c=s.x_c, x_d=s.x_d, fmuState=s.fmuState)
+function apply!(
+    c::FMUInstance,
+    s::FMUSnapshot;
+    t = s.t,
+    x_c = s.x_c,
+    x_d = s.x_d,
+    fmuState = s.fmuState,
+)
 
     # FMU state
     setFMUstate!(c, fmuState)
@@ -101,7 +107,7 @@ function apply!(c::FMUInstance, s::FMUSnapshot;
     c.state = s.state
 
     @debug "Applied snapshot $(s.t)"
-    
+
     # continuous state
     if !isnothing(x_c)
         setContinuousStates(c, x_c)
@@ -118,12 +124,12 @@ function apply!(c::FMUInstance, s::FMUSnapshot;
     #fmi2SetTime(c.fmu.cSetTime, c.compAddr, t)
     setTime(c, t)
     c.t = t
-    
+
     return nothing
 end
 export apply!
 
-function freeSnapshot!(s::FMUSnapshot) 
+function freeSnapshot!(s::FMUSnapshot)
     #@async println("cleanup!")
     freeFMUstate!(s.instance, Ref(s.fmuState))
     s.fmuState = nothing
