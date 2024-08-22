@@ -63,8 +63,8 @@ function Plots.plot!(
     stateIndices = nothing,
     valueIndices = nothing,
     maxLabelLength::Integer = 64,
-    maxStateEvents::Integer=100,
-    maxTimeEvents::Integer=100,
+    maxStateEvents::Integer = 100,
+    maxTimeEvents::Integer = 100,
     plotkwargs...,
 )
 
