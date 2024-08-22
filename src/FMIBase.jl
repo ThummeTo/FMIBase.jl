@@ -46,6 +46,8 @@ include("sense.jl")
 include("snapshot.jl")
 include("valueRefs.jl")
 
+include("deprecated.jl")
+
 # extensions
 using Requires
 using PackageExtensionCompat
