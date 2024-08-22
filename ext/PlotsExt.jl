@@ -168,10 +168,10 @@ function Plots.plot!(
             if v ∈ valueIndices
                 vr = "[unknown]"
                 vrName = "[unknown]"
-                if solution.valueReferences != nothing &&
+                if !isnothing(solution.valueReferences) &&
                    v <= length(solution.valueReferences)
                     vr = solution.valueReferences[v]
-                    vrNames = fmi2ValueReferenceToString(instance.fmu, vr)
+                    vrNames = valueReferenceToString(instance.fmu, vr)
                     vrName = length(vrNames) > 0 ? vrNames[1] : "?"
                 end
 
