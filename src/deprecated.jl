@@ -32,26 +32,50 @@ function Base.getproperty(obj::FMUSolution, var::Symbol)
     return Base.getfield(obj, var)
 end
 
-function fmi2GetSolutionState(solution::FMU2Solution, args...; kwargs...)
+function fmi2GetSolutionState(solution::FMUSolution, args...; kwargs...)
     @warn "`fmi2GetSolutionState` is deprecated, use `getState` instead." maxlog = 3
     return getState(solution, args...; kwargs...)
 end
 export fmi2GetSolutionState
 
-function fmi2GetSolutionDerivative(solution::FMU2Solution, args...; kwargs...)
-    @warn "`fmi2GetSolutionDerivative` is deprecated, use `getDerivative` instead." maxlog = 3
-    return getDerivative(solution, args...; kwargs...)
+function fmiGetSolutionState(solution::FMUSolution, args...; kwargs...)
+    @warn "`fmiGetSolutionState` is deprecated, use `getState` instead." maxlog = 3
+    return getState(solution, args...; kwargs...)
+end
+export fmiGetSolutionState
+
+function fmi2GetSolutionDerivative(solution::FMUSolution, args...; kwargs...)
+    @warn "`fmi2GetSolutionDerivative` is deprecated, use `getStateDerivative` instead." maxlog = 3
+    return getStateDerivative(solution, args...; kwargs...)
 end
 export fmi2GetSolutionDerivative
 
-function fmi2GetSolutionValue(solution::FMU2Solution, args...; kwargs...)
+function fmiGetSolutionDerivative(solution::FMUSolution, args...; kwargs...)
+    @warn "`fmiGetSolutionDerivative` is deprecated, use `getStateDerivative` instead." maxlog = 3
+    return getStateDerivative(solution, args...; kwargs...)
+end
+export fmiGetSolutionDerivative
+
+function fmi2GetSolutionValue(solution::FMUSolution, args...; kwargs...)
     @warn "`fmi2GetSolutionValue` is deprecated, use `getValue` instead." maxlog = 3
     return getValue(solution, args...; kwargs...)
 end
 export fmi2GetSolutionValue
 
-function fmi2GetSolutionTime(solution::FMU2Solution)
+function fmiGetSolutionValue(solution::FMUSolution, args...; kwargs...)
+    @warn "`fmiGetSolutionValue` is deprecated, use `getValue` instead." maxlog = 3
+    return getValue(solution, args...; kwargs...)
+end
+export fmiGetSolutionValue
+
+function fmi2GetSolutionTime(solution::FMUSolution)
     @warn "`fmi2GetSolutionTime` is deprecated, use `getTime` instead." maxlog = 3
     return getTime(solution)
 end
 export fmi2GetSolutionTime
+
+function fmiGetSolutionTime(solution::FMUSolution)
+    @warn "`fmiGetSolutionTime` is deprecated, use `getTime` instead." maxlog = 3
+    return getTime(solution)
+end
+export fmiGetSolutionTime
