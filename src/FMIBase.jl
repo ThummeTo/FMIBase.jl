@@ -44,7 +44,10 @@ include("setup.jl")
 include("logging.jl")
 include("sense.jl")
 include("snapshot.jl")
+include("solution.jl")
 include("valueRefs.jl")
+
+include("deprecated.jl")
 
 # extensions
 using Requires

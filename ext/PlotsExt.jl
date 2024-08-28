@@ -6,18 +6,23 @@
 module PlotsExt
 
 using FMIBase, Plots
+import FMIBase: unsense
 
 """
-    Plots.plot(solution::FMUSolution; kwargs...)
+    Plots.plot(solution::FMUSolution; plotkwargs...)
 
 Plots the `solution` of a FMU simulation and returns the corresponding figure.
 (requires package Plots.jl)
 
-See also [`plot!`](@ref)
+# Arguments
+- `solution::FMUSolution`: Struct containing information about the solution values, success, states and events of a specific FMU simulation.
+
+# Keywords
+- `plotkwargs...`: Arguments, that are passed on to Plots.plot!
 """
-function Plots.plot(solution::FMUSolution; kwargs...)
+function Plots.plot(solution::FMUSolution; plotkwargs...)
     fig = Plots.plot(; xlabel = "t [s]")
-    fmiPlot!(fig, solution; kwargs...)
+    Plots.plot!(fig, solution; plotkwargs...)
     return fig
 end
 
@@ -36,17 +41,17 @@ Plots the `solution` of a FMU simulation into `fig` and returns the figure again
 
 # Arguments
 - `fig::Plots.Plot`: Figure to plot into
-- `solution::FMUSolution`: Struct containing information about the solutions values, success, states and events of a specific FMU simulation.
-- `states::Union{Bool, Nothing}=nothing`: controls if states should be plotted (default = nothing: plot states from `solution`, as long as they exist)
-- `values::Union{Bool, Nothing}=nothing`: controls if values should be plotted (default = nothing: plot values from `solution`, as long as they exist)
+- `solution::FMUSolution`: Struct containing information about the solution values, success, states and events of a specific FMU simulation.
+- `states::Union{Bool, Nothing}=nothing`: controls if states should be plotted (default = nothing: plot states from `solution`, if they exist)
+- `values::Union{Bool, Nothing}=nothing`: controls if values should be plotted (default = nothing: plot values from `solution`, if they exist)
 - `stateEvents::Union{Bool, Nothing}=nothing`: controls if stateEvents should be plotted (default = nothing: plot stateEvents from `solution`, if at least one and at most 100 exist)
 - `timeEvents::Union{Bool, Nothing}=nothing`: controls if timeEvents should be plotted (default = nothing: plot timeEvents from `solution`, if at least one and at most 100 exist)
 - `stateIndices=nothing`: controls which states will be plotted by index in state vector (default = nothing: plot all states)
 - `valueIndices=nothing`: controls which values will be plotted by index (default = nothing: plot all values)
-- `maxLabelLength=64`: controls the maximum length for legend labels (too long labels are cut from front)
+- `maxLabelLength::Integer=64`: controls the maximum length for legend labels (too long labels are cut from front)
+- `maxStateEvents::Integer=100`: controls, how many state events are plotted before suppressing plotting state events
+- `maxTimeEvents::Integer=100`: controls, how many time events are plotted before suppressing plotting state events
 - `plotkwargs...`: Arguments, that are passed on to Plots.plot!
-
-See also [`fmiPlot`](@ref)
 """
 function Plots.plot!(
     fig::Plots.Plot,
@@ -57,11 +62,13 @@ function Plots.plot!(
     timeEvents::Union{Bool,Nothing} = nothing,
     stateIndices = nothing,
     valueIndices = nothing,
-    maxLabelLength = 64,
+    maxLabelLength::Integer = 64,
+    maxStateEvents::Integer = 100,
+    maxTimeEvents::Integer = 100,
     plotkwargs...,
 )
 
-    component = solution.instance
+    instance = solution.instance
 
     numStateEvents = 0
     numTimeEvents = 0
@@ -74,14 +81,14 @@ function Plots.plot!(
     end
 
     if isnothing(states)
-        states = (solution.states !== nothing)
+        states = !isnothing(solution.states)
     end
 
-    if values === nothing
-        values = (solution.values !== nothing)
+    if isnothing(values)
+        values = !isnothing(solution.values)
     end
 
-    if stateEvents === nothing
+    if isnothing(stateEvents)
         stateEvents = false
         for e in solution.events
             if e.indicator > 0
@@ -90,13 +97,13 @@ function Plots.plot!(
             end
         end
 
-        if numStateEvents > 100
+        if numStateEvents > maxStateEvents
             @info "fmiPlot(...): Number of state events ($(numStateEvents)) exceeding 100, disabling automatic plotting of state events (can be forced with keyword `stateEvents=true`)."
             stateEvents = false
         end
     end
 
-    if timeEvents === nothing
+    if isnothing(timeEvents)
         timeEvents = false
         for e in solution.events
             if e.indicator == 0
@@ -105,18 +112,18 @@ function Plots.plot!(
             end
         end
 
-        if numTimeEvents > 100
+        if numTimeEvents > maxTimeEvents
             @info "fmiPlot(...): Number of time events ($(numTimeEvents)) exceeding 100, disabling automatic plotting of time events (can be forced with keyword `timeEvents=true`)."
             timeEvents = false
         end
     end
 
-    if stateIndices === nothing
-        stateIndices = 1:length(component.fmu.modelDescription.stateValueReferences)
+    if isnothing(stateIndices)
+        stateIndices = 1:length(instance.fmu.modelDescription.stateValueReferences)
     end
 
-    if valueIndices === nothing
-        if solution.values !== nothing
+    if isnothing(valueIndices)
+        if !isnothing(solution.values)
             valueIndices = 1:length(solution.values.saveval[1])
         end
     end
@@ -131,8 +138,8 @@ function Plots.plot!(
 
         for v = 1:numValues
             if v ∈ stateIndices
-                vr = component.fmu.modelDescription.stateValueReferences[v]
-                vrNames = fmi2ValueReferenceToString(component.fmu, vr)
+                vr = instance.fmu.modelDescription.stateValueReferences[v]
+                vrNames = valueReferenceToString(instance.fmu, vr)
                 vrName = length(vrNames) > 0 ? vrNames[1] : "?"
 
                 vals = collect(unsense(data[v]) for data in solution.states.u)
@@ -161,10 +168,10 @@ function Plots.plot!(
             if v ∈ valueIndices
                 vr = "[unknown]"
                 vrName = "[unknown]"
-                if solution.valueReferences != nothing &&
+                if !isnothing(solution.valueReferences) &&
                    v <= length(solution.valueReferences)
                     vr = solution.valueReferences[v]
-                    vrNames = fmi2ValueReferenceToString(component.fmu, vr)
+                    vrNames = valueReferenceToString(instance.fmu, vr)
                     vrName = length(vrNames) > 0 ? vrNames[1] : "?"
                 end
 

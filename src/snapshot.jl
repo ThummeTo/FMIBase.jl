@@ -121,7 +121,6 @@ function apply!(
     end
 
     # time
-    #fmi2SetTime(c.fmu.cSetTime, c.compAddr, t)
     setTime(c, t)
     c.t = t
 
@@ -135,7 +134,7 @@ function freeSnapshot!(s::FMUSnapshot)
     s.fmuState = nothing
 
     ind = findall(x -> x == s, s.instance.snapshots)
-    @assert length(ind) == 1 "freeSnapshot!: Freeing $(length(ind)) snapshots with one call, this is not allowed. Target was found $(length(ind)) times at indicies $(ind)."
+    @assert length(ind) == 1 "freeSnapshot!: Freeing $(length(ind)) snapshots with one call, this is not allowed. Target was found $(length(ind)) times at indices $(ind)."
     deleteat!(s.instance.snapshots, ind)
 
     return nothing

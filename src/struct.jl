@@ -316,7 +316,7 @@ end
 The mutable struct representing a specific Solution of a FMI2 FMU.
 """
 mutable struct FMUSolution{C}
-    component::C # FMU2Component
+    instance::C # FMU2Component
     snapshots::Vector{FMUSnapshot}
     success::Bool
 
@@ -326,10 +326,10 @@ mutable struct FMUSolution{C}
     valueReferences::Union{Array,Nothing}          # ToDo: Array{fmi2ValueReference}
 
     # record events
-    events::Array{FMUEvent,1}
+    events::Vector{FMUEvent}
 
     # record event indicators
-    recordEventIndicators::Union{Array{Int,1},Nothing}
+    recordEventIndicators::Union{Vector{Int},Nothing}
     eventIndicators::Any                                 # ToDo: DataType
 
     # record eigenvalues 
@@ -362,13 +362,13 @@ mutable struct FMUSolution{C}
     function FMUSolution{C}() where {C}
         inst = new{C}()
 
-        inst.snapshots = []
+        inst.snapshots = Vector{FMUSnapshot}(undef, 0)
         inst.success = false
         inst.states = nothing
         inst.values = nothing
         inst.valueReferences = nothing
 
-        inst.events = []
+        inst.events = Vector{FMUEvent}(undef, 0)
 
         inst.recordEventIndicators = nothing
         inst.eigenvalues = nothing
@@ -400,9 +400,9 @@ mutable struct FMUSolution{C}
         return inst
     end
 
-    function FMUSolution(component::C) where {C}
+    function FMUSolution(instance::C) where {C}
         inst = FMUSolution{C}()
-        inst.component = component
+        inst.instance = instance
 
         return inst
     end
