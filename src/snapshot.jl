@@ -26,10 +26,10 @@ function snapshot!(sol::FMUSolution)
 end
 export snapshot!
 
-function snapshotDeltaTimeTolerance(inst::FMIInstance)
+function snapshotDeltaTimeTolerance(inst::FMUInstance)
     return inst.fmu.executionConfig.snapshotDeltaTimeTolerance
 end
-function snapshotDeltaTimeTolerance(sol::FMISolution)
+function snapshotDeltaTimeTolerance(sol::FMUSolution)
     return snapshotDeltaTimeTolerance(sol.instance)
 end
 
