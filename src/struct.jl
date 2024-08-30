@@ -52,6 +52,7 @@ mutable struct FMUExecutionConfiguration
 
     maxNewDiscreteStateCalls::UInt          # max calls for fmi2NewDiscreteStates before throwing an exception
     maxStateEventsPerSecond::UInt           # max state events allowed to occur per second (more is interpreted as event chattering)
+    snapshotDeltaTimeTolerance::Float64     # distance to distinguish between snapshots
 
     eval_t_gradients::Bool                  # if time gradients ∂ẋ_∂t and ∂y_∂t should be sampled (not part of the FMI standard)
     JVPBuiltInDerivatives::Bool             # use built-in directional derivatives for JVP-sensitivities over FMU without caching the jacobian (because this is done in the FMU, but not per default)
@@ -94,6 +95,7 @@ mutable struct FMUExecutionConfiguration
 
         inst.maxNewDiscreteStateCalls = 100
         inst.maxStateEventsPerSecond = 100
+        inst.snapshotDeltaTimeTolerance = 1e-8
 
         inst.eval_t_gradients = false
         inst.JVPBuiltInDerivatives = false

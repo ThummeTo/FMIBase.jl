@@ -26,7 +26,14 @@ function snapshot!(sol::FMUSolution)
 end
 export snapshot!
 
-function snapshot_if_needed!(obj::Union{FMUInstance,FMUSolution}, t::Real; atol = 1e-8)
+function snapshotDeltaTimeTolerance(inst::FMUInstance)
+    return inst.fmu.executionConfig.snapshotDeltaTimeTolerance
+end
+function snapshotDeltaTimeTolerance(sol::FMUSolution)
+    return snapshotDeltaTimeTolerance(sol.instance)
+end
+
+function snapshot_if_needed!(obj::Union{FMUInstance,FMUSolution}, t::Real; atol = snapshotDeltaTimeTolerance(obj))
     if !hasSnapshot(obj, t; atol = atol)
         snapshot!(obj)
     end
