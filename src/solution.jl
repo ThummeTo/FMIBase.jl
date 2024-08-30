@@ -35,13 +35,13 @@ function getState(solution::FMUSolution, vrs::fmi2ValueReferenceFormat; isIndex:
         end
     else
         ignore_derivatives() do
-            vrs = prepareValueReference(solution.component.fmu, vrs)
+            vrs = prepareValueReference(solution.instance.fmu, vrs)
 
             if !isnothing(solution.states)
                 for vr in vrs
                     found = false
-                    for i in 1:length(solution.component.fmu.modelDescription.stateValueReferences)
-                        if solution.component.fmu.modelDescription.stateValueReferences[i] == vr
+                    for i in 1:length(solution.instance.fmu.modelDescription.stateValueReferences)
+                        if solution.instance.fmu.modelDescription.stateValueReferences[i] == vr
                             push!(indices, i)
                             found = true 
                             break
@@ -101,19 +101,19 @@ function getStateDerivative(solution::FMUSolution, vrs::fmi2ValueReferenceFormat
         end
     else
         ignore_derivatives() do
-            vrs = prepareValueReference(solution.component.fmu, vrs)
+            vrs = prepareValueReference(solution.instance.fmu, vrs)
 
             if !isnothing(solution.states)
                 for vr in vrs
                     found = false
-                    for i in 1:length(solution.component.fmu.modelDescription.stateValueReferences)
-                        if solution.component.fmu.modelDescription.stateValueReferences[i] == vr
+                    for i in 1:length(solution.instance.fmu.modelDescription.stateValueReferences)
+                        if solution.instance.fmu.modelDescription.stateValueReferences[i] == vr
                             push!(indices, i)
                             found = true 
                             break
                         end
                     end
-                    @assert found "Couldn't find the index for value reference `$(vr)`! This is probaly because this value reference does not belong to a system state."
+                    @assert found "Couldn't find the index for value reference `$(vr)`! This is probably because this value reference does not belong to a system state."
                 end
             end
 
@@ -168,7 +168,7 @@ function getValue(solution::FMUSolution, vrs::fmi2ValueReferenceFormat; isIndex:
         end
     else
         ignore_derivatives() do
-            vrs = prepareValueReference(solution.component.fmu, vrs)
+            vrs = prepareValueReference(solution.instance.fmu, vrs)
 
             if !isnothing(solution.values)
                 for vr in vrs
@@ -180,7 +180,7 @@ function getValue(solution::FMUSolution, vrs::fmi2ValueReferenceFormat; isIndex:
                             break
                         end
                     end
-                    @assert found "Couldn't find the index for value reference `$(vr)`! This is probaly because this value reference does not exist for this system."
+                    @assert found "Couldn't find the index for value reference `$(vr)`! This is probably because this value reference does not exist for this system."
                 end
             end
 
