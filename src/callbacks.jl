@@ -113,7 +113,7 @@ function f(
 
     f(c, dx, x, p, t)
 
-    # correct statisitics, because fx-call above -> this was in fact an out-of-place evaluation
+    # correct statistics, because fx-call above -> this was in fact an out-of-place evaluation
     c.solution.evals_fx_inplace -= 1
 
     return dx
