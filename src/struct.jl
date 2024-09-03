@@ -417,7 +417,7 @@ Overload the Base.show() function for custom printing of the FMU2.
 function Base.show(io::IO, sol::FMUSolution)
     print(
         io,
-        "Model name:\n\t$(sol.component.fmu.modelDescription.modelName)\nSuccess:\n\t$(sol.success)\n",
+        "Model name:\n\t$(sol.instance.fmu.modelDescription.modelName)\nSuccess:\n\t$(sol.success)\n",
     )
 
     print(io, "f(x)-Evaluations:\n")
