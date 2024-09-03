@@ -16,7 +16,7 @@ function DataFrames.DataFrame(solution::FMUSolution)
         df[
             !,
             Symbol(
-                valueReferenceToString(solution.component.fmu, solution.valueReferences[i]),
+                valueReferenceToString(solution.instance.fmu, solution.valueReferences[i]),
             ),
         ] = [val[i] for val in solution.values.saveval]
     end

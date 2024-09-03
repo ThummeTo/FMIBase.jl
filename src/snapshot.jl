@@ -20,7 +20,7 @@ function snapshot!(c::FMUInstance)
     return s
 end
 function snapshot!(sol::FMUSolution)
-    s = snapshot!(sol.component)
+    s = snapshot!(sol.instance)
     push!(sol.snapshots, s)
     return s
 end
@@ -57,7 +57,28 @@ function getSnapshot(c::Union{FMU,FMUSolution}, t::Float64; exact::Bool = false,
     # [Note] only take exact fit if we are at 0, otherwise take the next left, 
     #        because we are saving snapshots for the right root of events.
 
-    @assert t ∉ (-Inf, Inf) "t = $(t), this is not allowed for snapshot search!"
+    #@assert t ∉ (-Inf, Inf) "t = $(t), this is not allowed for snapshot search!"
+    # if t == Inf 
+    #     if length(c.snapshots) > 0
+    #         @warn "t = $(t), this is not allowed for snapshot search!\nFallback to left-most snapshot!"
+    #         left = snapshots[1]
+    #         for snapshot in c.snapshots
+    #             if snapshot.t < left.t
+    #                 left = snapshot
+    #             end
+    #         end
+    #         return left
+    #     else
+    #         @warn "t = $(t), this is not allowed for snapshot search!\nNo snapshots available, returning nothing!"
+    #         return nothing 
+    #     end
+    # end
+
+    if t ∈ (-Inf, Inf)
+        @warn "t = $(t), this is not allowed for snapshot search! Returning nothing!"
+        return nothing
+    end
+
     @assert length(c.snapshots) > 0 "No snapshots available!"
 
     left = c.snapshots[1]
