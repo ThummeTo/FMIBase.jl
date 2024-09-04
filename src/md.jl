@@ -704,7 +704,7 @@ function getStartValue(
     starts = []
 
     for vr in vrs
-        mvs = fmi2ModelVariablesForValueReference(md, vr)
+        mvs = modelVariablesForValueReference(md, vr)
 
         if length(mvs) == 0
             @warn "getStartValue(...): Found no model variable with value reference $(vr)."
@@ -735,7 +735,7 @@ function getStartValue(
     starts = []
 
     for vr in vrs
-        mvs = fmi3ModelVariablesForValueReference(md, vr)
+        mvs = modelVariablesForValueReference(md, vr)
 
         if length(mvs) == 0
             @warn "getStartValue(...): Found no model variable with value reference $(vr)."
@@ -766,7 +766,7 @@ function getStartValue(
     starts = []
 
     for vr in vrs
-        mvs = fmi2ModelVariablesForValueReference(c.fmu.modelDescription, vr)
+        mvs = modelVariablesForValueReference(c.fmu.modelDescription, vr)
 
         if length(mvs) == 0
             @warn "fmi2GetStartValue(...): Found no model variable with value reference $(vr)."
@@ -818,7 +818,7 @@ function getStartValue(
     starts = []
 
     for vr in vrs
-        mvs = fmi3ModelVariablesForValueReference(c.fmu.modelDescription, vr)
+        mvs = modelVariablesForValueReference(c.fmu.modelDescription, vr)
 
         if length(mvs) == 0
             @warn "fmi3GetStartValue(...): Found no model variable with value reference $(vr)."
