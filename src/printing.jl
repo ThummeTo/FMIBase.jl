@@ -47,4 +47,3 @@ function logError(fmu::FMU, message, maxlog = typemax(Int))
     end
 end
 export logError
-
