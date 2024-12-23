@@ -33,7 +33,11 @@ function snapshotDeltaTimeTolerance(sol::FMUSolution)
     return snapshotDeltaTimeTolerance(sol.instance)
 end
 
-function snapshot_if_needed!(obj::Union{FMUInstance,FMUSolution}, t::Real; atol = snapshotDeltaTimeTolerance(obj))
+function snapshot_if_needed!(
+    obj::Union{FMUInstance,FMUSolution},
+    t::Real;
+    atol = snapshotDeltaTimeTolerance(obj),
+)
     if !hasSnapshot(obj, t; atol = atol)
         snapshot!(obj)
     end

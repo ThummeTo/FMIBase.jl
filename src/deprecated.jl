@@ -45,13 +45,15 @@ end
 export fmiGetSolutionState
 
 function fmi2GetSolutionDerivative(solution::FMUSolution, args...; kwargs...)
-    @warn "`fmi2GetSolutionDerivative` is deprecated, use `getStateDerivative` instead." maxlog = 3
+    @warn "`fmi2GetSolutionDerivative` is deprecated, use `getStateDerivative` instead." maxlog =
+        3
     return getStateDerivative(solution, args...; kwargs...)
 end
 export fmi2GetSolutionDerivative
 
 function fmiGetSolutionDerivative(solution::FMUSolution, args...; kwargs...)
-    @warn "`fmiGetSolutionDerivative` is deprecated, use `getStateDerivative` instead." maxlog = 3
+    @warn "`fmiGetSolutionDerivative` is deprecated, use `getStateDerivative` instead." maxlog =
+        3
     return getStateDerivative(solution, args...; kwargs...)
 end
 export fmiGetSolutionDerivative
