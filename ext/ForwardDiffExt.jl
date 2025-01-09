@@ -31,4 +31,3 @@ function FMIBase.sense_setindex!(A::Vector{Float64}, x::ForwardDiff.Dual, i::Int
 end
 
 end # ForwardDiffExt
-

@@ -144,12 +144,12 @@ end
 """
 ToDo
 """
-function setDiscreteStates(c::FMU2Component, x_d::AbstractArray{<:fmi2Real}; kwargs...)
-    setReal(c, c.fmu.modelDescription.discreteStateValueReferences, x_d; kwargs...)
+function setDiscreteStates(c::FMU2Component, x_d::AbstractArray{<:Any}; kwargs...)
+    setValue(c, c.fmu.modelDescription.discreteStateValueReferences, x_d; kwargs...)
     return nothing
 end
-function setDiscreteStates(c::FMU3Instance, x_d::AbstractArray{<:fmi3Float64}; kwargs...)
-    setReal(c, c.fmu.modelDescription.discreteStateValueReferences, x_d; kwargs...)
+function setDiscreteStates(c::FMU3Instance, x_d::AbstractArray{<:Any}; kwargs...)
+    setValue(c, c.fmu.modelDescription.discreteStateValueReferences, x_d; kwargs...)
     return nothing
 end
 
@@ -466,4 +466,24 @@ function getNextEventTime(c::FMU2Component)
 end
 function getNextEventTime(c::FMU3Instance)
     return c.nextEventTime
+end
+
+"""
+ToDo
+"""
+function enterEventMode(c::FMU2Component)
+    return fmi2EnterEventMode(c)
+end
+function enterEventMode(c::FMU3Instance)
+    return fmi3EnterEventMode(c)
+end
+
+"""
+ToDo
+"""
+function enterContinuousTimeMode(c::FMU2Component)
+    return fmi2EnterContinuousTimeMode(c)
+end
+function enterContinuousTimeMode(c::FMU3Instance)
+    return fmi3EnterContinuousTimeMode(c)
 end

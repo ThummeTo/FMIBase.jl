@@ -23,7 +23,11 @@ More detailed: `fmi2ValueReferenceFormat = Union{Nothing, String, Array{String,1
 - FMISpec2.0.2 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
 - FMISpec2.0.2[p.22]: 2.1.2 Platform Dependent Definitions (fmi2TypesPlatform.h)
 """
-function getState(solution::FMUSolution, vrs::fmi2ValueReferenceFormat; isIndex::Bool=false)
+function getState(
+    solution::FMUSolution,
+    vrs::fmi2ValueReferenceFormat;
+    isIndex::Bool = false,
+)
 
     indices = []
 
@@ -40,10 +44,14 @@ function getState(solution::FMUSolution, vrs::fmi2ValueReferenceFormat; isIndex:
             if !isnothing(solution.states)
                 for vr in vrs
                     found = false
-                    for i in 1:length(solution.instance.fmu.modelDescription.stateValueReferences)
-                        if solution.instance.fmu.modelDescription.stateValueReferences[i] == vr
+                    for i =
+                        1:length(
+                            solution.instance.fmu.modelDescription.stateValueReferences,
+                        )
+                        if solution.instance.fmu.modelDescription.stateValueReferences[i] ==
+                           vr
                             push!(indices, i)
-                            found = true 
+                            found = true
                             break
                         end
                     end
@@ -61,7 +69,9 @@ function getState(solution::FMUSolution, vrs::fmi2ValueReferenceFormat; isIndex:
             return collect(u[indices[1]] for u in solution.states.u)
 
         else # multi value
-            return collect(collect(u[indices[i]] for u in solution.states.u) for i in 1:length(indices))
+            return collect(
+                collect(u[indices[i]] for u in solution.states.u) for i = 1:length(indices)
+            )
 
         end
     end
@@ -90,7 +100,12 @@ More detailed: `fmi2ValueReferenceFormat = Union{Nothing, String, Array{String,1
 - FMISpec2.0.2 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
 - FMISpec2.0.2[p.22]: 2.1.2 Platform Dependent Definitions (fmi2TypesPlatform.h)
 """
-function getStateDerivative(solution::FMUSolution, vrs::fmi2ValueReferenceFormat; isIndex::Bool=false, order::Integer=1)
+function getStateDerivative(
+    solution::FMUSolution,
+    vrs::fmi2ValueReferenceFormat;
+    isIndex::Bool = false,
+    order::Integer = 1,
+)
     indices = []
 
     if isIndex
@@ -106,10 +121,14 @@ function getStateDerivative(solution::FMUSolution, vrs::fmi2ValueReferenceFormat
             if !isnothing(solution.states)
                 for vr in vrs
                     found = false
-                    for i in 1:length(solution.instance.fmu.modelDescription.stateValueReferences)
-                        if solution.instance.fmu.modelDescription.stateValueReferences[i] == vr
+                    for i =
+                        1:length(
+                            solution.instance.fmu.modelDescription.stateValueReferences,
+                        )
+                        if solution.instance.fmu.modelDescription.stateValueReferences[i] ==
+                           vr
                             push!(indices, i)
-                            found = true 
+                            found = true
                             break
                         end
                     end
@@ -124,10 +143,16 @@ function getStateDerivative(solution::FMUSolution, vrs::fmi2ValueReferenceFormat
     if length(indices) == length(vrs)
 
         if length(vrs) == 1  # single value
-            return collect(solution.states(t, Val{order})[indices[1]] for t in solution.states.t)
+            return collect(
+                solution.states(t, Val{order})[indices[1]] for t in solution.states.t
+            )
 
         else # multi value
-            return collect(collect(solution.states(t, Val{order})[indices[i]] for t in solution.states.t) for i in 1:length(indices))
+            return collect(
+                collect(
+                    solution.states(t, Val{order})[indices[i]] for t in solution.states.t
+                ) for i = 1:length(indices)
+            )
         end
     end
 
@@ -156,7 +181,11 @@ More detailed: `fmi2ValueReferenceFormat = Union{Nothing, String, Array{String,1
 - FMISpec2.0.2 Link: [https://fmi-standard.org/](https://fmi-standard.org/)
 - FMISpec2.0.2[p.22]: 2.1.2 Platform Dependent Definitions (fmi2TypesPlatform.h)
 """
-function getValue(solution::FMUSolution, vrs::fmi2ValueReferenceFormat; isIndex::Bool=false)
+function getValue(
+    solution::FMUSolution,
+    vrs::fmi2ValueReferenceFormat;
+    isIndex::Bool = false,
+)
 
     indices = []
 
@@ -173,10 +202,10 @@ function getValue(solution::FMUSolution, vrs::fmi2ValueReferenceFormat; isIndex:
             if !isnothing(solution.values)
                 for vr in vrs
                     found = false
-                    for i in 1:length(solution.valueReferences)
+                    for i = 1:length(solution.valueReferences)
                         if solution.valueReferences[i] == vr
                             push!(indices, i)
-                            found = true 
+                            found = true
                             break
                         end
                     end
@@ -194,7 +223,10 @@ function getValue(solution::FMUSolution, vrs::fmi2ValueReferenceFormat; isIndex:
             return collect(u[indices[1]] for u in solution.values.saveval)
 
         else # multi value
-            return collect(collect(u[indices[i]] for u in solution.values.saveval) for i in 1:length(indices))
+            return collect(
+                collect(u[indices[i]] for u in solution.values.saveval) for
+                i = 1:length(indices)
+            )
 
         end
     end
