@@ -13,8 +13,8 @@ import DiffEqCallbacks:
 
 function setupSolver!(fmu::FMU, tspan, kwargs)
 
-    t_start = tspan[1]
-    t_stop = tspan[end]
+    t_start = isnothing(tspan) ? nothing : tspan[1]
+    t_stop = isnothing(tspan) ? nothing : tspan[end]
 
     if isnothing(t_start)
         t_start = getDefaultStartTime(fmu)

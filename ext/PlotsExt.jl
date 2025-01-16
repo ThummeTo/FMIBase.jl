@@ -9,16 +9,31 @@ using FMIBase, Plots
 import FMIBase: unsense
 
 """
-    Plots.plot(solution::FMUSolution; plotkwargs...)
+    Plots.plot(solution::FMUSolution; 
+                states::Union{Bool, Nothing}=nothing,
+                values::Union{Bool, Nothing}=nothing,
+                stateEvents::Union{Bool, Nothing}=nothing,
+                timeEvents::Union{Bool, Nothing}=nothing,
+                stateIndices=nothing,
+                valueIndices=nothing,
+                maxLabelLength=64,
+                plotkwargs...)
 
-Plots the `solution` of a FMU simulation and returns the corresponding figure.
-(requires package Plots.jl)
+Plots the `solution` of a FMU simulation and returns a new figure.
 
 # Arguments
+- `fig::Plots.Plot`: Figure to plot into
 - `solution::FMUSolution`: Struct containing information about the solution values, success, states and events of a specific FMU simulation.
-
-# Keywords
-- `plotkwargs...`: Arguments, that are passed on to Plots.plot!
+- `states::Union{Bool, Nothing}=nothing`: controls if states should be plotted (default = nothing: plot states from `solution`, if they exist)
+- `values::Union{Bool, Nothing}=nothing`: controls if values should be plotted (default = nothing: plot values from `solution`, if they exist)
+- `stateEvents::Union{Bool, Nothing}=nothing`: controls if stateEvents should be plotted (default = nothing: plot stateEvents from `solution`, if at least one and at most 100 exist)
+- `timeEvents::Union{Bool, Nothing}=nothing`: controls if timeEvents should be plotted (default = nothing: plot timeEvents from `solution`, if at least one and at most 100 exist)
+- `stateIndices=nothing`: controls which states will be plotted by index in state vector (default = nothing: plot all states)
+- `valueIndices=nothing`: controls which values will be plotted by index (default = nothing: plot all values)
+- `maxLabelLength::Integer=64`: controls the maximum length for legend labels (too long labels are cut from front)
+- `maxStateEvents::Integer=100`: controls, how many state events are plotted before suppressing plotting state events
+- `maxTimeEvents::Integer=100`: controls, how many time events are plotted before suppressing plotting state events
+- `plotkwargs...`: Arguments, that are passed on to Plots.plot
 """
 function Plots.plot(solution::FMUSolution; plotkwargs...)
     fig = Plots.plot(; xlabel = "t [s]")

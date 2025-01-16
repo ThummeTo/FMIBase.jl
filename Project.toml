@@ -1,7 +1,7 @@
 name = "FMIBase"
 uuid = "900ee838-d029-460e-b485-d98a826ceef2"
 authors = ["TT <tobias.thummerer@informatik.uni-augsburg.de>", "LM <lars.mikelsons@informatik.uni-augsburg.de>"]
-version = "1.0.10"
+version = "1.0.11"
 
 [deps]
 ChainRulesCore = "d360d2e6-b24c-11e9-a2a3-2a2ae2dbcce4"
@@ -45,18 +45,18 @@ ReverseDiffExt = ["ReverseDiff"]
 
 [compat]
 CSV = "0.10"
-ChainRulesCore = "1.20 - 1.24"
+ChainRulesCore = "1.20"
 DataFrames = "1"
-DiffEqCallbacks = "2.0 - 3.9"
-EzXML = "1.1 - 1.2"
+DiffEqCallbacks = "2.0, 3.0, 4.0" 
+EzXML = "1.1"
 FMICore = "1.0"
-MAT = "0.10"
-JLD2 = "0.4"
-ForwardDiff = "0.10"
+MAT = "0.10.0"
+JLD2 = "0.4.0, 0.5.0"
+ForwardDiff = "0.10.0"
 PackageExtensionCompat = "1.0.0"
 Plots = "1"
 ProgressMeter = "1.7"
-Reexport = "1.0 - 1.2"
+Reexport = "1.0"
 Requires = "1.3.0"
 ReverseDiff = "1"
 SciMLBase = "1.0, 2.0" # v1 is required to keep Julia 1.6.7 (LTS) running!
