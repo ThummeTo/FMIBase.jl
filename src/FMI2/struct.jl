@@ -444,6 +444,11 @@ mutable struct FMU2 <: FMU
 
         return inst
     end
+
+    # required for creation of FMU layers in Flux.jl
+    function FMU2(args...)
+        return new(args...)
+    end
 end
 export FMU2
 
