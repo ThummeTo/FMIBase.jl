@@ -185,7 +185,7 @@ function (c::FMUInstance)(
         end
     end
 
-    @debug "dispatching on eval! $((c.cRef, dx, dx_refs, y, y_refs, x, u, u_refs, p, p_refs, ec, ec_idcs, t))"
+    # @debug "dispatching on eval! $((c.cRef, dx, dx_refs, y, y_refs, x, u, u_refs, p, p_refs, ec, ec_idcs, t))"
 
     # [Note] not necessary:
     #c.output = FMU2ADOutput{Real}(; initType=Real)
@@ -242,7 +242,7 @@ function eval!(
     t::Float64,
 )
 
-    @debug "eval! $((cRef, dx, dx_refs, y, y_refs, x, u, u_refs, p, p_refs, ec, ec_idcs, t))"
+    # @debug "eval! $((cRef, dx, dx_refs, y, y_refs, x, u, u_refs, p, p_refs, ec, ec_idcs, t))"
 
     c = unsafe_pointer_to_objref(Ptr{Nothing}(cRef))
 

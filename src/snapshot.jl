@@ -1,4 +1,4 @@
-#
+ #
 # Copyright (c) 2024 Tobias Thummerer, Lars Mikelsons
 # Licensed under the MIT license. See LICENSE file in the project root for details.
 #
@@ -17,6 +17,7 @@ end
 
 function snapshot!(c::FMUInstance)
     s = FMUSnapshot(c)
+    # is automatically pushed to instance within `FMUSnapshot`
     return s
 end
 function snapshot!(sol::FMUSolution)
@@ -53,11 +54,7 @@ function hasSnapshot(c::Union{FMUInstance,FMUSolution}, t::Float64; atol = 0.0)
     return false
 end
 
-function getSnapshot(c::FMUInstance, t::Float64; kwargs...)
-    return getSnapshot(c.fmu, t; kwargs...)
-end
-
-function getSnapshot(c::Union{FMU,FMUSolution}, t::Float64; exact::Bool = false, atol = 0.0)
+function getSnapshot(c::Union{FMUInstance,FMUSolution}, t::Float64; exact::Bool = false, atol = 0.0)
     # [Note] only take exact fit if we are at 0, otherwise take the next left, 
     #        because we are saving snapshots for the right root of events.
 
@@ -116,7 +113,11 @@ function update!(c::FMUInstance, s::FMUSnapshot)
     s.state = c.state
     s.instance = c
 
+    @debug "Updating snapshot t=$(s.t) [$(s.fmuState)]"
+
     getFMUstate!(c, Ref(s.fmuState))
+
+    @debug "... to t=$(s.t) [$(s.fmuState)]"
 
     s.x_c = isnothing(c.x) ? nothing : copy(c.x)
     s.x_d = isnothing(c.x_d) ? nothing : copy(c.x_d)
@@ -162,6 +163,8 @@ export apply!
 
 function freeSnapshot!(s::FMUSnapshot)
     #@async println("cleanup!")
+    @debug "Freeing snapshot t=$(s.t) [$(s.fmuState)]"
+
     freeFMUstate!(s.instance, Ref(s.fmuState))
     s.fmuState = nothing
 

@@ -199,6 +199,8 @@ mutable struct FMUSnapshot{E,C,D,I,S}
 
         inst = new{E,C,D,I,S}(t, eventInfo, state, instance, fmuState, x_c, x_d)
 
+        @debug "New snapshot #$(length(c.snapshots)+1) t=$(t), x_c=$(x_c) [$(fmuState)]"
+
         # if !isnothing(fmuState)
         #     inst = finalizer((_inst) -> cleanup!(c, _inst), inst)
         # end
