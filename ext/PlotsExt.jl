@@ -80,7 +80,7 @@ function Plots.plot!(
     maxLabelLength::Integer = 64,
     maxStateEvents::Integer = 100,
     maxTimeEvents::Integer = 100,
-    tspan::Union{Tuple{Real, Real}, Nothing} = nothing,
+    tspan::Union{Tuple{Real,Real},Nothing} = nothing,
     plotkwargs...,
 )
 
@@ -147,13 +147,13 @@ function Plots.plot!(
     plot_min = Inf
     plot_max = -Inf
 
-    t = nothing 
-    num_t = nothing 
+    t = nothing
+    num_t = nothing
 
     if values
         t = collect(unsense(e) for e in solution.values.t)
         num_t = length(solution.values.saveval)
-    end 
+    end
 
     if states
         t = collect(unsense(e) for e in solution.states.t)
@@ -165,7 +165,7 @@ function Plots.plot!(
 
     # calculating the indices for start and stop in tspan
     if !isnothing(tspan)
-        start, stop = tspan 
+        start, stop = tspan
 
         ts = 1
         te = num_t
@@ -180,9 +180,9 @@ function Plots.plot!(
         #     stop = t[end]
         # end
 
-        for i in 1:num_t
+        for i = 1:num_t
             if t[i] <= start
-                ts = max(i+1, ts)
+                ts = max(i + 1, ts)
             end
             if t[i] >= stop
                 te = min(i, te)

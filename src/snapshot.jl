@@ -1,4 +1,4 @@
- #
+#
 # Copyright (c) 2024 Tobias Thummerer, Lars Mikelsons
 # Licensed under the MIT license. See LICENSE file in the project root for details.
 #
@@ -54,7 +54,12 @@ function hasSnapshot(c::Union{FMUInstance,FMUSolution}, t::Float64; atol = 0.0)
     return false
 end
 
-function getSnapshot(c::Union{FMUInstance,FMUSolution}, t::Float64; exact::Bool = false, atol = 0.0)
+function getSnapshot(
+    c::Union{FMUInstance,FMUSolution},
+    t::Float64;
+    exact::Bool = false,
+    atol = 0.0,
+)
     # [Note] only take exact fit if we are at 0, otherwise take the next left, 
     #        because we are saving snapshots for the right root of events.
 
