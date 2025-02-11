@@ -80,6 +80,7 @@ function Plots.plot!(
     maxLabelLength::Integer = 64,
     maxStateEvents::Integer = 100,
     maxTimeEvents::Integer = 100,
+    tspan::Union{Tuple{Real, Real}, Nothing} = nothing,
     plotkwargs...,
 )
 
@@ -113,7 +114,7 @@ function Plots.plot!(
         end
 
         if numStateEvents > maxStateEvents
-            @info "fmiPlot(...): Number of state events ($(numStateEvents)) exceeding 100, disabling automatic plotting of state events (can be forced with keyword `stateEvents=true`)."
+            @info "plot(::FMUSolution, ...): Number of state events ($(numStateEvents)) exceeding 100, disabling automatic plotting of state events (can be forced with keyword `stateEvents=true`)."
             stateEvents = false
         end
     end
@@ -128,7 +129,7 @@ function Plots.plot!(
         end
 
         if numTimeEvents > maxTimeEvents
-            @info "fmiPlot(...): Number of time events ($(numTimeEvents)) exceeding 100, disabling automatic plotting of time events (can be forced with keyword `timeEvents=true`)."
+            @info "plot(::FMUSolution, ...): Number of time events ($(numTimeEvents)) exceeding 100, disabling automatic plotting of time events (can be forced with keyword `timeEvents=true`)."
             timeEvents = false
         end
     end
@@ -146,9 +147,55 @@ function Plots.plot!(
     plot_min = Inf
     plot_max = -Inf
 
-    # plot states
+    t = nothing 
+    num_t = nothing 
+
+    if values
+        t = collect(unsense(e) for e in solution.values.t)
+        num_t = length(solution.values.saveval)
+    end 
+
     if states
         t = collect(unsense(e) for e in solution.states.t)
+        num_t = length(solution.states.u)
+    end
+
+    ts = 1
+    te = num_t
+
+    # calculating the indices for start and stop in tspan
+    if !isnothing(tspan)
+        start, stop = tspan 
+
+        ts = 1
+        te = num_t
+
+        # if start < t[1]
+        #     # @warn "Given tspan start $(start) is less than solution start $(t[1]), correcting it."
+        #     start = t[1]
+        # end
+
+        # if stop > t[end]
+        #     # @warn "Given tspan stop $(start) is greater than solution stop $(t[end]), correcting it."
+        #     stop = t[end]
+        # end
+
+        for i in 1:num_t
+            if t[i] <= start
+                ts = max(i+1, ts)
+            end
+            if t[i] >= stop
+                te = min(i, te)
+            end
+        end
+
+        t = t[ts:te]
+        num_t = te - ts + 1
+    end
+
+    # plot states
+    if states
+        t = collect(unsense(e) for e in solution.states.t[ts:te])
         numValues = length(solution.states.u[1])
 
         for v = 1:numValues
@@ -157,7 +204,7 @@ function Plots.plot!(
                 vrNames = valueReferenceToString(instance.fmu, vr)
                 vrName = length(vrNames) > 0 ? vrNames[1] : "?"
 
-                vals = collect(unsense(data[v]) for data in solution.states.u)
+                vals = collect(unsense(data[v]) for data in solution.states.u[ts:te])
 
                 plot_min = min(plot_min, vals...)
                 plot_max = max(plot_max, vals...)
@@ -176,7 +223,7 @@ function Plots.plot!(
 
     # plot recorded values
     if values
-        t = collect(unsense(e) for e in solution.values.t)
+        t = collect(unsense(e) for e in solution.values.t[ts:te])
         numValues = length(solution.values.saveval[1])
 
         for v = 1:numValues
@@ -190,7 +237,7 @@ function Plots.plot!(
                     vrName = length(vrNames) > 0 ? vrNames[1] : "?"
                 end
 
-                vals = collect(unsense(data[v]) for data in solution.values.saveval)
+                vals = collect(unsense(data[v]) for data in solution.values.saveval[ts:te])
 
                 plot_min = min(plot_min, vals...)
                 plot_max = max(plot_max, vals...)
