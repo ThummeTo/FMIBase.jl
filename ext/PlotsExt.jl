@@ -9,16 +9,31 @@ using FMIBase, Plots
 import FMIBase: unsense
 
 """
-    Plots.plot(solution::FMUSolution; plotkwargs...)
+    Plots.plot(solution::FMUSolution; 
+                states::Union{Bool, Nothing}=nothing,
+                values::Union{Bool, Nothing}=nothing,
+                stateEvents::Union{Bool, Nothing}=nothing,
+                timeEvents::Union{Bool, Nothing}=nothing,
+                stateIndices=nothing,
+                valueIndices=nothing,
+                maxLabelLength=64,
+                plotkwargs...)
 
-Plots the `solution` of a FMU simulation and returns the corresponding figure.
-(requires package Plots.jl)
+Plots the `solution` of a FMU simulation and returns a new figure.
 
 # Arguments
+- `fig::Plots.Plot`: Figure to plot into
 - `solution::FMUSolution`: Struct containing information about the solution values, success, states and events of a specific FMU simulation.
-
-# Keywords
-- `plotkwargs...`: Arguments, that are passed on to Plots.plot!
+- `states::Union{Bool, Nothing}=nothing`: controls if states should be plotted (default = nothing: plot states from `solution`, if they exist)
+- `values::Union{Bool, Nothing}=nothing`: controls if values should be plotted (default = nothing: plot values from `solution`, if they exist)
+- `stateEvents::Union{Bool, Nothing}=nothing`: controls if stateEvents should be plotted (default = nothing: plot stateEvents from `solution`, if at least one and at most 100 exist)
+- `timeEvents::Union{Bool, Nothing}=nothing`: controls if timeEvents should be plotted (default = nothing: plot timeEvents from `solution`, if at least one and at most 100 exist)
+- `stateIndices=nothing`: controls which states will be plotted by index in state vector (default = nothing: plot all states)
+- `valueIndices=nothing`: controls which values will be plotted by index (default = nothing: plot all values)
+- `maxLabelLength::Integer=64`: controls the maximum length for legend labels (too long labels are cut from front)
+- `maxStateEvents::Integer=100`: controls, how many state events are plotted before suppressing plotting state events
+- `maxTimeEvents::Integer=100`: controls, how many time events are plotted before suppressing plotting state events
+- `plotkwargs...`: Arguments, that are passed on to Plots.plot
 """
 function Plots.plot(solution::FMUSolution; plotkwargs...)
     fig = Plots.plot(; xlabel = "t [s]")
@@ -65,6 +80,7 @@ function Plots.plot!(
     maxLabelLength::Integer = 64,
     maxStateEvents::Integer = 100,
     maxTimeEvents::Integer = 100,
+    tspan::Union{Tuple{Real,Real},Nothing} = nothing,
     plotkwargs...,
 )
 
@@ -98,7 +114,7 @@ function Plots.plot!(
         end
 
         if numStateEvents > maxStateEvents
-            @info "fmiPlot(...): Number of state events ($(numStateEvents)) exceeding 100, disabling automatic plotting of state events (can be forced with keyword `stateEvents=true`)."
+            @info "plot(::FMUSolution, ...): Number of state events ($(numStateEvents)) exceeding 100, disabling automatic plotting of state events (can be forced with keyword `stateEvents=true`)."
             stateEvents = false
         end
     end
@@ -113,7 +129,7 @@ function Plots.plot!(
         end
 
         if numTimeEvents > maxTimeEvents
-            @info "fmiPlot(...): Number of time events ($(numTimeEvents)) exceeding 100, disabling automatic plotting of time events (can be forced with keyword `timeEvents=true`)."
+            @info "plot(::FMUSolution, ...): Number of time events ($(numTimeEvents)) exceeding 100, disabling automatic plotting of time events (can be forced with keyword `timeEvents=true`)."
             timeEvents = false
         end
     end
@@ -131,9 +147,55 @@ function Plots.plot!(
     plot_min = Inf
     plot_max = -Inf
 
-    # plot states
+    t = nothing
+    num_t = nothing
+
+    if values
+        t = collect(unsense(e) for e in solution.values.t)
+        num_t = length(solution.values.saveval)
+    end
+
     if states
         t = collect(unsense(e) for e in solution.states.t)
+        num_t = length(solution.states.u)
+    end
+
+    ts = 1
+    te = num_t
+
+    # calculating the indices for start and stop in tspan
+    if !isnothing(tspan)
+        start, stop = tspan
+
+        ts = 1
+        te = num_t
+
+        # if start < t[1]
+        #     # @warn "Given tspan start $(start) is less than solution start $(t[1]), correcting it."
+        #     start = t[1]
+        # end
+
+        # if stop > t[end]
+        #     # @warn "Given tspan stop $(start) is greater than solution stop $(t[end]), correcting it."
+        #     stop = t[end]
+        # end
+
+        for i = 1:num_t
+            if t[i] <= start
+                ts = max(i + 1, ts)
+            end
+            if t[i] >= stop
+                te = min(i, te)
+            end
+        end
+
+        t = t[ts:te]
+        num_t = te - ts + 1
+    end
+
+    # plot states
+    if states
+        t = collect(unsense(e) for e in solution.states.t[ts:te])
         numValues = length(solution.states.u[1])
 
         for v = 1:numValues
@@ -142,7 +204,7 @@ function Plots.plot!(
                 vrNames = valueReferenceToString(instance.fmu, vr)
                 vrName = length(vrNames) > 0 ? vrNames[1] : "?"
 
-                vals = collect(unsense(data[v]) for data in solution.states.u)
+                vals = collect(unsense(data[v]) for data in solution.states.u[ts:te])
 
                 plot_min = min(plot_min, vals...)
                 plot_max = max(plot_max, vals...)
@@ -161,7 +223,7 @@ function Plots.plot!(
 
     # plot recorded values
     if values
-        t = collect(unsense(e) for e in solution.values.t)
+        t = collect(unsense(e) for e in solution.values.t[ts:te])
         numValues = length(solution.values.saveval[1])
 
         for v = 1:numValues
@@ -175,7 +237,7 @@ function Plots.plot!(
                     vrName = length(vrNames) > 0 ? vrNames[1] : "?"
                 end
 
-                vals = collect(unsense(data[v]) for data in solution.values.saveval)
+                vals = collect(unsense(data[v]) for data in solution.values.saveval[ts:te])
 
                 plot_min = min(plot_min, vals...)
                 plot_max = max(plot_max, vals...)
