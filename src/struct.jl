@@ -69,6 +69,7 @@ mutable struct FMUExecutionConfiguration
     handleTimeEvents::Bool                  # handle time events during simulation/training
 
     assertOnError::Bool                     # wheter an exception is thrown if a fmi2XXX-command fails (>= fmi2StatusError)
+    assertOnDiscard::Bool                   # wheter an exception is thrown if a fmi2XXX-command discards (>= fmi2StatusDiscard)
     assertOnWarning::Bool                   # wheter an exception is thrown if a fmi2XXX-command warns (>= fmi2StatusWarning)
 
     autoTimeShift::Bool                     # wheter to shift all time-related functions for simulation intervals not starting at 0.0
@@ -112,6 +113,7 @@ mutable struct FMUExecutionConfiguration
         inst.handleTimeEvents = true
 
         inst.assertOnError = false
+        inst.assertOnDiscard = false
         inst.assertOnWarning = false
 
         inst.autoTimeShift = false

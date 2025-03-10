@@ -68,6 +68,12 @@ isStatusOK(::FMU3Instance, status::fmi3Status) = (status == fmi3StatusOK)
 isStatusOK(::FMU2, status::fmi2Status) = (status == fmi2StatusOK)
 isStatusOK(::FMU3, status::fmi3Status) = (status == fmi3StatusOK)
 
+# status error
+isStatusError(::FMU2Component, status::fmi2Status) = (status >= fmi2StatusError)
+isStatusError(::FMU3Instance, status::fmi3Status) = (status >= fmi3StatusError)
+isStatusError(::FMU2, status::fmi2Status) = (status >= fmi2StatusError)
+isStatusError(::FMU3, status::fmi3Status) = (status >= fmi3StatusError)
+
 # wildcard for "no time set" 
 const NO_fmi2Real = typemin(fmi2Real)
 const NO_fmi3Float64 = typemin(fmi3Float64)

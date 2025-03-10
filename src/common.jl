@@ -218,7 +218,8 @@ function getDerivatives!(
 )
     @assert !c.fmu.isZeroState "getDerivatives! is not callable for zero state FMUs!"
 
-    fmi2GetDerivatives!(c, dx)
+    status = fmi2GetDerivatives!(c, dx)
+    #@assert isStatusOK(c, status) "fmi2GetDerivatives! failed with `$(status)`, check FMU error log for hints."
     return nothing
 end
 function getDerivatives!(
@@ -313,8 +314,8 @@ function getDirectionalDerivative(
     ∂x_refs::AbstractArray{<:fmi2ValueReference},
     seed,
 )
-    fmi2GetDirectionalDerivative(c, ∂f_refs, ∂x_refs, seed)
-    return nothing
+    status = fmi2GetDirectionalDerivative(c, ∂f_refs, ∂x_refs, seed)
+    return isStatusOK(c, status)
 end
 function getDirectionalDerivative(
     c::FMU3Instance,
@@ -322,8 +323,8 @@ function getDirectionalDerivative(
     ∂x_refs::AbstractArray{<:fmi3ValueReference},
     seed,
 )
-    fmi3GetDirectionalDerivative(c, ∂f_refs, ∂x_refs, seed)
-    return nothing
+    status = fmi3GetDirectionalDerivative(c, ∂f_refs, ∂x_refs, seed)
+    return isStatusOK(c, status)
 end
 
 """
@@ -333,21 +334,96 @@ function getDirectionalDerivative!(
     c::FMU2Component,
     ∂f_refs::AbstractArray{<:fmi2ValueReference},
     ∂x_refs::AbstractArray{<:fmi2ValueReference},
-    jvp,
     seed,
+    jvp,
 )
-    fmi2GetDirectionalDerivative!(c, ∂f_refs, ∂x_refs, jvp, seed)
-    return nothing
+    status = fmi2GetDirectionalDerivative!(c, ∂f_refs, ∂x_refs, seed, jvp)
+    return isStatusOK(c, status)
 end
 function getDirectionalDerivative!(
     c::FMU3Instance,
     ∂f_refs::AbstractArray{<:fmi3ValueReference},
     ∂x_refs::AbstractArray{<:fmi3ValueReference},
-    jvp,
     seed,
+    jvp,
 )
-    fmi3GetDirectionalDerivative!(c, ∂f_refs, ∂x_refs, jvp, seed)
-    return nothing
+    status = fmi3GetDirectionalDerivative!(c, ∂f_refs, ∂x_refs, seed, jvp)
+    return isStatusOK(c, status)
+end
+
+function indicesForRefs(c, refs)
+    indices = Integer[]
+    vrs = c.fmu.modelDescription.stateValueReferences
+    for i in 1:length(vrs)
+        vr = vrs[i]
+        if vr ∈ refs 
+            push!(indices, i)
+        end
+    end 
+    return indices
+end
+
+using FiniteDiff
+function sampleDirectionalDerivative!(c::FMUInstance, f_refs, x_refs, seed, res)
+
+    Δx = ones(length(x_refs)) * 1e-6
+
+    # if !isnothing(c.x_nominals)
+    #     nominal_idcs = indicesForRefs(c, x_refs)
+    #     @info "$(x_refs)"
+    #     @info "$(nominal_idcs)"
+    #     Δx .*= c.x_nominals[nominal_idcs]
+    # end
+
+    # x = getReal(c, x_refs)
+
+    # setReal(c, x_refs, x + Δx)
+    # pos = getReal(c, f_refs)
+
+    # setReal(c, x_refs, x - Δx)
+    # neg = getReal(c, f_refs)
+
+    # setReal(c, x_refs, x)
+
+    # res[:] = (pos - neg) ./ (2*Δx) 
+
+    # compute J, then J * seed
+    # f = function(x)
+    #     setReal(c, x_refs, x)
+    #     #getReal!(c, f_refs, dx)
+    #     getReal(c, f_refs)
+    # end
+    # x = getReal(c, x_refs)
+    # J = FiniteDiff.finite_difference_jacobian(f, x)
+    # res[:] = J * seed
+
+    # compute seed' * J (directly)
+    # f = function(x_sample, x)
+    #     σ = (x_sample - x) ./ seed
+    #     @info "$(σ)"
+        
+    #     setReal(c, x_refs, x + σ * seed) 
+    #     #getReal!(c, f_refs, dx)
+    #     getReal(c, f_refs)
+    # end
+    # x = getReal(c, x_refs)
+    # JVP_transpose = FiniteDiff.finite_difference_jacobian(_x -> f(_x, x), x)
+    # res[:] = JVP_transpose[1,:]
+    
+    Δx = 1e-12
+    x = getReal(c, x_refs)
+
+    setReal(c, x_refs, x + Δx * seed)
+    pos = getReal(c, f_refs)
+
+    setReal(c, x_refs, x - Δx * seed)
+    neg = getReal(c, f_refs)
+
+    setReal(c, x_refs, x)
+
+    res[:] = (pos - neg) ./ (2*Δx) 
+
+    nothing
 end
 
 """
@@ -357,8 +433,8 @@ function getAdjointDerivative!(
     c::FMU2Component,
     ∂f_refs::AbstractArray{<:fmi2ValueReference},
     ∂x_refs::AbstractArray{<:fmi2ValueReference},
-    vjp,
     seed,
+    vjp,
 )
     @assert false "No adjoint derivatives in FMI2!"
     return nothing
@@ -367,11 +443,11 @@ function getAdjointDerivative!(
     c::FMU3Instance,
     ∂f_refs::AbstractArray{<:fmi3ValueReference},
     ∂x_refs::AbstractArray{<:fmi3ValueReference},
-    vjp,
     seed,
+    vjp,
 )
-    fmi3GetAdjointDerivative!(c, ∂f_refs, ∂x_refs, vjp, seed)
-    return nothing
+    status = fmi3GetAdjointDerivative!(c, ∂f_refs, ∂x_refs, vjp, seed)
+    return isStatusOK(c, status)
 end
 
 # get/set FMU state 

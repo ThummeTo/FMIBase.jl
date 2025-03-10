@@ -67,6 +67,7 @@ mutable struct FMU2Component{F} <: FMUInstance
     t::fmi2Real             # the system time
     t_offset::fmi2Real      # time offset between simulation environment and FMU
     x::Union{Array{fmi2Real,1},Nothing}   # the system states (or sometimes u)
+    x_nominals::Union{Array{fmi2Real,1},Nothing}   # the system states (or sometimes u)
     x_d::Union{Array{Union{fmi2Real,fmi2Integer,fmi2Boolean},1},Nothing}   # the system discrete states
     ẋ::Union{Array{fmi2Real,1},Nothing}   # the system state derivative (or sometimes u̇)
     ẍ::Union{Array{fmi2Real,1},Nothing}   # the system state second derivative
@@ -131,6 +132,7 @@ mutable struct FMU2Component{F} <: FMUInstance
 
     # a container for all created snapshots, so that we can properly release them at unload
     snapshots::Vector{FMUSnapshot}
+    sampleSnapshot::Union{FMUSnapshot, Nothing} # a snapshot that is (re-)used for sampling 
 
     # constructor
     function FMU2Component{F}() where {F}
@@ -159,6 +161,7 @@ mutable struct FMU2Component{F} <: FMUInstance
 
         # caches
         inst.x = nothing
+        inst.x_nominals = nothing
         inst.x_d = nothing
         inst.ẋ = nothing
         inst.ẍ = nothing
@@ -206,6 +209,7 @@ mutable struct FMU2Component{F} <: FMUInstance
         inst.default_ec = EMPTY_fmi2Real
 
         inst.snapshots = Vector{FMUSnapshot}()
+        inst.sampleSnapshot = nothing
 
         # performance (pointers to prevent repeating allocations)
         inst._enterEventMode = zeros(fmi2Boolean, 1)

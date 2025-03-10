@@ -218,6 +218,21 @@ function (c::FMUInstance)(;
     (c)(dx, dx_refs, y, y_refs, x, u, u_refs, p, p_refs, ec, ec_idcs, t)
 end
 
+"""
+    sample!(cRef, dx, dx_refs, y, y_refs, x, u, u_refs, p, p_refs, ec, ec_idcs, t)
+
+Similar to `eval!`, but makes a snapshot beforehand to preserve the state before the change.
+"""
+function sample!(cRef, dx, dx_refs, y, y_refs, x, u, u_refs, p, p_refs, ec, ec_idcs, t)
+    c = unsafe_pointer_to_objref(Ptr{Nothing}(cRef))
+
+    startSampling(c)
+    ret = eval!(cRef, dx, dx_refs, y, y_refs, x, u, u_refs, p, p_refs, ec, ec_idcs, t)
+    stopSampling(c)
+
+    return ret
+end
+
 function eval!(cRef, dx, dx_refs, y, y_refs, x, u, u_refs, p, p_refs, ec, ec_idcs, t)
     @assert isa(x, AbstractArray{Float64}) ERR_MSG_NO_FMISENSITIVITY("x", typeof(x))
     @assert isa(u, AbstractArray{Float64}) ERR_MSG_NO_FMISENSITIVITY("u", typeof(u))

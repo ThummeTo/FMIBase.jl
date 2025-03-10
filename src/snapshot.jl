@@ -80,12 +80,12 @@ function getSnapshot(
     #     end
     # end
 
+    @assert length(c.snapshots) > 0 "No snapshots available!"
+
     if t ∈ (-Inf, Inf)
         @warn "t = $(t), this is not allowed for snapshot search! Returning nothing!"
         return nothing
     end
-
-    @assert length(c.snapshots) > 0 "No snapshots available!"
 
     left = c.snapshots[1]
     # right = c.snapshots[1]
@@ -139,13 +139,13 @@ function apply!(
     fmuState = s.fmuState,
 )
 
+    @debug "Applied snapshot $(s.t) @ $(c.t)"
+
     # FMU state
     setFMUstate!(c, fmuState)
     c.eventInfo = deepcopy(s.eventInfo)
     c.state = s.state
-
-    @debug "Applied snapshot $(s.t)"
-
+    
     # continuous state
     if !isnothing(x_c)
         setContinuousStates(c, x_c)
@@ -161,6 +161,7 @@ function apply!(
     # time
     setTime(c, t)
     c.t = t
+    c.default_t = t
 
     return nothing
 end
@@ -180,3 +181,17 @@ function freeSnapshot!(s::FMUSnapshot)
     return nothing
 end
 export freeSnapshot!
+
+function startSampling(c::FMUInstance)
+    if isnothing(c.sampleSnapshot)
+        c.sampleSnapshot = snapshot!(c)
+    else
+        update!(c, c.sampleSnapshot)
+    end
+    return c.sampleSnapshot
+end
+
+function stopSampling(c::FMUInstance)
+    @assert !isnothing(c.sampleSnapshot) "`stopSampling` called BEFORE `startSampling`, this is not allowed."
+    return apply!(c, c.sampleSnapshot)
+end
