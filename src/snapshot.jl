@@ -113,13 +113,13 @@ end
 export getSnapshot
 
 function update!(c::FMUInstance, s::FMUSnapshot)
+
+    @debug "Updating snapshot t=$(s.t) [$(s.fmuState)]"
+
     s.t = c.t
     s.eventInfo = deepcopy(c.eventInfo)
     s.state = c.state
     s.instance = c
-
-    @debug "Updating snapshot t=$(s.t) [$(s.fmuState)]"
-
     getFMUstate!(c, Ref(s.fmuState))
 
     @debug "... to t=$(s.t) [$(s.fmuState)]"

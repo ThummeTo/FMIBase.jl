@@ -219,7 +219,7 @@ function getDerivatives!(
     @assert !c.fmu.isZeroState "getDerivatives! is not callable for zero state FMUs!"
 
     status = fmi2GetDerivatives!(c, dx)
-    #@assert isStatusOK(c, status) "fmi2GetDerivatives! failed with `$(status)`, check FMU error log for hints."
+
     return nothing
 end
 function getDerivatives!(
@@ -230,6 +230,7 @@ function getDerivatives!(
     @assert !c.fmu.isZeroState "getDerivatives! is not callable for zero state FMUs!"
 
     fmi3GetContinuousStateDerivatives!(c, dx)
+
     return nothing
 end
 
@@ -363,54 +364,8 @@ function indicesForRefs(c, refs)
     return indices
 end
 
-using FiniteDiff
-function sampleDirectionalDerivative!(c::FMUInstance, f_refs, x_refs, seed, res)
-
-    Δx = ones(length(x_refs)) * 1e-6
-
-    # if !isnothing(c.x_nominals)
-    #     nominal_idcs = indicesForRefs(c, x_refs)
-    #     @info "$(x_refs)"
-    #     @info "$(nominal_idcs)"
-    #     Δx .*= c.x_nominals[nominal_idcs]
-    # end
-
-    # x = getReal(c, x_refs)
-
-    # setReal(c, x_refs, x + Δx)
-    # pos = getReal(c, f_refs)
-
-    # setReal(c, x_refs, x - Δx)
-    # neg = getReal(c, f_refs)
-
-    # setReal(c, x_refs, x)
-
-    # res[:] = (pos - neg) ./ (2*Δx) 
-
-    # compute J, then J * seed
-    # f = function(x)
-    #     setReal(c, x_refs, x)
-    #     #getReal!(c, f_refs, dx)
-    #     getReal(c, f_refs)
-    # end
-    # x = getReal(c, x_refs)
-    # J = FiniteDiff.finite_difference_jacobian(f, x)
-    # res[:] = J * seed
-
-    # compute seed' * J (directly)
-    # f = function(x_sample, x)
-    #     σ = (x_sample - x) ./ seed
-    #     @info "$(σ)"
-        
-    #     setReal(c, x_refs, x + σ * seed) 
-    #     #getReal!(c, f_refs, dx)
-    #     getReal(c, f_refs)
-    # end
-    # x = getReal(c, x_refs)
-    # JVP_transpose = FiniteDiff.finite_difference_jacobian(_x -> f(_x, x), x)
-    # res[:] = JVP_transpose[1,:]
+function sampleDirectionalDerivative!(c::FMUInstance, f_refs, x_refs, seed, res; Δx = 1e-12)
     
-    Δx = 1e-12
     x = getReal(c, x_refs)
 
     setReal(c, x_refs, x + Δx * seed)
@@ -419,9 +374,9 @@ function sampleDirectionalDerivative!(c::FMUInstance, f_refs, x_refs, seed, res)
     setReal(c, x_refs, x - Δx * seed)
     neg = getReal(c, f_refs)
 
-    setReal(c, x_refs, x)
-
     res[:] = (pos - neg) ./ (2*Δx) 
+
+    setReal(c, x_refs, x)
 
     nothing
 end

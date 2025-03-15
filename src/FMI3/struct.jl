@@ -146,7 +146,9 @@ mutable struct FMU3Instance{F} <: FMUInstance
     # constructor
     function FMU3Instance{F}() where {F}
         inst = new()
+
         inst.cRef = UInt64(pointer_from_objref(inst))
+
         inst.state = fmi3InstanceStateInstantiated
         inst.t = NO_fmi3Float64
         inst.t_offset = fmi3Float64(0.0)
@@ -239,8 +241,9 @@ mutable struct FMU3Instance{F} <: FMUInstance
 
     function FMU3Instance(fmu::F) where {F}
         inst = FMU3Instance{F}()
-        inst.fmu = fmu
 
+        inst.fmu = fmu
+        
         inst.default_t = inst.fmu.default_t
         inst.default_p_refs =
             inst.fmu.default_p_refs === EMPTY_fmi3ValueReference ? inst.fmu.default_p_refs :
@@ -473,10 +476,13 @@ mutable struct FMU3 <: FMU
     # Constructor
     function FMU3(logLevel::FMULogLevel = FMULogLevelWarn)
         inst = new()
-        inst.instances = []
+
         inst.modelName = ""
+        inst.fmuResourceLocation = ""
         inst.logLevel = logLevel
 
+        inst.instances = []
+        
         inst.hasStateEvents = nothing
         inst.hasTimeEvents = nothing
 
@@ -497,6 +503,86 @@ mutable struct FMU3 <: FMU
         inst.default_y_refs = EMPTY_fmi3ValueReference
         inst.default_dx = EMPTY_fmi3Float64
         inst.default_dx_refs = EMPTY_fmi3ValueReference
+
+        # c-functions
+        inst.cInstantiateModelExchange = C_NULL
+        inst.cInstantiateCoSimulation = C_NULL
+        inst.cInstantiateScheduledExecution = C_NULL
+
+        inst.cGetVersion = C_NULL
+        inst.cFreeInstance = C_NULL
+        inst.cSetDebugLogging = C_NULL
+        inst.cEnterConfigurationMode = C_NULL
+        inst.cExitConfigurationMode = C_NULL
+        inst.cEnterInitializationMode = C_NULL
+        inst.cExitInitializationMode = C_NULL
+        inst.cTerminate = C_NULL
+        inst.cReset = C_NULL
+        inst.cGetFloat32 = C_NULL
+        inst.cSetFloat32 = C_NULL
+        inst.cGetFloat64 = C_NULL
+        inst.cSetFloat64 = C_NULL
+        inst.cGetInt8 = C_NULL
+        inst.cSetInt8 = C_NULL
+        inst.cGetUInt8 = C_NULL
+        inst.cSetUInt8 = C_NULL
+        cGetInt16 = C_NULL
+        inst.cSetInt16 = C_NULL
+        inst.cGetUInt16 = C_NULL
+        inst.cSetUInt16 = C_NULL
+        inst.cGetInt32 = C_NULL
+        inst.cSetInt32 = C_NULL
+        inst.cGetUInt32 = C_NULL
+        inst.cSetUInt32 = C_NULL
+        inst.cGetInt64 = C_NULL
+        inst.cSetInt64 = C_NULL
+        inst.cGetUInt64 = C_NULL
+        inst.cSetUInt64 = C_NULL
+        inst.cGetBoolean = C_NULL
+        inst.cSetBoolean = C_NULL
+        inst.cGetString = C_NULL
+        inst.cSetString = C_NULL
+        inst.cGetBinary = C_NULL
+        inst.cSetBinary = C_NULL
+        inst.cGetFMUState = C_NULL
+        inst.cSetFMUState = C_NULL
+        inst.cFreeFMUState = C_NULL
+        inst.cSerializedFMUStateSize = C_NULL
+        inst.cSerializeFMUState = C_NULL
+        inst.cDeSerializeFMUState = C_NULL
+        inst.cGetDirectionalDerivative = C_NULL
+        inst.cGetAdjointDerivative = C_NULL
+        inst.cEvaluateDiscreteStates = C_NULL
+        inst.cGetNumberOfVariableDependencies = C_NULL
+        inst.cGetVariableDependencies = C_NULL
+
+        # Co Simulation function calls
+        inst.cGetOutputDerivatives = C_NULL
+        inst.cEnterStepMode = C_NULL
+        inst.cDoStep = C_NULL
+
+        # Model Exchange function calls
+        inst.cGetNumberOfContinuousStates = C_NULL
+        inst.cGetNumberOfEventIndicators = C_NULL
+        inst.cGetContinuousStates = C_NULL
+        inst.cGetNominalsOfContinuousStates = C_NULL
+        inst.cEnterContinuousTimeMode = C_NULL
+        inst.cSetTime = C_NULL
+        inst.cSetContinuousStates = C_NULL
+        inst.cGetContinuousStateDerivatives = C_NULL
+        inst.cGetEventIndicators = C_NULL
+        inst.cCompletedIntegratorStep = C_NULL
+        inst.cEnterEventMode = C_NULL
+        inst.cUpdateDiscreteStates = C_NULL
+
+        # Scheduled Execution function calls
+        inst.cSetIntervalDecimal = C_NULL
+        inst.cSetIntervalFraction = C_NULL
+        inst.cGetIntervalDecimal = C_NULL
+        inst.cGetIntervalFraction = C_NULL
+        inst.cGetShiftDecimal = C_NULL
+        inst.cGetShiftFraction = C_NULL
+        inst.cActivateModelPartition = C_NULL
 
         return inst
     end

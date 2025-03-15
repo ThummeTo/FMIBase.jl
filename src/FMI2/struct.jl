@@ -134,6 +134,8 @@ mutable struct FMU2Component{F} <: FMUInstance
     snapshots::Vector{FMUSnapshot}
     sampleSnapshot::Union{FMUSnapshot, Nothing} # a snapshot that is (re-)used for sampling 
 
+    termSim::Bool
+
     # constructor
     function FMU2Component{F}() where {F}
         inst = new{F}()
@@ -210,6 +212,8 @@ mutable struct FMU2Component{F} <: FMUInstance
 
         inst.snapshots = Vector{FMUSnapshot}()
         inst.sampleSnapshot = nothing
+
+        inst.termSim = false
 
         # performance (pointers to prevent repeating allocations)
         inst._enterEventMode = zeros(fmi2Boolean, 1)

@@ -68,6 +68,12 @@ isStatusOK(::FMU3Instance, status::fmi3Status) = (status == fmi3StatusOK)
 isStatusOK(::FMU2, status::fmi2Status) = (status == fmi2StatusOK)
 isStatusOK(::FMU3, status::fmi3Status) = (status == fmi3StatusOK)
 
+# status discard
+isStatusDiscard(::FMU2Component, status::fmi2Status) = (status >= fmi2StatusDiscard)
+isStatusDiscard(::FMU3Instance, status::fmi3Status) = (status >= fmi3StatusDiscard)
+isStatusDiscard(::FMU2, status::fmi2Status) = (status >= fmi2StatusDiscard)
+isStatusDiscard(::FMU3, status::fmi3Status) = (status >= fmi3StatusDiscard)
+
 # status error
 isStatusError(::FMU2Component, status::fmi2Status) = (status >= fmi2StatusError)
 isStatusError(::FMU3Instance, status::fmi3Status) = (status >= fmi3StatusError)
