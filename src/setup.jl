@@ -55,9 +55,10 @@ function setupSolver!(fmu::FMU, tspan, kwargs)
         # if no dt is given, pick auto-setting from DifferentialEquations.jl
     end
 
-    if !haskey(kwargs, :dtmax)
-        kwargs[:dtmax] = (t_stop - t_start) / 100.0
-    end
+    # [ToDo]: why was this added? this is not good...
+    # if !haskey(kwargs, :dtmax)
+    #     kwargs[:dtmax] = (t_stop - t_start) / 100.0
+    # end
 
     return tspan
 end
