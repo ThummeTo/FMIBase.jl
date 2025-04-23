@@ -142,6 +142,9 @@ mutable struct FMU3Instance{F} <: FMUInstance
 
     # a container for all created snapshots, so that we can properly release them at unload
     snapshots::Vector{FMUSnapshot}
+    sampleSnapshot::Union{FMUSnapshot, Nothing} # a snapshot that is (re-)used for sampling 
+
+    termSim::Bool
 
     # constructor
     function FMU3Instance{F}() where {F}
@@ -235,6 +238,9 @@ mutable struct FMU3Instance{F} <: FMUInstance
         inst.default_ec = EMPTY_fmi3Float64
 
         inst.snapshots = Vector{FMUSnapshot}()
+        inst.sampleSnapshot = nothing
+
+        inst.termSim = false
 
         return inst
     end

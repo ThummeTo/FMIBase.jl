@@ -39,9 +39,13 @@ function snapshot_if_needed!(
     t::Real;
     atol = snapshotDeltaTimeTolerance(obj),
 )
-    if !hasSnapshot(obj, t; atol = atol)
-        snapshot!(obj)
+    sn = getSnapshot(obj, t; exact=true, atol = atol)
+
+    if !isnothing(sn)
+        return sn 
     end
+    
+    return snapshot!(obj)
 end
 export snapshot_if_needed!
 
