@@ -143,6 +143,9 @@ mutable struct FMU3Instance{F} <: FMUInstance
     # a container for all created snapshots, so that we can properly release them at unload
     snapshots::Vector{FMUSnapshot}
 
+    # workaround for issue #269
+    doStep::Float64
+
     # constructor
     function FMU3Instance{F}() where {F}
         inst = new()
@@ -233,6 +236,9 @@ mutable struct FMU3Instance{F} <: FMUInstance
         inst.default_ec = EMPTY_fmi3Float64
 
         inst.snapshots = Vector{FMUSnapshot}()
+
+        # workaround for issue #269
+        inst.doStep = 0.0
 
         return inst
     end

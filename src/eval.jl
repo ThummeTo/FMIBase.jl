@@ -268,6 +268,14 @@ function eval!(
         setParameters(c, p_refs, p)
     end
 
+    # do step if required, only if accessing outputs in CS
+    if c.doStep > 0.0
+        @assert isSetReal(c.fmu, t) "Setting `c.doStep` for evaluation of FMU/Instance requires setting `t` as well."
+        @assert c.fmu.type == fmi2TypeCoSimulation::fmi2Type "Setting `dt` for evaluation of FMU/Instance only allowed for CS!"
+        doStep(c, c.doStep; currentCommunicationPoint=t)
+        c.doStep = 0.0
+    end
+
     # get derivative
     if length(dx) > 0
         if c.fmu.isZeroState

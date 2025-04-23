@@ -132,6 +132,9 @@ mutable struct FMU2Component{F} <: FMUInstance
     # a container for all created snapshots, so that we can properly release them at unload
     snapshots::Vector{FMUSnapshot}
 
+    # workaround for issue #269
+    doStep::Float64
+
     # constructor
     function FMU2Component{F}() where {F}
         inst = new{F}()
@@ -213,6 +216,9 @@ mutable struct FMU2Component{F} <: FMUInstance
 
         inst._ptr_enterEventMode = pointer(inst._enterEventMode)
         inst._ptr_terminateSimulation = pointer(inst._terminateSimulation)
+
+        # workaround for issue #269
+        inst.doStep = 0.0
 
         return inst
     end
