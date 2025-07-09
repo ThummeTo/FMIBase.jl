@@ -432,8 +432,8 @@ Copies the current FMU-state of the instance `inst` (like a memory copy) to the 
 - `state` ∈ (Ref{fmi2FMUstate}, Ref{fmi3FMUState}): the FMU state reference
 """
 function getFMUstate!(c::FMU2Component, state::Ref{fmi2FMUstate})
-    if c.fmu.modelDescription.modelExchange.canGetAndSetFMUstate ||
-       c.fmu.modelDescription.coSimulation.canGetAndSetFMUstate
+    if (c.fmu.type == fmi2TypeModelExchange && c.fmu.modelDescription.modelExchange.canGetAndSetFMUstate) ||
+       (c.fmu.type == fmi2TypeCoSimulation && c.fmu.modelDescription.coSimulation.canGetAndSetFMUstate)
         return fmi2GetFMUstate!(c.fmu.cGetFMUstate, c.addr, state)
     end
     return nothing
@@ -446,8 +446,8 @@ end
 ToDo
 """
 function setFMUstate!(c::FMU2Component, state::fmi2FMUstate)
-    if c.fmu.modelDescription.modelExchange.canGetAndSetFMUstate ||
-       c.fmu.modelDescription.coSimulation.canGetAndSetFMUstate
+    if (c.fmu.type == fmi2TypeModelExchange && c.fmu.modelDescription.modelExchange.canGetAndSetFMUstate) ||
+       (c.fmu.type == fmi2TypeCoSimulation && c.fmu.modelDescription.coSimulation.canGetAndSetFMUstate)
         return fmi2SetFMUstate(c.fmu.cSetFMUstate, c.addr, state)
     end
     return nothing
