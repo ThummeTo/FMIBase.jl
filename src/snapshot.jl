@@ -116,9 +116,15 @@ function getSnapshot(
 end
 export getSnapshot
 
-function update!(c::FMUInstance, s::FMUSnapshot)
+function update!(c::FMUInstance, s::FMUSnapshot; suppressWarning::Bool=false)
 
     @debug "Updating snapshot t=$(s.t) [$(s.fmuState)]"
+
+    if s.t != c.t 
+        if !suppressWarning
+            @warn "Updating snapshot with time $(s.t) to a snapshot with different time $(c.t).\nIf this is intended, use keyword `suppressWarning=true`."
+        end
+    end
 
     s.t = c.t
     s.eventInfo = deepcopy(c.eventInfo)
@@ -179,7 +185,7 @@ function freeSnapshot!(s::FMUSnapshot)
     s.fmuState = nothing
 
     ind = findall(x -> x == s, s.instance.snapshots)
-    @assert length(ind) == 1 "freeSnapshot!: Freeing $(length(ind)) snapshots with one call, this is not allowed. Target was found $(length(ind)) times at indices $(ind)."
+    @assert length(ind) == 1 "freeSnapshot!: Freeing $(length(ind)) snapshots with one call, this is not allowed.\nTarget was found $(length(ind)) times at indices $(ind)."
     deleteat!(s.instance.snapshots, ind)
 
     return nothing
@@ -190,7 +196,7 @@ function startSampling(c::FMUInstance)
     if isnothing(c.sampleSnapshot)
         c.sampleSnapshot = snapshot!(c)
     else
-        update!(c, c.sampleSnapshot)
+        update!(c, c.sampleSnapshot; suppressWarning=true)
     end
     return c.sampleSnapshot
 end

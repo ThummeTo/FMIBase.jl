@@ -460,7 +460,10 @@ end
 ToDo
 """
 function freeFMUstate!(c::FMU2Component, state::Ref{fmi2FMUstate})
-    fmi2FreeFMUstate(c.fmu.cFreeFMUstate, c.addr, state)
+    if (c.fmu.type == fmi2TypeModelExchange && c.fmu.modelDescription.modelExchange.canGetAndSetFMUstate) ||
+       (c.fmu.type == fmi2TypeCoSimulation && c.fmu.modelDescription.coSimulation.canGetAndSetFMUstate)
+        fmi2FreeFMUstate(c.fmu.cFreeFMUstate, c.addr, state)
+    end
     return nothing
 end
 function freeFMUstate!(c::FMU3Instance, state::Ref{fmi3FMUState})
