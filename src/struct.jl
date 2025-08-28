@@ -92,7 +92,7 @@ mutable struct FMUExecutionConfiguration
     set_p_every_step::Bool                  # whether parameters are set for every simulation step - this is uncommon, because parameters are (often) set just one time: during/after intialization
 
     # sampling 
-    finitediff_fdtype::DataType
+    finitediff_fdtype # ::DataType
     finitediff_relstep::Float64
     finitediff_absstep::Float64
 
@@ -141,9 +141,9 @@ mutable struct FMUExecutionConfiguration
         inst.set_p_every_step = false
 
         # FiniteDiff
-        inst.finitediff_fdtype = Val{:forward}  # is FiniteDiff default
-        inst.finitediff_relstep = -1.0           # 0.0 = use FiniteDiff default
-        inst.finitediff_absstep = -1.0           # 0.0 = use FiniteDiff default
+        inst.finitediff_fdtype = Val(:forward)  # is FiniteDiff default
+        inst.finitediff_relstep = -1.0           # < 0.0 use FiniteDiff default
+        inst.finitediff_absstep = -1.0           # < 0.0 use FiniteDiff default
 
         # deprecated 
         inst.concat_eval = true

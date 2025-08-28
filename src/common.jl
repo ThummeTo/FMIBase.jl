@@ -278,6 +278,8 @@ function getEventIndicators!(
     ec::AbstractArray{<:fmi2Real},
     ec_idcs::AbstractArray{<:fmi2ValueReference},
 )
+    @assert length(ec_idcs) == 0 || length(ec) == length(ec_idcs) "Calling `getEventIndicators!` with length(ec) = $(length(ec)), but length(ec_idcs) = $(length(ec_idcs)).\nMust be the same length or length(ec_idcs) = 0 (to pick all event indicators)."
+
     if length(ec_idcs) == c.fmu.modelDescription.numberOfEventIndicators ||
        length(ec_idcs) == 0 # pick ALL event indicators
         fmi2GetEventIndicators!(c, ec)
@@ -292,6 +294,8 @@ function getEventIndicators!(
     ec::AbstractArray{<:fmi3Float64},
     ec_idcs::AbstractArray{<:fmi3ValueReference},
 )
+    @assert length(ec_idcs) == 0 || length(ec) == length(ec_idcs) "Calling `getEventIndicators!` with length(ec) = $(length(ec)), but length(ec_idcs) = $(length(ec_idcs)).\nMust be the same length or length(ec_idcs) = 0 (to pick all event indicators)."
+
     if length(ec_idcs) == c.fmu.modelDescription.numberOfEventIndicators ||
        length(ec_idcs) == 0 # pick ALL event indicators
         fmi3GetEventIndicators!(c, ec, c.fmu.modelDescription.numberOfEventIndicators)
