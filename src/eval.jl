@@ -96,6 +96,23 @@ Not all options are available for any FMU type, e.g. setting state is not suppor
 - `dx::Union{AbstractVector{<:Real}, Nothing}`: The system state-derivaitve (if ME-FMU, otherwise `nothing`).
 - `ec::Union{AbstractVector{<:Real}, Nothing}`: The system event indicators (if ME-FMU, otherwise `nothing`).
 """
+function (c::FMUInstance)(;
+    dx::AbstractVector{<:Real} = c.default_dx,
+    dx_refs::AbstractVector{<:fmiValueReference} = c.default_dx_refs,
+    y::AbstractVector{<:Real} = c.default_y,
+    y_refs::AbstractVector{<:fmiValueReference} = c.default_y_refs,
+    x::AbstractVector{<:Real} = getEmptyReal(c.fmu),
+    u::AbstractVector{<:Real} = getEmptyReal(c.fmu),
+    u_refs::AbstractVector{<:fmiValueReference} = getEmptyValueReference(c.fmu),
+    p::AbstractVector{<:Real} = c.default_p,
+    p_refs::AbstractVector{<:fmiValueReference} = c.default_p_refs,
+    ec::AbstractVector{<:Real} = c.default_ec,
+    ec_idcs::AbstractVector{<:fmiValueReference} = c.default_ec_idcs,
+    t::Real = c.default_t,
+)
+    (c)(dx, dx_refs, y, y_refs, x, u, u_refs, p, p_refs, ec, ec_idcs, t)
+end
+
 function (c::FMUInstance)(
     dx::AbstractVector{<:Real},
     dx_refs::AbstractVector{<:fmiValueReference},
@@ -196,26 +213,9 @@ function (c::FMUInstance)(
     c.output.len_y = len_y_refs
     c.output.len_ec = len_ec_idcs
 
-    @assert !any(collect(isa(c.output.buffer[i], Int64) for i = 1:length(c.output.buffer))) "Fuuuuu $(c.output.buffer)"
+    #@assert !any(collect(isa(c.output.buffer[i], Int64) for i = 1:length(c.output.buffer))) "Fuuuuu $(c.output.buffer)"
 
     return c.output
-end
-
-function (c::FMUInstance)(;
-    dx::AbstractVector{<:Real} = c.default_dx,
-    dx_refs::AbstractVector{<:fmiValueReference} = c.default_dx_refs,
-    y::AbstractVector{<:Real} = c.default_y,
-    y_refs::AbstractVector{<:fmiValueReference} = c.default_y_refs,
-    x::AbstractVector{<:Real} = getEmptyReal(c.fmu),
-    u::AbstractVector{<:Real} = getEmptyReal(c.fmu),
-    u_refs::AbstractVector{<:fmiValueReference} = getEmptyValueReference(c.fmu),
-    p::AbstractVector{<:Real} = c.default_p,
-    p_refs::AbstractVector{<:fmiValueReference} = c.default_p_refs,
-    ec::AbstractVector{<:Real} = c.default_ec,
-    ec_idcs::AbstractVector{<:fmiValueReference} = c.default_ec_idcs,
-    t::Real = c.default_t,
-)
-    (c)(dx, dx_refs, y, y_refs, x, u, u_refs, p, p_refs, ec, ec_idcs, t)
 end
 
 """

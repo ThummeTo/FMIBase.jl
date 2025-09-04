@@ -414,20 +414,24 @@ end
 """
 ToDo
 """
-function getFMUstate(c::FMU2Component)
+function getFMUState(c::FMU2Component)
     state = fmi2FMUstate()
     ref = Ref(state)
-    getFMUstate!(c, ref)
+    getFMUState!(c, ref)
     #@info "snap state: $(state)"
     return ref[]
 end
-function getFMUstate(c::FMU3Instance)
-    @assert false, "Not implemented yet. Please open an issue." # [TODO]
+function getFMUState(c::FMU3Instance)
+    state = fmi3FMUState()
+    ref = Ref(state)
+    getFMUState!(c, ref)
+    #@info "snap state: $(state)"
+    return ref[]
 end
 
 """
 
-    getFMUstate!(inst, state)
+    getFMUState!(inst, state)
 
 Copies the current FMU-state of the instance `inst` (like a memory copy) to the address `state`.
 
@@ -435,43 +439,61 @@ Copies the current FMU-state of the instance `inst` (like a memory copy) to the 
 - `inst` ∈ (FMU2Component, FMI3Instance): the FMU instance
 - `state` ∈ (Ref{fmi2FMUstate}, Ref{fmi3FMUState}): the FMU state reference
 """
-function getFMUstate!(c::FMU2Component, state::Ref{fmi2FMUstate})
+function getFMUState!(c::FMU2Component, state::Ref{fmi2FMUstate})
     if (c.fmu.type == fmi2TypeModelExchange && c.fmu.modelDescription.modelExchange.canGetAndSetFMUstate) ||
        (c.fmu.type == fmi2TypeCoSimulation && c.fmu.modelDescription.coSimulation.canGetAndSetFMUstate)
         return fmi2GetFMUstate!(c.fmu.cGetFMUstate, c.addr, state)
     end
     return nothing
 end
-function getFMUstate!(c::FMU3Instance, state::Ref{fmi3FMUState})
-    @assert false, "Not implemented yet. Please open an issue." # [TODO]
+function getFMUState!(c::FMU3Instance, state::Ref{fmi3FMUState})
+    if (c.fmu.type == fmi3TypeModelExchange && c.fmu.modelDescription.modelExchange.canGetAndSetFMUState) ||
+       (c.fmu.type == fmi3TypeCoSimulation && c.fmu.modelDescription.coSimulation.canGetAndSetFMUState)
+        return fmi3GetFMUState!(c.fmu.cGetFMUState, c.addr, state)
+    end
+    return nothing
 end
 
 """
-ToDo
+    setFMUState!(instance, state)
+
+Sets a FMUState `state`.
+
+# Arguments
+- `instance`: the `FMUInstance` (`FMUComponent` or `FMU3Instance`)
+- `state`: the FMU state reference (`fmi2FMUstate` or `fmi3FMUstate`)
 """
-function setFMUstate!(c::FMU2Component, state::fmi2FMUstate)
+function setFMUState!(c::FMU2Component, state::fmi2FMUstate)
     if (c.fmu.type == fmi2TypeModelExchange && c.fmu.modelDescription.modelExchange.canGetAndSetFMUstate) ||
        (c.fmu.type == fmi2TypeCoSimulation && c.fmu.modelDescription.coSimulation.canGetAndSetFMUstate)
         return fmi2SetFMUstate(c.fmu.cSetFMUstate, c.addr, state)
     end
     return nothing
 end
-function setFMUstate!(c::FMU3Instance, state::fmi2FMUstate)
-    @assert false, "Not implemented yet. Please open an issue." # [TODO]
+function setFMUState!(c::FMU3Instance, state::fmi3FMUState)
+    if (c.fmu.type == fmi3TypeModelExchange && c.fmu.modelDescription.modelExchange.canGetAndSetFMUState) ||
+       (c.fmu.type == fmi3TypeCoSimulation && c.fmu.modelDescription.coSimulation.canGetAndSetFMUState)
+        return fmi3SetFMUState(c.fmu.cSetFMUState, c.addr, state)
+    end
+    return nothing
 end
 
 """
 ToDo
 """
-function freeFMUstate!(c::FMU2Component, state::Ref{fmi2FMUstate})
+function freeFMUState!(c::FMU2Component, state::Ref{fmi2FMUstate})
     if (c.fmu.type == fmi2TypeModelExchange && c.fmu.modelDescription.modelExchange.canGetAndSetFMUstate) ||
        (c.fmu.type == fmi2TypeCoSimulation && c.fmu.modelDescription.coSimulation.canGetAndSetFMUstate)
         fmi2FreeFMUstate(c.fmu.cFreeFMUstate, c.addr, state)
     end
     return nothing
 end
-function freeFMUstate!(c::FMU3Instance, state::Ref{fmi3FMUState})
-    @assert false "Not implemented yet. Please open an issue." # [TODO]
+function freeFMUState!(c::FMU3Instance, state::Ref{fmi3FMUState})
+    if (c.fmu.type == fmi3TypeModelExchange && c.fmu.modelDescription.modelExchange.canGetAndSetFMUState) ||
+       (c.fmu.type == fmi3TypeCoSimulation && c.fmu.modelDescription.coSimulation.canGetAndSetFMUState)
+        fmi3FreeFMUState(c.fmu.cFreeFMUState, c.addr, state)
+    end
+    return nothing
 end
 
 """
@@ -524,4 +546,36 @@ function enterContinuousTimeMode(c::FMU2Component)
 end
 function enterContinuousTimeMode(c::FMU3Instance)
     return fmi3EnterContinuousTimeMode(c)
+end
+
+function getEventInfo(c::FMU2Component)
+    return deepcopy(c.eventInfo)
+end
+
+# in FMI3 there is no eventInfo, so we need to pack a named tuple instead
+function getEventInfo(c::FMU3Instance)
+    return (enterEventMode                  = c.enterEventMode,
+        discreteStatesNeedUpdate            = c.discreteStatesNeedUpdate,
+        terminateSimulation                 = c.terminateSimulation,
+        nominalsOfContinuousStatesChanged   = c.nominalsOfContinuousStatesChanged,
+        valuesOfContinuousStatesChanged     = c.valuesOfContinuousStatesChanged,
+        nextEventTimeDefined                = c.nextEventTimeDefined,
+        nextEventTime                       = c.nextEventTime)
+end
+
+function setEventInfo!(c::FMU2Component, e::fmi2EventInfo)
+    c.eventInfo = deepcopy(e)
+    nothing 
+end
+
+# in FMI3 there is no eventInfo, so we need to unpack a named tuple instead
+function setEventInfo!(c::FMU3Instance, e::NamedTuple)
+    c.enterEventMode                    = e.enterEventMode
+    c.discreteStatesNeedUpdate          = e.discreteStatesNeedUpdate
+    c.terminateSimulation               = e.terminateSimulation
+    c.nominalsOfContinuousStatesChanged = e.nominalsOfContinuousStatesChanged
+    c.valuesOfContinuousStatesChanged   = e.valuesOfContinuousStatesChanged
+    c.nextEventTimeDefined              = e.nextEventTimeDefined
+    c.nextEventTime                     = e.nextEventTime
+    nothing 
 end

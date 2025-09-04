@@ -3,15 +3,15 @@
 # Licensed under the MIT license. See LICENSE file in the project root for details.
 #
 
-function getFMUstate!(c::FMUInstance, s::Ref{Nothing})
+function getFMUState!(c::FMUInstance, s::Ref{Nothing})
     return nothing
 end
 
-function setFMUstate!(c::FMUInstance, state::Nothing)
+function setFMUState!(c::FMUInstance, state::Nothing)
     return nothing
 end
 
-function freeFMUstate!(c::FMUInstance, state::Ref{Nothing})
+function freeFMUState!(c::FMUInstance, state::Ref{Nothing})
     return nothing
 end
 
@@ -58,6 +58,9 @@ function hasSnapshot(c::Union{FMUInstance,FMUSolution}, t::Float64; atol = 0.0)
     return false
 end
 
+"""
+    Searches the closest snapshot for given `t` within the component `c`. If no snapshot is found, `nothing` is returned.
+"""
 function getSnapshot(
     c::Union{FMUInstance,FMUSolution},
     t::Float64;
@@ -84,7 +87,10 @@ function getSnapshot(
     #     end
     # end
 
-    @assert length(c.snapshots) > 0 "No snapshots available!"
+    #@assert length(c.snapshots) > 0 "No snapshots available!"
+    if length(c.snapshots) <= 0
+        return nothing
+    end
 
     if t ∈ (-Inf, Inf)
         @warn "t = $(t), this is not allowed for snapshot search! Returning nothing!"
@@ -120,17 +126,24 @@ function update!(c::FMUInstance, s::FMUSnapshot; suppressWarning::Bool=false)
 
     @debug "Updating snapshot t=$(s.t) [$(s.fmuState)]"
 
+    if c != s.instance 
+        if !suppressWarning
+            @warn "Snapshot is updated to snapshot of other instant $(c.address) != $(s.instance.address).\nThis might fail depending on the FMU implementation."
+        end
+    end
+
     if s.t != c.t 
         if !suppressWarning
-            @warn "Updating snapshot with time $(s.t) to a snapshot with different time $(c.t).\nIf this is intended, use keyword `suppressWarning=true`."
+            @warn "Updating snapshot with time $(s.t) (default_t=$(s.default_t)) to a snapshot with different time $(c.t) (default_t=$(c.default_t)).\nIf this is intended, use keyword `suppressWarning=true`."
         end
     end
 
     s.t = c.t
-    s.eventInfo = deepcopy(c.eventInfo)
+    s.default_t = c.default_t
+    s.eventInfo = getEventInfo(c)
     s.state = c.state
     s.instance = c
-    getFMUstate!(c, Ref(s.fmuState))
+    getFMUState!(c, Ref(s.fmuState))
 
     @debug "... to t=$(s.t) [$(s.fmuState)]"
 
@@ -144,16 +157,21 @@ function apply!(
     c::FMUInstance,
     s::FMUSnapshot;
     t = s.t,
+    default_t = s.default_t,
     x_c = s.x_c,
     x_d = s.x_d,
     fmuState = s.fmuState,
 )
 
+    if c != s.instance 
+        @warn "Snapshot is applied to snapshot of other instant $(c.address) != $(s.instance.address).\nThis might fail depending on the FMU implementation."
+    end
+
     @debug "Applied snapshot $(s.t) @ $(c.t)"
 
     # FMU state
-    setFMUstate!(c, fmuState)
-    c.eventInfo = deepcopy(s.eventInfo)
+    setFMUState!(c, fmuState)
+    setEventInfo!(c, s.eventInfo)
     c.state = s.state
     
     # continuous state
@@ -171,7 +189,7 @@ function apply!(
     # time
     setTime(c, t)
     c.t = t
-    c.default_t = t
+    c.default_t = default_t
 
     return nothing
 end
@@ -181,7 +199,7 @@ function freeSnapshot!(s::FMUSnapshot)
     #@async println("cleanup!")
     @debug "Freeing snapshot t=$(s.t) [$(s.fmuState)]"
 
-    freeFMUstate!(s.instance, Ref(s.fmuState))
+    freeFMUState!(s.instance, Ref(s.fmuState))
     s.fmuState = nothing
 
     ind = findall(x -> x == s, s.instance.snapshots)
@@ -194,6 +212,7 @@ export freeSnapshot!
 
 function startSampling(c::FMUInstance)
     if isnothing(c.sampleSnapshot)
+        # Info: snapshot! stores this snapshot in a vector, so all (including this) snapshot are release when calling fmi2FreeInstance.
         c.sampleSnapshot = snapshot!(c)
     else
         update!(c, c.sampleSnapshot; suppressWarning=true)

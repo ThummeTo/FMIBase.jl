@@ -204,6 +204,7 @@ export FMU_EXECUTION_CONFIGURATIONS
 mutable struct FMUSnapshot{E,C,D,I,S}
 
     t::Float64
+    default_t::Float64
     eventInfo::E
     state::UInt32
     instance::I
@@ -219,11 +220,12 @@ mutable struct FMUSnapshot{E,C,D,I,S}
 
     function FMUSnapshot(c::FMUInstance)
 
-        t = c.t
-        eventInfo = deepcopy(c.eventInfo)
+        t = unsense(c.t)
+        default_t = unsense(c.default_t)
+        eventInfo = getEventInfo(c)
         state = c.state
         instance = c
-        fmuState = getFMUstate(c)
+        fmuState = getFMUState(c)
         #x_c = isnothing(c.x  ) ? nothing : copy(c.x  ) 
         #x_d = isnothing(c.x_d) ? nothing : copy(c.x_d)
 
@@ -238,7 +240,7 @@ mutable struct FMUSnapshot{E,C,D,I,S}
         I = typeof(instance)
         S = typeof(fmuState)
 
-        inst = new{E,C,D,I,S}(t, eventInfo, state, instance, fmuState, x_c, x_d)
+        inst = new{E,C,D,I,S}(t, default_t, eventInfo, state, instance, fmuState, x_c, x_d)
 
         @debug "New snapshot #$(length(c.snapshots)+1) t=$(t), x_c=$(x_c) [$(fmuState)]"
 
@@ -257,6 +259,8 @@ export FMUSnapshot
 function Base.show(io::IO, s::FMUSnapshot)
     print(io, "FMUSnapshot(t=$(s.t), x_c=$(s.x_c), x_d=$(s.x_d), fmuState=$(s.fmuState))")
 end
+
+
 
 """
     FMUInputFunction(inputFunction, vrs)
