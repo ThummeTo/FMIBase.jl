@@ -88,6 +88,7 @@ mutable struct FMUExecutionConfiguration
     VJPBuiltInDerivatives::Bool             # use built-in adjoint derivatives for VJP-sensitivities over FMU without caching the jacobian (because this is done in the FMU, but not per default)
 
     sensitivity_strategy::Symbol            # build up strategy for jacobians/gradients, available is `:FMIDirectionalDerivative`, `:FMIAdjointDerivative`, `:FiniteDiff`
+    snapshot_every_step::Bool
 
     set_p_every_step::Bool                  # whether parameters are set for every simulation step - this is uncommon, because parameters are (often) set just one time: during/after intialization
 
@@ -137,6 +138,7 @@ mutable struct FMUExecutionConfiguration
         inst.JVPBuiltInDerivatives = false
         inst.VJPBuiltInDerivatives = false
         inst.sensitivity_strategy = :FMIDirectionalDerivative
+        inst.snapshot_every_step = false
 
         inst.set_p_every_step = false
 

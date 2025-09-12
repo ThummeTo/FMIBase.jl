@@ -34,12 +34,15 @@ function snapshotDeltaTimeTolerance(sol::FMUSolution)
     return snapshotDeltaTimeTolerance(sol.instance)
 end
 
+"""
+    Does a snapshot if there is no snapshot available for `t` (with tolerance `atol`).
+"""
 function snapshot_if_needed!(
     obj::Union{FMUInstance,FMUSolution},
     t::Real;
     atol = snapshotDeltaTimeTolerance(obj),
 )
-    sn = getSnapshot(obj, t; exact=true, atol = atol)
+    sn = getSnapshot(obj, t; atol = atol)
 
     if !isnothing(sn)
         return sn 
@@ -49,7 +52,10 @@ function snapshot_if_needed!(
 end
 export snapshot_if_needed!
 
-function hasSnapshot(c::Union{FMUInstance,FMUSolution}, t::Float64; atol = 0.0)
+"""
+    Checks for a snapshot available for `t` (with tolerance `atol`).
+"""
+function hasSnapshot(c::Union{FMUInstance,FMUSolution}, t::Float64; atol = snapshotDeltaTimeTolerance(obj))
     for snapshot in c.snapshots
         if abs(snapshot.t - t) <= atol
             return true
@@ -64,30 +70,8 @@ end
 function getSnapshot(
     c::Union{FMUInstance,FMUSolution},
     t::Float64;
-    exact::Bool = false,
-    atol = 0.0,
+    atol = snapshotDeltaTimeTolerance(c),
 )
-    # [Note] only take exact fit if we are at 0, otherwise take the next left, 
-    #        because we are saving snapshots for the right root of events.
-
-    #@assert t ∉ (-Inf, Inf) "t = $(t), this is not allowed for snapshot search!"
-    # if t == Inf 
-    #     if length(c.snapshots) > 0
-    #         @warn "t = $(t), this is not allowed for snapshot search!\nFallback to left-most snapshot!"
-    #         left = snapshots[1]
-    #         for snapshot in c.snapshots
-    #             if snapshot.t < left.t
-    #                 left = snapshot
-    #             end
-    #         end
-    #         return left
-    #     else
-    #         @warn "t = $(t), this is not allowed for snapshot search!\nNo snapshots available, returning nothing!"
-    #         return nothing 
-    #     end
-    # end
-
-    #@assert length(c.snapshots) > 0 "No snapshots available!"
     if length(c.snapshots) <= 0
         return nothing
     end
@@ -97,30 +81,63 @@ function getSnapshot(
         return nothing
     end
 
-    left = c.snapshots[1]
-    # right = c.snapshots[1]
+    for snapshot in c.snapshots
+        if abs(snapshot.t - t) <= atol
+            return snapshot
+        end
+    end
 
-    if exact
+    return nothing
+end
+export getSnapshot
+
+function getPreviousSnapshot(
+    c::Union{FMUInstance,FMUSolution},
+    t::Float64;
+    atol = snapshotDeltaTimeTolerance(c),
+)
+    if length(c.snapshots) <= 0
+        return nothing
+    end
+
+    if t == -Inf
+        @warn "t = $(t), this is not allowed for snapshot search! Returning nothing!"
+        return nothing
+    end
+
+    if t == Inf
+        @warn "t = $(t), returning max snapshot!"
+        max_snapshot = c.snapshots[1]
         for snapshot in c.snapshots
-            if abs(snapshot.t - t) <= atol
-                return snapshot
+            if snapshot.t > max_snapshot.t
+                max_snapshot = snapshot
             end
         end
-        return nothing
-    else
-        for snapshot in c.snapshots
-            if snapshot.t < (t - atol) && snapshot.t > (left.t + atol)
-                left = snapshot
+        return max_snapshot
+    end
+
+    left = nothing
+
+    for snapshot in c.snapshots
+
+        # it's required to NOT be a perfect match
+        if abs(snapshot.t - t) > atol
+
+            # only if we are really left
+            if snapshot.t < t 
+                
+                # if we didn't find something until now or
+                # or we find a closer left snapshot
+                if isnothing(left) || abs(t-snapshot.t) < abs(t-left.t)
+                    left = snapshot
+                end
             end
-            # if snapshot.t > t && snapshot.t < right.t
-            #     right = snapshot
-            # end
         end
     end
 
     return left
 end
-export getSnapshot
+export getPreviousSnapshot
 
 function update!(c::FMUInstance, s::FMUSnapshot; suppressWarning::Bool=false)
 
