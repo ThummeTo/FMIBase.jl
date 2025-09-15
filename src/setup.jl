@@ -43,7 +43,10 @@ function setupSolver!(fmu::FMU, tspan, kwargs)
     tspan = (t_start, t_stop)
 
     if !haskey(kwargs, :reltol)
-        kwargs[:reltol] = getDefaultTolerance(fmu)
+        reltol = getDefaultTolerance(fmu)
+        if !isnothing(reltol)
+            kwargs[:reltol] = reltol
+        end
         # if no tolerance is given, pick auto-setting from DifferentialEquations.jl 
     end
 

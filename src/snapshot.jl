@@ -145,7 +145,7 @@ function update!(c::FMUInstance, s::FMUSnapshot; suppressWarning::Bool=false)
 
     if c != s.instance 
         if !suppressWarning
-            @warn "Snapshot is updated to snapshot of other instant $(c.address) != $(s.instance.address).\nThis might fail depending on the FMU implementation."
+            @warn "Snapshot is updated to snapshot of other instant $(c.addr) != $(s.instance.addr).\nThis might fail depending on the FMU implementation."
         end
     end
 
