@@ -143,7 +143,7 @@ mutable struct FMUExecutionConfiguration
         inst.set_p_every_step = false
 
         inst.snapshot_every_step = false
-        inst.max_snapshots = 1e5
+        inst.max_snapshots = 1e4
 
         # FiniteDiff
         inst.finitediff_fdtype = Val(:forward)  # is FiniteDiff default
