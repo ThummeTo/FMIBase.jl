@@ -65,24 +65,33 @@ end
 ToDo
 """
 function getContinuousStates(c::FMU2Component)
+    x = nothing
     if !c.fmu.isZeroState
         nx = Csize_t(length(c.fmu.modelDescription.stateValueReferences))
         x = zeros(fmi2Real, nx)
         fmi2GetContinuousStates!(c, x, nx)
-        return x
     else
-        return zeros(fmi2Real, 1)
+        x = zeros(fmi2Real, 1)
     end
+
+    return x
 end
 function getContinuousStates(c::FMU3Instance)
     if !c.fmu.isZeroState
         nx = Csize_t(length(c.fmu.modelDescription.stateValueReferences))
         x = zeros(fmi3Float64, nx)
         fmi3GetContinuousStates!(c, x, nx)
-        return x
     else
-        return zeros(fmi3Float64, 1)
+        x = zeros(fmi3Float64, 1)
     end
+
+    return x
+end
+
+function getStates(c::Union{FMU2Component,FMU3Instance})
+    x_c = getContinuousStates(c)
+    x_d = getDiscreteStates(c)
+    return vcat(x_c, x_d)
 end
 
 """
@@ -144,13 +153,43 @@ end
 """
 ToDo
 """
-function setDiscreteStates(c::FMU2Component, x_d::AbstractArray{<:Any}; kwargs...)
-    setValue(c, c.fmu.modelDescription.discreteStateValueReferences, x_d; kwargs...)
+function setDiscreteStates(c::Union{FMU2Component,FMU3Instance}, x_d::Vector{<:Real}; kwargs...)
+
+    c.x_d = x_d
+    
+    if !c.fmu.isDummyDiscrete
+        setValue(c, c.fmu.modelDescription.discreteStateValueReferences, c.x_d; kwargs...)
+    end
+
     return nothing
 end
-function setDiscreteStates(c::FMU3Instance, x_d::AbstractArray{<:Any}; kwargs...)
-    setValue(c, c.fmu.modelDescription.discreteStateValueReferences, x_d; kwargs...)
-    return nothing
+
+"""
+ToDo
+"""
+function getDiscreteStates(c::FMU2Component; kwargs...)
+
+    if !c.fmu.isDummyDiscrete
+        if length(c.fmu.modelDescription.discreteStateValueReferences) <= 0
+            c.x_d = Vector{fmi2Real}() # Union{fmi2Real,fmi2Integer,fmi2Boolean} 
+        else
+            c.x_d = getValue(c, c.fmu.modelDescription.discreteStateValueReferences; kwargs...)
+        end
+    end
+
+    return c.x_d
+end
+function getDiscreteStates(c::FMU3Instance; kwargs...)
+
+    if !c.fmu.isDummyDiscrete
+        if length(c.fmu.modelDescription.discreteStateValueReferences) <= 0
+            c.x_d = Vector{fmi3Float64}() # Union{fmi2Real,fmi2Integer,fmi2Boolean} 
+        else
+            c.x_d = getValue(c, c.fmu.modelDescription.discreteStateValueReferences; kwargs...)
+        end
+    end
+
+    return c.x_d
 end
 
 """
@@ -218,7 +257,11 @@ function getDerivatives!(
 )
     @assert !c.fmu.isZeroState "getDerivatives! is not callable for zero state FMUs!"
 
-    status = fmi2GetDerivatives!(c, dx)
+    if c.fmu.isZeroState
+        dx[1] = 1.0
+    else
+        status = fmi2GetDerivatives!(c, dx)
+    end
 
     return nothing
 end
@@ -229,7 +272,11 @@ function getDerivatives!(
 )
     @assert !c.fmu.isZeroState "getDerivatives! is not callable for zero state FMUs!"
 
-    fmi3GetContinuousStateDerivatives!(c, dx)
+    if c.fmu.isZeroState
+        dx[1] = 1.0
+    else
+        fmi3GetContinuousStateDerivatives!(c, dx)
+    end
 
     return nothing
 end

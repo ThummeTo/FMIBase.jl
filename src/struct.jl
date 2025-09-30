@@ -89,6 +89,7 @@ mutable struct FMUExecutionConfiguration
 
     sensitivity_strategy::Symbol            # build up strategy for jacobians/gradients, available is `:FMIDirectionalDerivative`, `:FMIAdjointDerivative`, `:FiniteDiff`
     snapshot_every_step::Bool
+    max_snapshots::UInt
 
     set_p_every_step::Bool                  # whether parameters are set for every simulation step - this is uncommon, because parameters are (often) set just one time: during/after intialization
 
@@ -132,15 +133,17 @@ mutable struct FMUExecutionConfiguration
 
         inst.maxNewDiscreteStateCalls = 100
         inst.maxStateEventsPerSecond = 100
-        inst.snapshotDeltaTimeTolerance = 1e-8
+        inst.snapshotDeltaTimeTolerance = 0.0
 
         inst.eval_t_gradients = false
         inst.JVPBuiltInDerivatives = false
         inst.VJPBuiltInDerivatives = false
         inst.sensitivity_strategy = :FMIDirectionalDerivative
-        inst.snapshot_every_step = false
 
         inst.set_p_every_step = false
+
+        inst.snapshot_every_step = false
+        inst.max_snapshots = 1e5
 
         # FiniteDiff
         inst.finitediff_fdtype = Val(:forward)  # is FiniteDiff default
@@ -200,6 +203,53 @@ FMU_EXECUTION_CONFIGURATIONS = (
 )
 export FMU_EXECUTION_CONFIGURATIONS
 
+# mutable struct SuperDenseTime
+#     t::Float64 
+#     index::Int32
+
+#     function SuperDenseTime(t::Real, index::Integer=0)
+#         return new(t, index)
+#     end
+# end
+
+# function Base.:(>)(a::SuperDenseTime, b::SuperDenseTime)
+#     if a.t == b.t 
+#         return a.index > b.index 
+#     end
+#     return a.t > b.t
+# end
+
+# function Base.:(<)(a::SuperDenseTime, b::SuperDenseTime)
+#     if a.t == b.t 
+#         return a.index < b.index 
+#     end
+#     return a.t < b.t
+# end
+
+# function Base.:(==)(a::SuperDenseTime, b::SuperDenseTime)
+#     return a.t == b.t && a.index == b.index 
+# end
+
+# function Base.:(>)(a::SuperDenseTime, b::Real)
+#     return a.t > b
+# end
+
+# function Base.:(<)(a::SuperDenseTime, b::Real)
+#     return a.t < b
+# end
+
+# function Base.:(==)(a::SuperDenseTime, b::Real)
+#     return a.t == b
+# end
+
+# function Base.isapprox(a::SuperDenseTime, b::SuperDenseTime; kwargs...)
+#     return a.t.index == b.t.index && isapprox(a.t.t, b.t.t; kwargs...)
+# end
+
+# function Base.isapprox(a::SuperDenseTime, b_t::Real, b_index::Integer; kwargs...)
+#     return a.t.index == b_index && isapprox(a.t.t, b_t; kwargs...)
+# end
+
 """
  ToDo 
 """
@@ -213,6 +263,7 @@ mutable struct FMUSnapshot{E,C,D,I,S}
     fmuState::Union{S,Nothing}
     x_c::C
     x_d::D
+    valid::Bool
 
     function FMUSnapshot{E,C,D,I,S}() where {E,C,D,I,S}
         inst = new{E,C,D,I,S}()
@@ -231,10 +282,12 @@ mutable struct FMUSnapshot{E,C,D,I,S}
         #x_c = isnothing(c.x  ) ? nothing : copy(c.x  ) 
         #x_d = isnothing(c.x_d) ? nothing : copy(c.x_d)
 
-        n_x_c = Csize_t(length(c.fmu.modelDescription.stateValueReferences))
-        x_c = zeros(Float64, n_x_c)
-        fmi2GetContinuousStates!(c.fmu.cGetContinuousStates, c.addr, x_c, n_x_c)
-        x_d = nothing # ToDo
+        # n_x_c = Csize_t(length(c.fmu.modelDescription.stateValueReferences))
+        # x_c = zeros(Float64, n_x_c)
+        # fmi2GetContinuousStates!(c.fmu.cGetContinuousStates, c.addr, x_c, n_x_c)
+        # x_d = isnothing(c.x_d) ? nothing : copy(c.x_d)
+        x_c = getContinuousStates(c)
+        x_d = getDiscreteStates(c)
 
         E = typeof(eventInfo)
         C = typeof(x_c)
@@ -242,7 +295,7 @@ mutable struct FMUSnapshot{E,C,D,I,S}
         I = typeof(instance)
         S = typeof(fmuState)
 
-        inst = new{E,C,D,I,S}(t, default_t, eventInfo, state, instance, fmuState, x_c, x_d)
+        inst = new{E,C,D,I,S}(t, default_t, eventInfo, state, instance, fmuState, x_c, x_d, true)
 
         @debug "New snapshot #$(length(c.snapshots)+1) t=$(t), x_c=$(x_c) [$(fmuState)]"
 
@@ -253,6 +306,20 @@ mutable struct FMUSnapshot{E,C,D,I,S}
         push!(c.snapshots, inst)
 
         return inst
+    end
+
+    function FMUSnapshot(c::FMUInstance, symbol::Symbol)
+        @assert symbol == :auto "Unknwon symbol $(index)"
+
+        # find super dense time index
+        index = 0
+        for snapshot in c.snapshots
+            if snapshot.sdt.t == t #abs(snapshot.sdt.t - t) < snapshotDeltaTimeTolerance(c) 
+                index += 1
+            end
+        end
+
+        return FMUSnapshot(c, index)
     end
 
 end
@@ -330,14 +397,18 @@ end
 """
 Container for event related information.
 """
-struct FMUEvent{T}
+mutable struct FMUEvent{T}
     t::T                                        # event time point
+    
     indicator::UInt                                 # index of event indicator ("0" for time events)
 
     x_left::Union{Array{T,1},Nothing}       # state before the event
     x_right::Union{Array{T,1},Nothing}      # state after the event (if discontinuous)
 
     indicatorValue::Union{T,Nothing}         # value of the event indicator that triggered the event (should be really close to zero)
+
+    left_snapshot::Union{FMUSnapshot,Nothing} 
+    right_snapshot::Union{FMUSnapshot,Nothing} 
 
     function FMUEvent(
         t::T,
@@ -347,6 +418,8 @@ struct FMUEvent{T}
         indicatorValue::Union{T,Nothing} = nothing,
     ) where {T}
         inst = new{T}(t, indicator, x_left, x_right, indicatorValue)
+        inst.left_snapshot = nothing 
+        inst.right_snapshot = nothing
         return inst
     end
 end

@@ -177,6 +177,10 @@ function Base.length(out::FMUADOutput)
 end
 
 function Base.getindex(out::FMUADOutput, ind::Int)
+    # @info "$(out.buffer) visible len=$(length(out))"
+    # @info "dx= $(out.len_dx)"
+    # @info "y=  $(out.len_y)"
+    # @info "ec= $(out.len_ec)"
     return getindex(out.buffer, ind)
 end
 

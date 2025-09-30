@@ -61,7 +61,8 @@ mutable struct FMU3Instance{F} <: FMUInstance
     t::fmi3Float64             # the system time
     t_offset::fmi3Float64      # time offset between simulation environment and FMU
     x::Union{Array{fmi3Float64,1},Nothing}   # the system states (or sometimes u)
-    x_d::Union{Array{Union{fmi3Float64,fmi3Int64,fmi3Boolean},1},Nothing}   # the system discrete states, [TODO]: Extend to all data types
+    x_nominals::Union{Array{fmi3Float64,1},Nothing}   # the system states (or sometimes u)
+    x_d::Union{Array{fmi3Float64,1},Nothing} # Union{Array{Union{fmi3Float64,fmi3Int64,fmi3Boolean},1}, Array{fmi3Float64,1}, Nothing}   # the system discrete states, [TODO]: Extend to all data types
     ẋ::Union{Array{fmi3Float64,1},Nothing}   # the system state derivative (or sometimes u̇)
     ẍ::Union{Array{fmi3Float64,1},Nothing}   # the system state second derivative
     #u::Array{fmi3Float64, 1}   # the system inputs
@@ -114,6 +115,7 @@ mutable struct FMU3Instance{F} <: FMUInstance
     default_t::Real
     default_p_refs::AbstractVector{<:fmi3ValueReference}
     default_p::AbstractVector{<:Real}
+    default_x_d::AbstractVector{<:Real}
     default_ec_idcs::AbstractVector{<:fmi3ValueReference}
     default_dx_refs::AbstractVector{<:fmi3ValueReference}
     default_u::AbstractVector{<:Real}
@@ -191,6 +193,7 @@ mutable struct FMU3Instance{F} <: FMUInstance
 
         # caches
         inst.x = nothing
+        inst.x_nominals = nothing
         inst.x_d = nothing
         inst.ẋ = nothing
         inst.ẍ = nothing
@@ -228,6 +231,7 @@ mutable struct FMU3Instance{F} <: FMUInstance
         inst.default_t = NO_fmi3Float64
         inst.default_p_refs = EMPTY_fmi3ValueReference
         inst.default_p = EMPTY_fmi3Float64
+        inst.default_x_d = EMPTY_fmi3Float64
         inst.default_ec_idcs = EMPTY_fmi3ValueReference
         inst.default_u = EMPTY_fmi3Float64
         inst.default_y_refs = EMPTY_fmi3ValueReference
@@ -257,6 +261,8 @@ mutable struct FMU3Instance{F} <: FMUInstance
         inst.default_p =
             inst.fmu.default_p === EMPTY_fmi3Float64 ? inst.fmu.default_p :
             copy(inst.fmu.default_p)
+        inst.default_x_d = inst.fmu.default_x_d === EMPTY_fmi3Float64 ? inst.fmu.default_x_d :
+            copy(inst.fmu.default_x_d)
         inst.default_ec =
             inst.fmu.default_ec === EMPTY_fmi3Float64 ? inst.fmu.default_ec :
             copy(inst.fmu.default_ec)
@@ -455,6 +461,7 @@ mutable struct FMU3 <: FMU
     hasStateEvents::Union{Bool,Nothing}
     hasTimeEvents::Union{Bool,Nothing}
     isZeroState::Bool
+    isDummyDiscrete::Bool
 
     # c-libraries
     libHandle::Ptr{Nothing}
@@ -471,6 +478,7 @@ mutable struct FMU3 <: FMU
     default_t::Real
     default_p_refs::AbstractVector{<:fmi3ValueReference}
     default_p::AbstractVector{<:Real}
+    default_x_d::AbstractVector{<:Real}
     default_ec::AbstractVector{<:Real}
     default_ec_idcs::AbstractVector{<:fmi3ValueReference}
     default_dx::AbstractVector{<:Real}
@@ -492,6 +500,8 @@ mutable struct FMU3 <: FMU
         inst.hasStateEvents = nothing
         inst.hasTimeEvents = nothing
 
+        inst.isDummyDiscrete = false
+
         inst.executionConfig = FMU_EXECUTION_CONFIGURATION_NO_RESET
         inst.threadInstances = Dict{Integer,Union{FMU2Component,Nothing}}()
         inst.cFunctionPtrs = Dict{String,Ptr{Nothing}}()
@@ -502,6 +512,7 @@ mutable struct FMU3 <: FMU
         inst.default_t = NO_fmi3Float64
         inst.default_p_refs = EMPTY_fmi3ValueReference
         inst.default_p = EMPTY_fmi3Float64
+        inst.default_x_d = EMPTY_fmi3Float64
         inst.default_ec = EMPTY_fmi3Float64
         inst.default_ec_idcs = EMPTY_fmi3ValueReference
         inst.default_u = EMPTY_fmi3Float64
