@@ -24,7 +24,10 @@ function snapshot!(c::FMUInstance)
         end
     end 
 
-    @assert length(c.snapshots) < c.fmu.executionConfig.max_snapshots "Reached max snapshots ($(c.fmu.executionConfig.max_snapshots)) for lazy unloading, if needed increase value for `fmu.executionConfig.max_snapshots`."
+    #@assert length(c.snapshots) < c.fmu.executionConfig.max_snapshots "Reached max snapshots ($(c.fmu.executionConfig.max_snapshots)) for lazy unloading, if needed increase value for `fmu.executionConfig.max_snapshots`."
+    if length(c.snapshots) > c.fmu.executionConfig.max_snapshots
+        @warn "Exceeded max snapshots $(length(c.snapshots)) > $(c.fmu.executionConfig.max_snapshots) for lazy unloading."
+    end
 
     snapshot = FMUSnapshot(c)
     # is automatically pushed to instance within `FMUSnapshot`
@@ -317,6 +320,8 @@ function freeSnapshot!(s::FMUSnapshot; lazy::Bool=true)
     # We use lazy unloading here, because some FMUs are not compatible with excessive creation/freeing of snapshots (memory leaks).
     # That's why we just invalidate the memory copy here, and re-use it later if new snapshots are needed.
     if lazy 
+        @assert s.valid "Trying to (lazy) free an already invald snapshot at $(s.t)."
+
         s.valid = false 
         return nothing 
     end
