@@ -26,7 +26,7 @@ function snapshot!(c::FMUInstance)
 
     #@assert length(c.snapshots) < c.fmu.executionConfig.max_snapshots "Reached max snapshots ($(c.fmu.executionConfig.max_snapshots)) for lazy unloading, if needed increase value for `fmu.executionConfig.max_snapshots`."
     if length(c.snapshots) > c.fmu.executionConfig.max_snapshots
-        @warn "Exceeded max snapshots $(length(c.snapshots)) > $(c.fmu.executionConfig.max_snapshots) for lazy unloading."
+        @warn "Exceeded max snapshots $(length(c.snapshots)) > $(c.fmu.executionConfig.max_snapshots) for lazy unloading at t=$(c.t)."
     end
 
     snapshot = FMUSnapshot(c)
