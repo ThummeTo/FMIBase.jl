@@ -302,8 +302,12 @@ function apply!(
 
     # discrete state
     if !isnothing(x_d)
-        setDiscreteStates(c, x_d)
-        c.x_d = copy(x_d)
+        if length(x_d) == 1 && length(x_d) != length(c.fmu.modelDescription.discreteStateValueReferences)
+            @warn "apply!(): length(x_d)=$(length(x_d)) != number of discrete value refs=$(length(c.fmu.modelDescription.discreteStateValueReferences)).\nThis might be because you are applying snapshots, that where recorded with dummy discrete state, but are now applied for regular simulation (e.g. during batch scheduling).\nSkipping this ..." maxlog=3
+        else 
+            setDiscreteStates(c, x_d)
+            c.x_d = copy(x_d)
+        end
     end
 
     # time
