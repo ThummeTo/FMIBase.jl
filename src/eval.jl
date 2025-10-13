@@ -269,7 +269,7 @@ function eval_set!(
         # set the corresponding FMUState
         snapshot = getSnapshotForDiscreteState(c, x_d)
 
-        @assert !isnothing(snapshot) || all(x_d .== 0.0) "Snapshot is nothing for x_d != 0\nx_d=$(x_d)\nt=$(t)\nAvailable: $(collect(s.x_d for s in c.snapshots))\nDummy Discrete: $(c.fmu.isDummyDiscrete)"
+        @assert !isnothing(snapshot) || all(x_d .== 0.0) "Snapshot is nothing for x_d != 0\nx_d=$(x_d)\nt=$(t)\nAvailable: ... $(last(collect(s.x_d for s in c.snapshots), 10))\nDummy Discrete: $(c.fmu.isDummyDiscrete)"
         if !isnothing(snapshot)
             apply!(c, snapshot)
             #@info "Apply snapshot for discrete state $(x_d) at t=$(t)"
