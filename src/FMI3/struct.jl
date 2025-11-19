@@ -544,7 +544,7 @@ mutable struct FMU3 <: FMU
         inst.cSetInt8 = C_NULL
         inst.cGetUInt8 = C_NULL
         inst.cSetUInt8 = C_NULL
-        cGetInt16 = C_NULL
+        inst.cGetInt16 = C_NULL
         inst.cSetInt16 = C_NULL
         inst.cGetUInt16 = C_NULL
         inst.cSetUInt16 = C_NULL
