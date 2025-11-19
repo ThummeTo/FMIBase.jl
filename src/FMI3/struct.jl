@@ -61,7 +61,8 @@ mutable struct FMU3Instance{F} <: FMUInstance
     t::fmi3Float64             # the system time
     t_offset::fmi3Float64      # time offset between simulation environment and FMU
     x::Union{Array{fmi3Float64,1},Nothing}   # the system states (or sometimes u)
-    x_d::Union{Array{Union{fmi3Float64,fmi3Int64,fmi3Boolean},1},Nothing}   # the system discrete states, [TODO]: Extend to all data types
+    x_nominals::Union{Array{fmi3Float64,1},Nothing}   # the system states (or sometimes u)
+    x_d::Union{Array{fmi3Float64,1},Nothing} # Union{Array{Union{fmi3Float64,fmi3Int64,fmi3Boolean},1}, Array{fmi3Float64,1}, Nothing}   # the system discrete states, [TODO]: Extend to all data types
     ẋ::Union{Array{fmi3Float64,1},Nothing}   # the system state derivative (or sometimes u̇)
     ẍ::Union{Array{fmi3Float64,1},Nothing}   # the system state second derivative
     #u::Array{fmi3Float64, 1}   # the system inputs
@@ -114,6 +115,7 @@ mutable struct FMU3Instance{F} <: FMUInstance
     default_t::Real
     default_p_refs::AbstractVector{<:fmi3ValueReference}
     default_p::AbstractVector{<:Real}
+    default_x_d::AbstractVector{<:Real}
     default_ec_idcs::AbstractVector{<:fmi3ValueReference}
     default_dx_refs::AbstractVector{<:fmi3ValueReference}
     default_u::AbstractVector{<:Real}
@@ -142,11 +144,16 @@ mutable struct FMU3Instance{F} <: FMUInstance
 
     # a container for all created snapshots, so that we can properly release them at unload
     snapshots::Vector{FMUSnapshot}
+    sampleSnapshot::Union{FMUSnapshot,Nothing} # a snapshot that is (re-)used for sampling 
+
+    termSim::Bool
 
     # constructor
     function FMU3Instance{F}() where {F}
         inst = new()
+
         inst.cRef = UInt64(pointer_from_objref(inst))
+
         inst.state = fmi3InstanceStateInstantiated
         inst.t = NO_fmi3Float64
         inst.t_offset = fmi3Float64(0.0)
@@ -186,6 +193,7 @@ mutable struct FMU3Instance{F} <: FMUInstance
 
         # caches
         inst.x = nothing
+        inst.x_nominals = nothing
         inst.x_d = nothing
         inst.ẋ = nothing
         inst.ẍ = nothing
@@ -223,6 +231,7 @@ mutable struct FMU3Instance{F} <: FMUInstance
         inst.default_t = NO_fmi3Float64
         inst.default_p_refs = EMPTY_fmi3ValueReference
         inst.default_p = EMPTY_fmi3Float64
+        inst.default_x_d = EMPTY_fmi3Float64
         inst.default_ec_idcs = EMPTY_fmi3ValueReference
         inst.default_u = EMPTY_fmi3Float64
         inst.default_y_refs = EMPTY_fmi3ValueReference
@@ -233,12 +242,16 @@ mutable struct FMU3Instance{F} <: FMUInstance
         inst.default_ec = EMPTY_fmi3Float64
 
         inst.snapshots = Vector{FMUSnapshot}()
+        inst.sampleSnapshot = nothing
+
+        inst.termSim = false
 
         return inst
     end
 
     function FMU3Instance(fmu::F) where {F}
         inst = FMU3Instance{F}()
+
         inst.fmu = fmu
 
         inst.default_t = inst.fmu.default_t
@@ -248,6 +261,9 @@ mutable struct FMU3Instance{F} <: FMUInstance
         inst.default_p =
             inst.fmu.default_p === EMPTY_fmi3Float64 ? inst.fmu.default_p :
             copy(inst.fmu.default_p)
+        inst.default_x_d =
+            inst.fmu.default_x_d === EMPTY_fmi3Float64 ? inst.fmu.default_x_d :
+            copy(inst.fmu.default_x_d)
         inst.default_ec =
             inst.fmu.default_ec === EMPTY_fmi3Float64 ? inst.fmu.default_ec :
             copy(inst.fmu.default_ec)
@@ -446,6 +462,7 @@ mutable struct FMU3 <: FMU
     hasStateEvents::Union{Bool,Nothing}
     hasTimeEvents::Union{Bool,Nothing}
     isZeroState::Bool
+    isDummyDiscrete::Bool
 
     # c-libraries
     libHandle::Ptr{Nothing}
@@ -462,6 +479,7 @@ mutable struct FMU3 <: FMU
     default_t::Real
     default_p_refs::AbstractVector{<:fmi3ValueReference}
     default_p::AbstractVector{<:Real}
+    default_x_d::AbstractVector{<:Real}
     default_ec::AbstractVector{<:Real}
     default_ec_idcs::AbstractVector{<:fmi3ValueReference}
     default_dx::AbstractVector{<:Real}
@@ -473,12 +491,17 @@ mutable struct FMU3 <: FMU
     # Constructor
     function FMU3(logLevel::FMULogLevel = FMULogLevelWarn)
         inst = new()
-        inst.instances = []
+
         inst.modelName = ""
+        inst.fmuResourceLocation = ""
         inst.logLevel = logLevel
+
+        inst.instances = []
 
         inst.hasStateEvents = nothing
         inst.hasTimeEvents = nothing
+
+        inst.isDummyDiscrete = false
 
         inst.executionConfig = FMU_EXECUTION_CONFIGURATION_NO_RESET
         inst.threadInstances = Dict{Integer,Union{FMU2Component,Nothing}}()
@@ -490,6 +513,7 @@ mutable struct FMU3 <: FMU
         inst.default_t = NO_fmi3Float64
         inst.default_p_refs = EMPTY_fmi3ValueReference
         inst.default_p = EMPTY_fmi3Float64
+        inst.default_x_d = EMPTY_fmi3Float64
         inst.default_ec = EMPTY_fmi3Float64
         inst.default_ec_idcs = EMPTY_fmi3ValueReference
         inst.default_u = EMPTY_fmi3Float64
@@ -497,6 +521,86 @@ mutable struct FMU3 <: FMU
         inst.default_y_refs = EMPTY_fmi3ValueReference
         inst.default_dx = EMPTY_fmi3Float64
         inst.default_dx_refs = EMPTY_fmi3ValueReference
+
+        # c-functions
+        inst.cInstantiateModelExchange = C_NULL
+        inst.cInstantiateCoSimulation = C_NULL
+        inst.cInstantiateScheduledExecution = C_NULL
+
+        inst.cGetVersion = C_NULL
+        inst.cFreeInstance = C_NULL
+        inst.cSetDebugLogging = C_NULL
+        inst.cEnterConfigurationMode = C_NULL
+        inst.cExitConfigurationMode = C_NULL
+        inst.cEnterInitializationMode = C_NULL
+        inst.cExitInitializationMode = C_NULL
+        inst.cTerminate = C_NULL
+        inst.cReset = C_NULL
+        inst.cGetFloat32 = C_NULL
+        inst.cSetFloat32 = C_NULL
+        inst.cGetFloat64 = C_NULL
+        inst.cSetFloat64 = C_NULL
+        inst.cGetInt8 = C_NULL
+        inst.cSetInt8 = C_NULL
+        inst.cGetUInt8 = C_NULL
+        inst.cSetUInt8 = C_NULL
+        inst.cGetInt16 = C_NULL
+        inst.cSetInt16 = C_NULL
+        inst.cGetUInt16 = C_NULL
+        inst.cSetUInt16 = C_NULL
+        inst.cGetInt32 = C_NULL
+        inst.cSetInt32 = C_NULL
+        inst.cGetUInt32 = C_NULL
+        inst.cSetUInt32 = C_NULL
+        inst.cGetInt64 = C_NULL
+        inst.cSetInt64 = C_NULL
+        inst.cGetUInt64 = C_NULL
+        inst.cSetUInt64 = C_NULL
+        inst.cGetBoolean = C_NULL
+        inst.cSetBoolean = C_NULL
+        inst.cGetString = C_NULL
+        inst.cSetString = C_NULL
+        inst.cGetBinary = C_NULL
+        inst.cSetBinary = C_NULL
+        inst.cGetFMUState = C_NULL
+        inst.cSetFMUState = C_NULL
+        inst.cFreeFMUState = C_NULL
+        inst.cSerializedFMUStateSize = C_NULL
+        inst.cSerializeFMUState = C_NULL
+        inst.cDeSerializeFMUState = C_NULL
+        inst.cGetDirectionalDerivative = C_NULL
+        inst.cGetAdjointDerivative = C_NULL
+        inst.cEvaluateDiscreteStates = C_NULL
+        inst.cGetNumberOfVariableDependencies = C_NULL
+        inst.cGetVariableDependencies = C_NULL
+
+        # Co Simulation function calls
+        inst.cGetOutputDerivatives = C_NULL
+        inst.cEnterStepMode = C_NULL
+        inst.cDoStep = C_NULL
+
+        # Model Exchange function calls
+        inst.cGetNumberOfContinuousStates = C_NULL
+        inst.cGetNumberOfEventIndicators = C_NULL
+        inst.cGetContinuousStates = C_NULL
+        inst.cGetNominalsOfContinuousStates = C_NULL
+        inst.cEnterContinuousTimeMode = C_NULL
+        inst.cSetTime = C_NULL
+        inst.cSetContinuousStates = C_NULL
+        inst.cGetContinuousStateDerivatives = C_NULL
+        inst.cGetEventIndicators = C_NULL
+        inst.cCompletedIntegratorStep = C_NULL
+        inst.cEnterEventMode = C_NULL
+        inst.cUpdateDiscreteStates = C_NULL
+
+        # Scheduled Execution function calls
+        inst.cSetIntervalDecimal = C_NULL
+        inst.cSetIntervalFraction = C_NULL
+        inst.cGetIntervalDecimal = C_NULL
+        inst.cGetIntervalFraction = C_NULL
+        inst.cGetShiftDecimal = C_NULL
+        inst.cGetShiftFraction = C_NULL
+        inst.cActivateModelPartition = C_NULL
 
         return inst
     end

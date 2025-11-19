@@ -67,7 +67,8 @@ mutable struct FMU2Component{F} <: FMUInstance
     t::fmi2Real             # the system time
     t_offset::fmi2Real      # time offset between simulation environment and FMU
     x::Union{Array{fmi2Real,1},Nothing}   # the system states (or sometimes u)
-    x_d::Union{Array{Union{fmi2Real,fmi2Integer,fmi2Boolean},1},Nothing}   # the system discrete states
+    x_nominals::Union{Array{fmi2Real,1},Nothing}   # the system states (or sometimes u)
+    x_d::Union{Array{fmi2Real,1},Nothing} # Union{Array{Union{fmi2Real,fmi2Integer,fmi2Boolean},1}, Array{fmi2Real}, Nothing}   # the system discrete states
     ẋ::Union{Array{fmi2Real,1},Nothing}   # the system state derivative (or sometimes u̇)
     ẍ::Union{Array{fmi2Real,1},Nothing}   # the system state second derivative
     #u::Union{Array{fmi2Real, 1}, Nothing}  # the system inputs
@@ -120,6 +121,7 @@ mutable struct FMU2Component{F} <: FMUInstance
     default_t::Real
     default_p_refs::AbstractVector{<:fmi2ValueReference}
     default_p::AbstractVector{<:Real}
+    default_x_d::AbstractVector{<:Real}
     default_ec_idcs::AbstractVector{<:fmi2ValueReference}
     default_dx_refs::AbstractVector{<:fmi2ValueReference}
     default_u::AbstractVector{<:Real}
@@ -131,6 +133,9 @@ mutable struct FMU2Component{F} <: FMUInstance
 
     # a container for all created snapshots, so that we can properly release them at unload
     snapshots::Vector{FMUSnapshot}
+    sampleSnapshot::Union{FMUSnapshot,Nothing} # a snapshot that is (re-)used for sampling 
+
+    termSim::Bool
 
     # constructor
     function FMU2Component{F}() where {F}
@@ -159,6 +164,7 @@ mutable struct FMU2Component{F} <: FMUInstance
 
         # caches
         inst.x = nothing
+        inst.x_nominals = nothing
         inst.x_d = nothing
         inst.ẋ = nothing
         inst.ẍ = nothing
@@ -196,6 +202,7 @@ mutable struct FMU2Component{F} <: FMUInstance
         inst.default_t = NO_fmi2Real
         inst.default_p_refs = EMPTY_fmi2ValueReference
         inst.default_p = EMPTY_fmi2Real
+        inst.default_x_d = EMPTY_fmi2Real
         inst.default_ec_idcs = EMPTY_fmi2ValueReference
         inst.default_u = EMPTY_fmi2Real
         inst.default_y_refs = EMPTY_fmi2ValueReference
@@ -206,6 +213,9 @@ mutable struct FMU2Component{F} <: FMUInstance
         inst.default_ec = EMPTY_fmi2Real
 
         inst.snapshots = Vector{FMUSnapshot}()
+        inst.sampleSnapshot = nothing
+
+        inst.termSim = false
 
         # performance (pointers to prevent repeating allocations)
         inst._enterEventMode = zeros(fmi2Boolean, 1)
@@ -228,6 +238,9 @@ mutable struct FMU2Component{F} <: FMUInstance
         inst.default_p =
             inst.fmu.default_p === EMPTY_fmi2Real ? inst.fmu.default_p :
             copy(inst.fmu.default_p)
+        inst.default_x_d =
+            inst.fmu.default_x_d === EMPTY_fmi2Real ? inst.fmu.default_x_d :
+            copy(inst.fmu.default_x_d)
         inst.default_ec =
             inst.fmu.default_ec === EMPTY_fmi2Real ? inst.fmu.default_ec :
             copy(inst.fmu.default_ec)
@@ -389,6 +402,7 @@ mutable struct FMU2 <: FMU
     hasStateEvents::Union{Bool,Nothing}
     hasTimeEvents::Union{Bool,Nothing}
     isZeroState::Bool
+    isDummyDiscrete::Bool
 
     # c-libraries
     libHandle::Ptr{Nothing}
@@ -405,6 +419,7 @@ mutable struct FMU2 <: FMU
     default_t::Real
     default_p_refs::AbstractVector{<:fmi2ValueReference}
     default_p::AbstractVector{<:Real}
+    default_x_d::AbstractVector{<:Real}
     default_ec::AbstractVector{<:Real}
     default_ec_idcs::AbstractVector{<:fmi2ValueReference}
     default_dx::AbstractVector{<:Real}
@@ -424,6 +439,8 @@ mutable struct FMU2 <: FMU
         inst.hasStateEvents = nothing
         inst.hasTimeEvents = nothing
 
+        inst.isDummyDiscrete = false
+
         inst.executionConfig = FMU_EXECUTION_CONFIGURATION_NO_RESET
         inst.threadInstances = Dict{Integer,Union{FMU2Component,Nothing}}()
         inst.cFunctionPtrs = Dict{String,Ptr{Nothing}}()
@@ -434,6 +451,7 @@ mutable struct FMU2 <: FMU
         inst.default_t = NO_fmi2Real
         inst.default_p_refs = EMPTY_fmi2ValueReference
         inst.default_p = EMPTY_fmi2Real
+        inst.default_x_d = EMPTY_fmi2Real
         inst.default_ec = EMPTY_fmi2Real
         inst.default_ec_idcs = EMPTY_fmi2ValueReference
         inst.default_u = EMPTY_fmi2Real

@@ -68,13 +68,25 @@ isStatusOK(::FMU3Instance, status::fmi3Status) = (status == fmi3StatusOK)
 isStatusOK(::FMU2, status::fmi2Status) = (status == fmi2StatusOK)
 isStatusOK(::FMU3, status::fmi3Status) = (status == fmi3StatusOK)
 
+# status discard
+isStatusDiscard(::FMU2Component, status::fmi2Status) = (status >= fmi2StatusDiscard)
+isStatusDiscard(::FMU3Instance, status::fmi3Status) = (status >= fmi3StatusDiscard)
+isStatusDiscard(::FMU2, status::fmi2Status) = (status >= fmi2StatusDiscard)
+isStatusDiscard(::FMU3, status::fmi3Status) = (status >= fmi3StatusDiscard)
+
+# status error
+isStatusError(::FMU2Component, status::fmi2Status) = (status >= fmi2StatusError)
+isStatusError(::FMU3Instance, status::fmi3Status) = (status >= fmi3StatusError)
+isStatusError(::FMU2, status::fmi2Status) = (status >= fmi2StatusError)
+isStatusError(::FMU3, status::fmi3Status) = (status >= fmi3StatusError)
+
 # wildcard for "no time set" 
 const NO_fmi2Real = typemin(fmi2Real)
 const NO_fmi3Float64 = typemin(fmi3Float64)
 getNotSetReal(::FMU2) = NO_fmi2Real
 getNotSetReal(::FMU3) = NO_fmi3Float64
-isSetReal(::FMU2, val::Real) = true
-isSetReal(::FMU3, val::Real) = true
+isSetReal(::FMU2, val::Real) = true     # e.g. AD primitives
+isSetReal(::FMU3, val::Real) = true     # e.g. AD primitives
 isSetReal(::FMU2, val::fmi2Real) = (val != NO_fmi2Real)
 isSetReal(::FMU3, val::fmi3Float64) = (val != NO_fmi3Float64)
 

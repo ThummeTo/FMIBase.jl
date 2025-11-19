@@ -7,6 +7,7 @@
 # - calling function for FMU2 and FMU2Component
 
 import ChainRulesCore: ignore_derivatives
+import FMIBase: FMUADOutput
 
 """
 
@@ -19,7 +20,8 @@ import ChainRulesCore: ignore_derivatives
                  p::AbstractVector{<:Real},
                  p_refs::AbstractVector{<:fmiValueReference},
                  ec::AbstractVector{<:Real},
-                 t::Real)
+                 t::Real, 
+                 x_d) # ToDo
 
 Evaluates a `FMU` by setting the component state `x`, inputs `u` and/or time `t`. If no component is available, one is allocated. The result of the evaluation might be the system output `y` and/or state-derivative `dx`. 
 Not all options are available for any FMU type, e.g. setting state is not supported for CS-FMUs. Assertions will be generated for wrong use.
@@ -96,6 +98,24 @@ Not all options are available for any FMU type, e.g. setting state is not suppor
 - `dx::Union{AbstractVector{<:Real}, Nothing}`: The system state-derivaitve (if ME-FMU, otherwise `nothing`).
 - `ec::Union{AbstractVector{<:Real}, Nothing}`: The system event indicators (if ME-FMU, otherwise `nothing`).
 """
+function (c::FMUInstance)(;
+    dx::AbstractVector{<:Real} = c.default_dx,
+    dx_refs::AbstractVector{<:fmiValueReference} = c.default_dx_refs,
+    y::AbstractVector{<:Real} = c.default_y,
+    y_refs::AbstractVector{<:fmiValueReference} = c.default_y_refs,
+    x::AbstractVector{<:Real} = getEmptyReal(c.fmu),
+    u::AbstractVector{<:Real} = getEmptyReal(c.fmu),
+    u_refs::AbstractVector{<:fmiValueReference} = getEmptyValueReference(c.fmu),
+    p::AbstractVector{<:Real} = c.default_p,
+    p_refs::AbstractVector{<:fmiValueReference} = c.default_p_refs,
+    ec::AbstractVector{<:Real} = c.default_ec,
+    ec_idcs::AbstractVector{<:fmiValueReference} = c.default_ec_idcs,
+    t::Real = c.default_t,
+    x_d::AbstractVector{<:Real} = c.default_x_d,
+)
+    (c)(dx, dx_refs, y, y_refs, x, u, u_refs, p, p_refs, ec, ec_idcs, t, x_d)
+end
+
 function (c::FMUInstance)(
     dx::AbstractVector{<:Real},
     dx_refs::AbstractVector{<:fmiValueReference},
@@ -109,6 +129,7 @@ function (c::FMUInstance)(
     ec::AbstractVector{<:Real},
     ec_idcs::AbstractVector{<:fmiValueReference},
     t::Real,
+    xd::AbstractVector{<:Real},
 )
 
     len_x = length(x)
@@ -188,37 +209,35 @@ function (c::FMUInstance)(
     # @debug "dispatching on eval! $((c.cRef, dx, dx_refs, y, y_refs, x, u, u_refs, p, p_refs, ec, ec_idcs, t))"
 
     # [Note] not necessary:
-    #c.output = FMU2ADOutput{Real}(; initType=Real)
+    #c.output = FMUADOutput{Real}(; initType=Real)
 
     c.output.buffer =
-        eval!(c.cRef, dx, dx_refs, y, y_refs, x, u, u_refs, p, p_refs, ec, ec_idcs, t)
+        eval!(c.cRef, dx, dx_refs, y, y_refs, x, u, u_refs, p, p_refs, ec, ec_idcs, t, xd)
     c.output.len_dx = len_dx_refs
     c.output.len_y = len_y_refs
     c.output.len_ec = len_ec_idcs
 
-    @assert !any(collect(isa(c.output.buffer[i], Int64) for i = 1:length(c.output.buffer))) "Fuuuuu $(c.output.buffer)"
+    #@assert !any(collect(isa(c.output.buffer[i], Int64) for i = 1:length(c.output.buffer))) "Fuuuuu $(c.output.buffer)"
 
     return c.output
 end
 
-function (c::FMUInstance)(;
-    dx::AbstractVector{<:Real} = c.default_dx,
-    dx_refs::AbstractVector{<:fmiValueReference} = c.default_dx_refs,
-    y::AbstractVector{<:Real} = c.default_y,
-    y_refs::AbstractVector{<:fmiValueReference} = c.default_y_refs,
-    x::AbstractVector{<:Real} = getEmptyReal(c.fmu),
-    u::AbstractVector{<:Real} = getEmptyReal(c.fmu),
-    u_refs::AbstractVector{<:fmiValueReference} = getEmptyValueReference(c.fmu),
-    p::AbstractVector{<:Real} = c.default_p,
-    p_refs::AbstractVector{<:fmiValueReference} = c.default_p_refs,
-    ec::AbstractVector{<:Real} = c.default_ec,
-    ec_idcs::AbstractVector{<:fmiValueReference} = c.default_ec_idcs,
-    t::Real = c.default_t,
-)
-    (c)(dx, dx_refs, y, y_refs, x, u, u_refs, p, p_refs, ec, ec_idcs, t)
+"""
+    sample!(cRef, dx, dx_refs, y, y_refs, x, u, u_refs, p, p_refs, ec, ec_idcs, t)
+
+Similar to `eval!`, but makes a snapshot beforehand to preserve the state before the change.
+"""
+function sample!(cRef, dx, dx_refs, y, y_refs, x, u, u_refs, p, p_refs, ec, ec_idcs, t, xd)
+    c = unsafe_pointer_to_objref(Ptr{Nothing}(cRef))
+
+    startSampling(c)
+    ret = eval!(cRef, dx, dx_refs, y, y_refs, x, u, u_refs, p, p_refs, ec, ec_idcs, t, xd)
+    stopSampling(c)
+
+    return ret
 end
 
-function eval!(cRef, dx, dx_refs, y, y_refs, x, u, u_refs, p, p_refs, ec, ec_idcs, t)
+function eval!(cRef, dx, dx_refs, y, y_refs, x, u, u_refs, p, p_refs, ec, ec_idcs, t, x_d)
     @assert isa(x, AbstractArray{Float64}) ERR_MSG_NO_FMISENSITIVITY("x", typeof(x))
     @assert isa(u, AbstractArray{Float64}) ERR_MSG_NO_FMISENSITIVITY("u", typeof(u))
     @assert isa(t, Float64) ERR_MSG_NO_FMISENSITIVITY("t", typeof(t))
@@ -226,31 +245,43 @@ function eval!(cRef, dx, dx_refs, y, y_refs, x, u, u_refs, p, p_refs, ec, ec_idc
     @assert false "Fatal error, no dispatch implemented!\nPlease open an issue with MWE and attach error message:\neval!($(typeof(cRef)), $(typeof(dx)), $(typeof(y)), $(typeof(y_refs)), $(typeof(x)), $(typeof(u)), $(typeof(u_refs)), $(typeof(p)), $(typeof(p_refs)), $(typeof(t)))"
 end
 
-function eval!(
-    cRef::UInt64,
-    dx::AbstractVector{Float64},
-    dx_refs::AbstractVector{<:fmiValueReference},
-    y::AbstractVector{Float64},
-    y_refs::AbstractVector{<:fmiValueReference},
+# like eval!, but only setters without getters
+function eval_set!(
+    c::FMUInstance,
     x::AbstractVector{Float64},
     u::AbstractVector{Float64},
     u_refs::AbstractVector{<:fmiValueReference},
     p::AbstractVector{Float64},
     p_refs::AbstractVector{<:fmiValueReference},
-    ec::AbstractVector{Float64},
-    ec_idcs::AbstractVector{<:fmiValueReference},
     t::Float64,
+    x_d::AbstractVector{Float64},
 )
+    # set the correct discrete state via FMUState!
+    if length(x_d) > 0
+        # ToDo: There is the ugly workaround with the oscillating discrete state.
+        # Therefore we correct it before.
+        if c.fmu.isDummyDiscrete
+            x_d[1] = round(Integer, x_d[1])
+        else
+            @assert length(x_d) ==
+                    length(c.fmu.modelDescription.discreteStateValueReferences) "eval!: length of x_d ($(length(x_d))) doesn't match number of discrete states in model desctiption ($(length(c.fmu.modelDescription.discreteStateValueReferences)))."
+        end
 
-    # @debug "eval! $((cRef, dx, dx_refs, y, y_refs, x, u, u_refs, p, p_refs, ec, ec_idcs, t))"
+        # set the corresponding FMUState
+        snapshot = getSnapshotForDiscreteState(c, x_d)
 
-    c = unsafe_pointer_to_objref(Ptr{Nothing}(cRef))
+        @assert !isnothing(snapshot) || all(x_d .== 0.0) "Snapshot is nothing for x_d != 0\nx_d=$(x_d)\nt=$(t)\nAvailable: ... $(last(collect(s.x_d for s in c.snapshots), 10))\nDummy Discrete: $(c.fmu.isDummyDiscrete)"
+        if !isnothing(snapshot)
+            apply!(c, snapshot)
+            #@info "Apply snapshot for discrete state $(x_d) at t=$(t)"
+        end
+
+        setDiscreteStates(c, x_d)
+    end
 
     # set state
     if length(x) > 0
-        if !c.fmu.isZeroState
-            setContinuousStates(c, x)
-        end
+        setContinuousStates(c, x)
     end
 
     # set time
@@ -268,13 +299,47 @@ function eval!(
         setParameters(c, p_refs, p)
     end
 
+    nothing
+end
+function eval_set!(
+    cRef::UInt64,
+    x::AbstractVector{Float64},
+    u::AbstractVector{Float64},
+    u_refs::AbstractVector{<:fmiValueReference},
+    p::AbstractVector{Float64},
+    p_refs::AbstractVector{<:fmiValueReference},
+    t::Float64,
+    x_d::AbstractVector{Float64},
+)
+    c = unsafe_pointer_to_objref(Ptr{Nothing}(cRef))
+    return eval_set!(c, x, u, u_refs, p, p_refs, t, x_d)
+end
+
+function eval!(
+    cRef::UInt64,
+    dx::AbstractVector{Float64},
+    dx_refs::AbstractVector{<:fmiValueReference},
+    y::AbstractVector{Float64},
+    y_refs::AbstractVector{<:fmiValueReference},
+    x::AbstractVector{Float64},
+    u::AbstractVector{Float64},
+    u_refs::AbstractVector{<:fmiValueReference},
+    p::AbstractVector{Float64},
+    p_refs::AbstractVector{<:fmiValueReference},
+    ec::AbstractVector{Float64},
+    ec_idcs::AbstractVector{<:fmiValueReference},
+    t::Float64,
+    x_d::AbstractVector{Float64},
+)
+
+    c = unsafe_pointer_to_objref(Ptr{Nothing}(cRef))
+    # @debug "eval! $((cRef, dx, dx_refs, y, y_refs, x, u, u_refs, p, p_refs, ec, ec_idcs, t, xd))"
+
+    eval_set!(c, x, u, u_refs, p, p_refs, t, x_d)
+
     # get derivative
     if length(dx) > 0
-        if c.fmu.isZeroState
-            dx[1] = 1.0
-        else
-            getDerivatives!(c, dx, dx_refs)
-        end
+        getDerivatives!(c, dx, dx_refs)
     end
 
     # get output 
@@ -310,4 +375,20 @@ eval!(
     ec::AbstractVector{Float64},
     ec_idcs::AbstractVector{<:fmiValueReference},
     t::Int64,
-) = eval!(cRef, dx, dx_refs, y, y_refs, x, u, u_refs, p, p_refs, ec, ec_idcs, Float64(t))
+    x_d::AbstractVector{Float64},
+) = eval!(
+    cRef,
+    dx,
+    dx_refs,
+    y,
+    y_refs,
+    x,
+    u,
+    u_refs,
+    p,
+    p_refs,
+    ec,
+    ec_idcs,
+    Float64(t),
+    x_d,
+)

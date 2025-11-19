@@ -65,24 +65,33 @@ end
 ToDo
 """
 function getContinuousStates(c::FMU2Component)
+    x = nothing
     if !c.fmu.isZeroState
         nx = Csize_t(length(c.fmu.modelDescription.stateValueReferences))
         x = zeros(fmi2Real, nx)
         fmi2GetContinuousStates!(c, x, nx)
-        return x
     else
-        return zeros(fmi2Real, 1)
+        x = zeros(fmi2Real, 1)
     end
+
+    return x
 end
 function getContinuousStates(c::FMU3Instance)
     if !c.fmu.isZeroState
         nx = Csize_t(length(c.fmu.modelDescription.stateValueReferences))
         x = zeros(fmi3Float64, nx)
         fmi3GetContinuousStates!(c, x, nx)
-        return x
     else
-        return zeros(fmi3Float64, 1)
+        x = zeros(fmi3Float64, 1)
     end
+
+    return x
+end
+
+function getStates(c::Union{FMU2Component,FMU3Instance})
+    x_c = getContinuousStates(c)
+    x_d = getDiscreteStates(c)
+    return vcat(x_c, x_d)
 end
 
 """
@@ -144,13 +153,49 @@ end
 """
 ToDo
 """
-function setDiscreteStates(c::FMU2Component, x_d::AbstractArray{<:Any}; kwargs...)
-    setValue(c, c.fmu.modelDescription.discreteStateValueReferences, x_d; kwargs...)
+function setDiscreteStates(
+    c::Union{FMU2Component,FMU3Instance},
+    x_d::Vector{<:Real};
+    kwargs...,
+)
+
+    c.x_d = x_d
+
+    if !c.fmu.isDummyDiscrete
+        setValue(c, c.fmu.modelDescription.discreteStateValueReferences, c.x_d; kwargs...)
+    end
+
     return nothing
 end
-function setDiscreteStates(c::FMU3Instance, x_d::AbstractArray{<:Any}; kwargs...)
-    setValue(c, c.fmu.modelDescription.discreteStateValueReferences, x_d; kwargs...)
-    return nothing
+
+"""
+ToDo
+"""
+function getDiscreteStates(c::FMU2Component; kwargs...)
+
+    if !c.fmu.isDummyDiscrete
+        if length(c.fmu.modelDescription.discreteStateValueReferences) <= 0
+            c.x_d = Vector{fmi2Real}() # Union{fmi2Real,fmi2Integer,fmi2Boolean} 
+        else
+            c.x_d =
+                getValue(c, c.fmu.modelDescription.discreteStateValueReferences; kwargs...)
+        end
+    end
+
+    return c.x_d
+end
+function getDiscreteStates(c::FMU3Instance; kwargs...)
+
+    if !c.fmu.isDummyDiscrete
+        if length(c.fmu.modelDescription.discreteStateValueReferences) <= 0
+            c.x_d = Vector{fmi3Float64}() # Union{fmi2Real,fmi2Integer,fmi2Boolean} 
+        else
+            c.x_d =
+                getValue(c, c.fmu.modelDescription.discreteStateValueReferences; kwargs...)
+        end
+    end
+
+    return c.x_d
 end
 
 """
@@ -218,7 +263,12 @@ function getDerivatives!(
 )
     @assert !c.fmu.isZeroState "getDerivatives! is not callable for zero state FMUs!"
 
-    fmi2GetDerivatives!(c, dx)
+    if c.fmu.isZeroState
+        dx[1] = 1.0
+    else
+        status = fmi2GetDerivatives!(c, dx)
+    end
+
     return nothing
 end
 function getDerivatives!(
@@ -228,7 +278,12 @@ function getDerivatives!(
 )
     @assert !c.fmu.isZeroState "getDerivatives! is not callable for zero state FMUs!"
 
-    fmi3GetContinuousStateDerivatives!(c, dx)
+    if c.fmu.isZeroState
+        dx[1] = 1.0
+    else
+        fmi3GetContinuousStateDerivatives!(c, dx)
+    end
+
     return nothing
 end
 
@@ -276,6 +331,8 @@ function getEventIndicators!(
     ec::AbstractArray{<:fmi2Real},
     ec_idcs::AbstractArray{<:fmi2ValueReference},
 )
+    @assert length(ec_idcs) == 0 || length(ec) == length(ec_idcs) "Calling `getEventIndicators!` with length(ec) = $(length(ec)), but length(ec_idcs) = $(length(ec_idcs)).\nMust be the same length or length(ec_idcs) = 0 (to pick all event indicators)."
+
     if length(ec_idcs) == c.fmu.modelDescription.numberOfEventIndicators ||
        length(ec_idcs) == 0 # pick ALL event indicators
         fmi2GetEventIndicators!(c, ec)
@@ -290,6 +347,8 @@ function getEventIndicators!(
     ec::AbstractArray{<:fmi3Float64},
     ec_idcs::AbstractArray{<:fmi3ValueReference},
 )
+    @assert length(ec_idcs) == 0 || length(ec) == length(ec_idcs) "Calling `getEventIndicators!` with length(ec) = $(length(ec)), but length(ec_idcs) = $(length(ec_idcs)).\nMust be the same length or length(ec_idcs) = 0 (to pick all event indicators)."
+
     if length(ec_idcs) == c.fmu.modelDescription.numberOfEventIndicators ||
        length(ec_idcs) == 0 # pick ALL event indicators
         fmi3GetEventIndicators!(c, ec, c.fmu.modelDescription.numberOfEventIndicators)
@@ -313,8 +372,8 @@ function getDirectionalDerivative(
     ∂x_refs::AbstractArray{<:fmi2ValueReference},
     seed,
 )
-    fmi2GetDirectionalDerivative(c, ∂f_refs, ∂x_refs, seed)
-    return nothing
+    status = fmi2GetDirectionalDerivative(c, ∂f_refs, ∂x_refs, seed)
+    return isStatusOK(c, status)
 end
 function getDirectionalDerivative(
     c::FMU3Instance,
@@ -322,8 +381,8 @@ function getDirectionalDerivative(
     ∂x_refs::AbstractArray{<:fmi3ValueReference},
     seed,
 )
-    fmi3GetDirectionalDerivative(c, ∂f_refs, ∂x_refs, seed)
-    return nothing
+    status = fmi3GetDirectionalDerivative(c, ∂f_refs, ∂x_refs, seed)
+    return isStatusOK(c, status)
 end
 
 """
@@ -333,21 +392,50 @@ function getDirectionalDerivative!(
     c::FMU2Component,
     ∂f_refs::AbstractArray{<:fmi2ValueReference},
     ∂x_refs::AbstractArray{<:fmi2ValueReference},
-    jvp,
     seed,
+    jvp,
 )
-    fmi2GetDirectionalDerivative!(c, ∂f_refs, ∂x_refs, jvp, seed)
-    return nothing
+    status = fmi2GetDirectionalDerivative!(c, ∂f_refs, ∂x_refs, seed, jvp)
+    return isStatusOK(c, status)
 end
 function getDirectionalDerivative!(
     c::FMU3Instance,
     ∂f_refs::AbstractArray{<:fmi3ValueReference},
     ∂x_refs::AbstractArray{<:fmi3ValueReference},
-    jvp,
     seed,
+    jvp,
 )
-    fmi3GetDirectionalDerivative!(c, ∂f_refs, ∂x_refs, jvp, seed)
-    return nothing
+    status = fmi3GetDirectionalDerivative!(c, ∂f_refs, ∂x_refs, seed, jvp)
+    return isStatusOK(c, status)
+end
+
+function indicesForRefs(c, refs)
+    indices = Integer[]
+    vrs = c.fmu.modelDescription.stateValueReferences
+    for i = 1:length(vrs)
+        vr = vrs[i]
+        if vr ∈ refs
+            push!(indices, i)
+        end
+    end
+    return indices
+end
+
+function sampleDirectionalDerivative!(c::FMUInstance, f_refs, x_refs, seed, res; Δx = 1e-12)
+
+    x = getReal(c, x_refs)
+
+    setReal(c, x_refs, x + Δx * seed)
+    pos = getReal(c, f_refs)
+
+    setReal(c, x_refs, x - Δx * seed)
+    neg = getReal(c, f_refs)
+
+    res[:] = (pos - neg) ./ (2*Δx)
+
+    setReal(c, x_refs, x)
+
+    nothing
 end
 
 """
@@ -357,8 +445,8 @@ function getAdjointDerivative!(
     c::FMU2Component,
     ∂f_refs::AbstractArray{<:fmi2ValueReference},
     ∂x_refs::AbstractArray{<:fmi2ValueReference},
-    vjp,
     seed,
+    vjp,
 )
     @assert false "No adjoint derivatives in FMI2!"
     return nothing
@@ -367,11 +455,11 @@ function getAdjointDerivative!(
     c::FMU3Instance,
     ∂f_refs::AbstractArray{<:fmi3ValueReference},
     ∂x_refs::AbstractArray{<:fmi3ValueReference},
-    vjp,
     seed,
+    vjp,
 )
-    fmi3GetAdjointDerivative!(c, ∂f_refs, ∂x_refs, vjp, seed)
-    return nothing
+    status = fmi3GetAdjointDerivative!(c, ∂f_refs, ∂x_refs, vjp, seed)
+    return isStatusOK(c, status)
 end
 
 # get/set FMU state 
@@ -379,20 +467,24 @@ end
 """
 ToDo
 """
-function getFMUstate(c::FMU2Component)
+function getFMUState(c::FMU2Component)
     state = fmi2FMUstate()
     ref = Ref(state)
-    getFMUstate!(c, ref)
+    getFMUState!(c, ref)
     #@info "snap state: $(state)"
     return ref[]
 end
-function getFMUstate(c::FMU3Instance)
-    @assert false, "Not implemented yet. Please open an issue." # [TODO]
+function getFMUState(c::FMU3Instance)
+    state = fmi3FMUState()
+    ref = Ref(state)
+    getFMUState!(c, ref)
+    #@info "snap state: $(state)"
+    return ref[]
 end
 
 """
 
-    getFMUstate!(inst, state)
+    getFMUState!(inst, state)
 
 Copies the current FMU-state of the instance `inst` (like a memory copy) to the address `state`.
 
@@ -400,40 +492,91 @@ Copies the current FMU-state of the instance `inst` (like a memory copy) to the 
 - `inst` ∈ (FMU2Component, FMI3Instance): the FMU instance
 - `state` ∈ (Ref{fmi2FMUstate}, Ref{fmi3FMUState}): the FMU state reference
 """
-function getFMUstate!(c::FMU2Component, state::Ref{fmi2FMUstate})
-    if c.fmu.modelDescription.modelExchange.canGetAndSetFMUstate ||
-       c.fmu.modelDescription.coSimulation.canGetAndSetFMUstate
+function getFMUState!(c::FMU2Component, state::Ref{fmi2FMUstate})
+    if (
+        c.fmu.type == fmi2TypeModelExchange &&
+        c.fmu.modelDescription.modelExchange.canGetAndSetFMUstate
+    ) || (
+        c.fmu.type == fmi2TypeCoSimulation &&
+        c.fmu.modelDescription.coSimulation.canGetAndSetFMUstate
+    )
         return fmi2GetFMUstate!(c.fmu.cGetFMUstate, c.addr, state)
     end
     return nothing
 end
-function getFMUstate!(c::FMU3Instance, state::Ref{fmi3FMUState})
-    @assert false, "Not implemented yet. Please open an issue." # [TODO]
+function getFMUState!(c::FMU3Instance, state::Ref{fmi3FMUState})
+    if (
+        c.fmu.type == fmi3TypeModelExchange &&
+        c.fmu.modelDescription.modelExchange.canGetAndSetFMUState
+    ) || (
+        c.fmu.type == fmi3TypeCoSimulation &&
+        c.fmu.modelDescription.coSimulation.canGetAndSetFMUState
+    )
+        return fmi3GetFMUState!(c.fmu.cGetFMUState, c.addr, state)
+    end
+    return nothing
 end
 
 """
-ToDo
+    setFMUState!(instance, state)
+
+Sets a FMUState `state`.
+
+# Arguments
+- `instance`: the `FMUInstance` (`FMUComponent` or `FMU3Instance`)
+- `state`: the FMU state reference (`fmi2FMUstate` or `fmi3FMUstate`)
 """
-function setFMUstate!(c::FMU2Component, state::fmi2FMUstate)
-    if c.fmu.modelDescription.modelExchange.canGetAndSetFMUstate ||
-       c.fmu.modelDescription.coSimulation.canGetAndSetFMUstate
+function setFMUState!(c::FMU2Component, state::fmi2FMUstate)
+    if (
+        c.fmu.type == fmi2TypeModelExchange &&
+        c.fmu.modelDescription.modelExchange.canGetAndSetFMUstate
+    ) || (
+        c.fmu.type == fmi2TypeCoSimulation &&
+        c.fmu.modelDescription.coSimulation.canGetAndSetFMUstate
+    )
         return fmi2SetFMUstate(c.fmu.cSetFMUstate, c.addr, state)
     end
     return nothing
 end
-function setFMUstate!(c::FMU3Instance, state::fmi2FMUstate)
-    @assert false, "Not implemented yet. Please open an issue." # [TODO]
+function setFMUState!(c::FMU3Instance, state::fmi3FMUState)
+    if (
+        c.fmu.type == fmi3TypeModelExchange &&
+        c.fmu.modelDescription.modelExchange.canGetAndSetFMUState
+    ) || (
+        c.fmu.type == fmi3TypeCoSimulation &&
+        c.fmu.modelDescription.coSimulation.canGetAndSetFMUState
+    )
+        return fmi3SetFMUState(c.fmu.cSetFMUState, c.addr, state)
+    end
+    return nothing
 end
 
 """
 ToDo
 """
-function freeFMUstate!(c::FMU2Component, state::Ref{fmi2FMUstate})
-    fmi2FreeFMUstate(c.fmu.cFreeFMUstate, c.addr, state)
+function freeFMUState!(c::FMU2Component, state::Ref{fmi2FMUstate})
+    if (
+        c.fmu.type == fmi2TypeModelExchange &&
+        c.fmu.modelDescription.modelExchange.canGetAndSetFMUstate
+    ) || (
+        c.fmu.type == fmi2TypeCoSimulation &&
+        c.fmu.modelDescription.coSimulation.canGetAndSetFMUstate
+    )
+        fmi2FreeFMUstate(c.fmu.cFreeFMUstate, c.addr, state)
+    end
     return nothing
 end
-function freeFMUstate!(c::FMU3Instance, state::Ref{fmi3FMUState})
-    @assert false "Not implemented yet. Please open an issue." # [TODO]
+function freeFMUState!(c::FMU3Instance, state::Ref{fmi3FMUState})
+    if (
+        c.fmu.type == fmi3TypeModelExchange &&
+        c.fmu.modelDescription.modelExchange.canGetAndSetFMUState
+    ) || (
+        c.fmu.type == fmi3TypeCoSimulation &&
+        c.fmu.modelDescription.coSimulation.canGetAndSetFMUState
+    )
+        fmi3FreeFMUState(c.fmu.cFreeFMUState, c.addr, state)
+    end
+    return nothing
 end
 
 """
@@ -486,4 +629,38 @@ function enterContinuousTimeMode(c::FMU2Component)
 end
 function enterContinuousTimeMode(c::FMU3Instance)
     return fmi3EnterContinuousTimeMode(c)
+end
+
+function getEventInfo(c::FMU2Component)
+    return deepcopy(c.eventInfo)
+end
+
+# in FMI3 there is no eventInfo, so we need to pack a named tuple instead
+function getEventInfo(c::FMU3Instance)
+    return (
+        enterEventMode = c.enterEventMode,
+        discreteStatesNeedUpdate = c.discreteStatesNeedUpdate,
+        terminateSimulation = c.terminateSimulation,
+        nominalsOfContinuousStatesChanged = c.nominalsOfContinuousStatesChanged,
+        valuesOfContinuousStatesChanged = c.valuesOfContinuousStatesChanged,
+        nextEventTimeDefined = c.nextEventTimeDefined,
+        nextEventTime = c.nextEventTime,
+    )
+end
+
+function setEventInfo!(c::FMU2Component, e::fmi2EventInfo)
+    c.eventInfo = deepcopy(e)
+    nothing
+end
+
+# in FMI3 there is no eventInfo, so we need to unpack a named tuple instead
+function setEventInfo!(c::FMU3Instance, e::NamedTuple)
+    c.enterEventMode = e.enterEventMode
+    c.discreteStatesNeedUpdate = e.discreteStatesNeedUpdate
+    c.terminateSimulation = e.terminateSimulation
+    c.nominalsOfContinuousStatesChanged = e.nominalsOfContinuousStatesChanged
+    c.valuesOfContinuousStatesChanged = e.valuesOfContinuousStatesChanged
+    c.nextEventTimeDefined = e.nextEventTimeDefined
+    c.nextEventTime = e.nextEventTime
+    nothing
 end

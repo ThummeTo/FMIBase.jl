@@ -43,7 +43,10 @@ function setupSolver!(fmu::FMU, tspan, kwargs)
     tspan = (t_start, t_stop)
 
     if !haskey(kwargs, :reltol)
-        kwargs[:reltol] = getDefaultTolerance(fmu)
+        reltol = getDefaultTolerance(fmu)
+        if !isnothing(reltol)
+            kwargs[:reltol] = reltol
+        end
         # if no tolerance is given, pick auto-setting from DifferentialEquations.jl 
     end
 
@@ -55,9 +58,10 @@ function setupSolver!(fmu::FMU, tspan, kwargs)
         # if no dt is given, pick auto-setting from DifferentialEquations.jl
     end
 
-    if !haskey(kwargs, :dtmax)
-        kwargs[:dtmax] = (t_stop - t_start) / 100.0
-    end
+    # [ToDo]: why was this added? this is not good...
+    # if !haskey(kwargs, :dtmax)
+    #     kwargs[:dtmax] = (t_stop - t_start) / 100.0
+    # end
 
     return tspan
 end
@@ -207,8 +211,9 @@ function setupCallbacks(
     end
 
     if recordEigenvalues
-        dtypes =
-            collect(Float64 for _ = 1:2*length(c.fmu.modelDescription.stateValueReferences))
+        dtypes = collect(
+            Float64 for _ = 1:(2*length(c.fmu.modelDescription.stateValueReferences))
+        )
         c.solution.eigenvalues = SavedValues(getRealType(c), Tuple{dtypes...})
 
         savingCB = nothing

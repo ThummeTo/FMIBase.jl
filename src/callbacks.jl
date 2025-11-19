@@ -19,6 +19,7 @@ function condition!(
     t::Real,
     inputFunction::Union{Nothing,FMUInputFunction},
 )
+    @assert isContinuousTimeMode(c) "condition!(...):\n" * ERR_MSG_CONT_TIME_MODE
 
     c.solution.evals_condition += 1
 
@@ -31,41 +32,51 @@ function condition!(
 
     c(; x = x, u = u, u_refs = u_refs, t = t, ec = ec)
 
+    @debug "condition!(c=_, ec=$(ec), x=_, t=$(t), integrator=_, inputFunction=_) -> nothing"
+
     return nothing
 end
 
 # Read next time event from FMU and provide it to the integrator 
 function time_choice(c::FMU2Component, integrator, tStart, tStop)
 
+    @assert isContinuousTimeMode(c) "time_choice(...):\n" * ERR_MSG_CONT_TIME_MODE
+
     c.solution.evals_timechoice += 1
 
     if isTrue(c.eventInfo.nextEventTimeDefined)
 
         if c.eventInfo.nextEventTime >= tStart && c.eventInfo.nextEventTime <= tStop
+            @debug "time_choice(...) -> $(c.eventInfo.nextEventTime)"
             return c.eventInfo.nextEventTime
         else
             # the time event is outside the simulation range!
-            @debug "Next time event @$(c.eventInfo.nextEventTime)s is outside simulation time range ($(tStart), $(tStop)), skipping."
+            @debug "Next time event @$(c.eventInfo.nextEventTime)s is outside simulation time range ($(tStart), $(tStop)), skipping.\ntime_choice(...) -> $(c.eventInfo.nextEventTime)"
             return nothing
         end
     else
+        @debug "No event time defined, skipping.\ntime_choice(...) -> nothing"
         return nothing
     end
 end
 function time_choice(c::FMU3Instance, integrator, tStart, tStop)
+
+    @assert isContinuousTimeMode(c) "time_choice!(...):\n" * ERR_MSG_CONT_TIME_MODE
 
     c.solution.evals_timechoice += 1
 
     if isTrue(c.nextEventTimeDefined)
 
         if c.nextEventTime >= tStart && c.nextEventTime <= tStop
+            @debug "time_choice(...) -> $(c.nextEventTime)"
             return c.nextEventTime
         else
             # the time event is outside the simulation range!
-            @debug "Next time event @$(c.nextEventTime)s is outside simulation time range ($(tStart), $(tStop)), skipping."
+            @debug "Next time event @$(c.nextEventTime)s is outside simulation time range ($(tStart), $(tStop)), skipping.\ntime_choice(...) -> $(c.nextEventTime)"
             return nothing
         end
     else
+        @debug "No event time defined, skipping.\ntime_choice(...) -> nothing"
         return nothing
     end
 end
@@ -77,10 +88,12 @@ function f(
     x::AbstractArray{<:Real},
     p::Tuple,
     t::Real,
-    inputFunction::Union{Nothing,FMUInputFunction},
+    inputFunction::Union{Nothing,FMUInputFunction};
+    force::Bool = false,
 )
-
     c.solution.evals_fx_inplace += 1
+
+    @debug "f(t=$(t), ...) [in-place, eval count: $(c.solution.evals_fx_inplace)]"
 
     u = getEmptyReal(c)
     u_refs = getEmptyValueReference(c)
@@ -89,11 +102,16 @@ function f(
         u_refs = inputFunction.vrs
     end
 
+    oldForce = c.force
+    c.force = force
+
     if c.fmu.isZeroState
         c(; u = u, u_refs = u_refs, t = t)
     else
         c(; dx = dx, x = x, u = u, u_refs = u_refs, t = t)
     end
+
+    c.force = oldForce
 
     return nothing
 end
@@ -104,14 +122,17 @@ function f(
     x::AbstractArray{<:Real},
     p::Tuple,
     t::Real,
-    inputFunction::Union{Nothing,FMUInputFunction},
+    inputFunction::Union{Nothing,FMUInputFunction};
+    kwargs...,
 )
 
     c.solution.evals_fx_outofplace += 1
 
+    @debug "f(t=$(t), ...) [out-of-place, eval count: $(c.solution.evals_fx_outofplace)]"
+
     dx = zeros(getRealType(c), length(x))
 
-    f(c, dx, x, p, t)
+    f(c, dx, x, p, t, inputFunction; kwargs...)
 
     # correct statistics, because fx-call above -> this was in fact an out-of-place evaluation
     c.solution.evals_fx_inplace -= 1
@@ -127,6 +148,10 @@ function f_set(
     inputFunction::Union{Nothing,FMUInputFunction};
     force::Bool = false,
 )
+    # Info: no `dx` is allocated, so this counts as "in-place"
+    c.solution.evals_fx_inplace += 1
+
+    @debug "f(t=$(t), ...) [in-place, eval count: $(c.solution.evals_fx_inplace)]"
 
     u = getEmptyReal(c)
     u_refs = getEmptyValueReference(c)
@@ -152,6 +177,7 @@ function saveValues(c::FMUInstance, recordValues, x, t, integrator, inputFunctio
 
     c.solution.evals_savevalues += 1
 
+    # update inputs
     f_set(c, x, t, inputFunction)
 
     # ToDo: Replace by inplace statement!
@@ -170,6 +196,8 @@ function saveEventIndicators(
     @assert isContinuousTimeMode(c) "saveEventIndicators(...):\n" * ERR_MSG_CONT_TIME_MODE
 
     c.solution.evals_saveeventindicators += 1
+
+    f_set(c, x, t, inputFunction)
 
     out = zeros(getRealType(c), c.fmu.modelDescription.numberOfEventIndicators)
     condition!(c, out, x, t, inputFunction)
@@ -225,7 +253,7 @@ function stepCompleted(
         end
     end
 
-    noSetFMUStatePriorToCurrentPoint = fmi2True
+    noSetFMUStatePriorToCurrentPoint = fmi2False
     status = fmi2CompletedIntegratorStep!(
         c,
         noSetFMUStatePriorToCurrentPoint,
@@ -236,6 +264,8 @@ function stepCompleted(
     if isTrue(c.terminateSimulation)
         @error "stepCompleted(...): FMU requested termination!"
     end
+
+    @debug "stepCompleted(t=$(t), ...) -> enterEventMode=$(c.enterEventMode), terminateSimulation=$(c.terminateSimulation)"
 
     if isTrue(c.enterEventMode)
         affectFMU!(c, integrator, -1, inputFunction)
@@ -270,7 +300,7 @@ function stepCompleted(
         end
     end
 
-    noSetFMUStatePriorToCurrentPoint = fmi3True
+    noSetFMUStatePriorToCurrentPoint = fmi3False
     status = fmi3CompletedIntegratorStep!(
         c,
         noSetFMUStatePriorToCurrentPoint,
@@ -281,6 +311,8 @@ function stepCompleted(
     if isTrue(c.terminateSimulation)
         @error "stepCompleted(...): FMU requested termination!"
     end
+
+    @debug "stepCompleted(t=$(t), ...) -> enterEventMode=$(c.enterEventMode), terminateSimulation=$(c.terminateSimulation)"
 
     if isTrue(c.enterEventMode)
         affectFMU!(c, integrator, -1, inputFunction)
@@ -297,10 +329,14 @@ function affectFMU!(c::FMU2Component, integrator, idx, inputFunction)
 
     @assert isContinuousTimeMode(c) "affectFMU!(...):\n" * ERR_MSG_CONT_TIME_MODE
 
+    t = integrator.t
+
+    @debug "affectFMU!(t=$(t), ...) -> ..."
+
     c.solution.evals_affect += 1
 
     # there are fx-evaluations before the event is handled, reset the FMU state to the current integrator step
-    f_set(c, integrator.u, integrator.t, inputFunction; force = true)
+    f_set(c, integrator.u, t, inputFunction; force = true)
 
     fmi2EnterEventMode(c)
 
@@ -339,8 +375,12 @@ function affectFMU!(c::FMU3Instance, integrator, idx, inputFunction)
 
     @assert isContinuousTimeMode(c) "affectFMU!(...): Must be in continuous time mode!"
 
+    t = integrator.t
+
+    @debug "affectFMU!(t=$(t), ...) -> ..."
+
     # there are fx-evaluations before the event is handled, reset the FMU state to the current integrator step
-    f_set(c, integrator.u, integrator.t, inputFunction; force = true)
+    f_set(c, integrator.u, t, inputFunction; force = true)
 
     fmi3EnterEventMode(
         c,
@@ -444,6 +484,8 @@ function handleEvents(c::FMU2Component)
     c.eventInfo.nextEventTimeDefined = nextEventTimeDefined
     c.eventInfo.nextEventTime = nextEventTime
 
+    @debug "handleEvents(...) -> valuesOfContinuousStatesChanged=$(c.eventInfo.valuesOfContinuousStatesChanged), nextEventTimeDefined=$(c.eventInfo.nextEventTimeDefined), nextEventTime=$(c.eventInfo.nextEventTime)"
+
     @assert fmi2EnterContinuousTimeMode(c) == fmi2StatusOK "FMU is not in state continuous time after event handling."
 
     return nothing
@@ -490,6 +532,8 @@ function handleEvents(c::FMU3Instance)
 
         @assert numCalls <= c.fmu.executionConfig.maxNewDiscreteStateCalls "handleEvents(...): Exceeded $(c.fmu.executionConfig.maxNewDiscreteStateCalls) calls, this may be an error in the FMU. If not, you can change the max value for this FMU in `fmu.executionConfig.maxNewDiscreteStateCalls`."
     end
+
+    @debug "handleEvents(...) -> valuesOfContinuousStatesChanged=$(c.valuesOfContinuousStatesChanged), nextEventTimeDefined=$(c.nextEventTimeDefined), nextEventTime=$(c.nextEventTime)"
 
     @assert isStatusOK(c, fmi3EnterContinuousTimeMode(c)) "FMU is not in state continuous time after event handling."
 

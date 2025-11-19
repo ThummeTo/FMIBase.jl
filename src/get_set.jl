@@ -322,71 +322,71 @@ function setValue(
 end
 export setValue
 
-"""
-    setDiscreteStates(c::FMU2Component,
-                                 x::Union{AbstractArray{Float32},AbstractArray{Float64}})
+# """
+#     setDiscreteStates(c::FMU2Component,
+#                                  x::Union{AbstractArray{Float32},AbstractArray{Float64}})
 
-Set a new (discrete) state vector and reinitialize chaching of variables that depend on states.
+# Set a new (discrete) state vector and reinitialize chaching of variables that depend on states.
 
-# Arguments
-[ToDo]
-"""
-function setDiscreteStates(
-    c::FMU2Component,
-    xd::AbstractArray{Union{fmi2Real,fmi2Integer,fmi2Boolean}},
-)
+# # Arguments
+# [ToDo]
+# """
+# function setDiscreteStates(
+#     c::FMU2Component,
+#     xd::AbstractArray{Union{fmi2Real,fmi2Integer,fmi2Boolean}},
+# )
 
-    if length(c.fmu.modelDescription.discreteStateValueReferences) <= 0
-        return fmi2StatusOK
-    end
+#     if length(c.fmu.modelDescription.discreteStateValueReferences) <= 0
+#         return fmi2StatusOK
+#     end
 
-    status = fmi2Set(c, c.fmu.modelDescription.discreteStateValueReferences, xd)
-    if status == fmi2StatusOK
-        fast_copy!(c, :x_d, xd)
-    end
-    return status
-end
-export setDiscreteStates
+#     status = fmi2Set(c, c.fmu.modelDescription.discreteStateValueReferences, xd)
+#     if status == fmi2StatusOK
+#         fast_copy!(c, :x_d, xd)
+#     end
+#     return status
+# end
+# export setDiscreteStates
 
-"""
-    getDiscreteStates!(c, xd)
+# """
+#     getDiscreteStates!(c, xd)
 
-Sets a new (discrete) state vector (in-place).
+# Sets a new (discrete) state vector (in-place).
 
-# Arguments
-- `c::FMU2Component`
-- `xd::AbstractArray{Union{fmi2Real, fmi2Integer, fmi2Boolean}}`
-"""
-function getDiscreteStates!(
-    c::FMU2Component,
-    xd::AbstractArray{Union{fmi2Real,fmi2Integer,fmi2Boolean}},
-)
+# # Arguments
+# - `c::FMU2Component`
+# - `xd::AbstractArray{Union{fmi2Real, fmi2Integer, fmi2Boolean}}`
+# """
+# function getDiscreteStates!(
+#     c::FMU2Component,
+#     xd::AbstractArray{Union{fmi2Real,fmi2Integer,fmi2Boolean}},
+# )
 
-    if length(c.fmu.modelDescription.discreteStateValueReferences) <= 0
-        return fmi2StatusOK
-    end
+#     if length(c.fmu.modelDescription.discreteStateValueReferences) <= 0
+#         return fmi2StatusOK
+#     end
 
-    status = getValue!(c, c.fmu.modelDescription.discreteStateValueReferences, xd)
-    if status == fmi2StatusOK
-        fast_copy!(c, :x_d, xd)
-    end
-    return status
-end
-export getDiscreteStates!
+#     status = getValue!(c, c.fmu.modelDescription.discreteStateValueReferences, xd)
+#     if status == fmi2StatusOK
+#         fast_copy!(c, :x_d, xd)
+#     end
+#     return status
+# end
+# export getDiscreteStates!
 
-"""
-    getDiscreteStates(c)
+# """
+#     getDiscreteStates(c)
 
-Sets a new (discrete) state vector (out-of-place).
+# Sets a new (discrete) state vector (out-of-place).
 
-# Arguments
-- `c::FMU2Component`
-"""
-function getDiscreteStates(c::FMU2Component)
+# # Arguments
+# - `c::FMU2Component`
+# """
+# function getDiscreteStates(c::FMU2Component)
 
-    ndx = length(c.fmu.modelDescription.discreteStateValueReferences)
-    xd = Vector{Union{fmi2Real,fmi2Integer,fmi2Boolean}}()
-    getDiscreteStates!(c, xd)
-    return xd
-end
-export getDiscreteStates
+#     ndx = length(c.fmu.modelDescription.discreteStateValueReferences)
+#     xd = Vector{Union{fmi2Real,fmi2Integer,fmi2Boolean}}()
+#     getDiscreteStates!(c, xd)
+#     return xd
+# end
+# export getDiscreteStates

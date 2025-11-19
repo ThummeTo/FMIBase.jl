@@ -161,9 +161,9 @@ function Base.getproperty(out::FMUADOutput, var::Symbol)
     if var == :dx
         return @view(out.buffer[1:out.len_dx])
     elseif var == :y
-        return @view(out.buffer[out.len_dx+1:out.len_dx+out.len_y])
+        return @view(out.buffer[(out.len_dx+1):(out.len_dx+out.len_y)])
     elseif var == :ec
-        return @view(out.buffer[out.len_dx+out.len_y+1:end])
+        return @view(out.buffer[(out.len_dx+out.len_y+1):end])
     else
         return Base.getfield(out, var)
     end
@@ -177,6 +177,10 @@ function Base.length(out::FMUADOutput)
 end
 
 function Base.getindex(out::FMUADOutput, ind::Int)
+    # @info "$(out.buffer) visible len=$(length(out))"
+    # @info "dx= $(out.len_dx)"
+    # @info "y=  $(out.len_y)"
+    # @info "ec= $(out.len_ec)"
     return getindex(out.buffer, ind)
 end
 

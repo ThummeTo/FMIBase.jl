@@ -213,7 +213,7 @@ function Plots.plot!(
                 label = "$vrName ($vr)"
                 labelLength = length(label)
                 if labelLength > maxLabelLength
-                    label = "..." * label[labelLength-maxLabelLength:end]
+                    label = "..." * label[(labelLength-maxLabelLength):end]
                 end
 
                 Plots.plot!(fig, t, vals; label = label, plotkwargs...)
@@ -246,7 +246,7 @@ function Plots.plot!(
                 label = "$vrName ($vr)"
                 labelLength = length(label)
                 if labelLength > maxLabelLength
-                    label = "..." * label[labelLength-maxLabelLength:end]
+                    label = "..." * label[(labelLength-maxLabelLength):end]
                 end
 
                 Plots.plot!(fig, t, vals; label = label, plotkwargs...)

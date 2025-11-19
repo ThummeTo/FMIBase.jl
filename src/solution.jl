@@ -40,22 +40,19 @@ function getState(
     else
         ignore_derivatives() do
             vrs = prepareValueReference(solution.instance.fmu, vrs)
+            x_refs = solution.instance.fmu.modelDescription.stateValueReferences
 
             if !isnothing(solution.states)
                 for vr in vrs
                     found = false
-                    for i =
-                        1:length(
-                            solution.instance.fmu.modelDescription.stateValueReferences,
-                        )
-                        if solution.instance.fmu.modelDescription.stateValueReferences[i] ==
-                           vr
+                    for i = 1:length(x_refs)
+                        if x_refs[i] == vr
                             push!(indices, i)
                             found = true
                             break
                         end
                     end
-                    @assert found "Couldn't find the index for value reference `$(vr)`! This is probably because this value reference does not belong to a system state."
+                    @assert found "Couldn't find the index for value reference `$(vr)`!\nThis is probably because this value reference does not belong to a system state."
                 end
             end
 
@@ -125,6 +122,7 @@ function getStateDerivative(
                         1:length(
                             solution.instance.fmu.modelDescription.stateValueReferences,
                         )
+
                         if solution.instance.fmu.modelDescription.stateValueReferences[i] ==
                            vr
                             push!(indices, i)
