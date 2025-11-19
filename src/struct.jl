@@ -94,7 +94,7 @@ mutable struct FMUExecutionConfiguration
     set_p_every_step::Bool                  # whether parameters are set for every simulation step - this is uncommon, because parameters are (often) set just one time: during/after intialization
 
     # sampling 
-    finitediff_fdtype # ::DataType
+    finitediff_fdtype::Any # ::DataType
     finitediff_relstep::Float64
     finitediff_absstep::Float64
 
@@ -295,7 +295,17 @@ mutable struct FMUSnapshot{E,C,D,I,S}
         I = typeof(instance)
         S = typeof(fmuState)
 
-        inst = new{E,C,D,I,S}(t, default_t, eventInfo, state, instance, fmuState, x_c, x_d, true)
+        inst = new{E,C,D,I,S}(
+            t,
+            default_t,
+            eventInfo,
+            state,
+            instance,
+            fmuState,
+            x_c,
+            x_d,
+            true,
+        )
 
         @debug "New snapshot #$(length(c.snapshots)+1) t=$(t), x_c=$(x_c) [$(fmuState)]"
 
@@ -399,7 +409,7 @@ Container for event related information.
 """
 mutable struct FMUEvent{T}
     t::T                                        # event time point
-    
+
     indicator::UInt                                 # index of event indicator ("0" for time events)
 
     x_left::Union{Array{T,1},Nothing}       # state before the event
@@ -407,8 +417,8 @@ mutable struct FMUEvent{T}
 
     indicatorValue::Union{T,Nothing}         # value of the event indicator that triggered the event (should be really close to zero)
 
-    left_snapshot::Union{FMUSnapshot,Nothing} 
-    right_snapshot::Union{FMUSnapshot,Nothing} 
+    left_snapshot::Union{FMUSnapshot,Nothing}
+    right_snapshot::Union{FMUSnapshot,Nothing}
 
     function FMUEvent(
         t::T,
@@ -418,7 +428,7 @@ mutable struct FMUEvent{T}
         indicatorValue::Union{T,Nothing} = nothing,
     ) where {T}
         inst = new{T}(t, indicator, x_left, x_right, indicatorValue)
-        inst.left_snapshot = nothing 
+        inst.left_snapshot = nothing
         inst.right_snapshot = nothing
         return inst
     end

@@ -144,7 +144,7 @@ mutable struct FMU3Instance{F} <: FMUInstance
 
     # a container for all created snapshots, so that we can properly release them at unload
     snapshots::Vector{FMUSnapshot}
-    sampleSnapshot::Union{FMUSnapshot, Nothing} # a snapshot that is (re-)used for sampling 
+    sampleSnapshot::Union{FMUSnapshot,Nothing} # a snapshot that is (re-)used for sampling 
 
     termSim::Bool
 
@@ -253,7 +253,7 @@ mutable struct FMU3Instance{F} <: FMUInstance
         inst = FMU3Instance{F}()
 
         inst.fmu = fmu
-        
+
         inst.default_t = inst.fmu.default_t
         inst.default_p_refs =
             inst.fmu.default_p_refs === EMPTY_fmi3ValueReference ? inst.fmu.default_p_refs :
@@ -261,7 +261,8 @@ mutable struct FMU3Instance{F} <: FMUInstance
         inst.default_p =
             inst.fmu.default_p === EMPTY_fmi3Float64 ? inst.fmu.default_p :
             copy(inst.fmu.default_p)
-        inst.default_x_d = inst.fmu.default_x_d === EMPTY_fmi3Float64 ? inst.fmu.default_x_d :
+        inst.default_x_d =
+            inst.fmu.default_x_d === EMPTY_fmi3Float64 ? inst.fmu.default_x_d :
             copy(inst.fmu.default_x_d)
         inst.default_ec =
             inst.fmu.default_ec === EMPTY_fmi3Float64 ? inst.fmu.default_ec :
@@ -496,7 +497,7 @@ mutable struct FMU3 <: FMU
         inst.logLevel = logLevel
 
         inst.instances = []
-        
+
         inst.hasStateEvents = nothing
         inst.hasTimeEvents = nothing
 

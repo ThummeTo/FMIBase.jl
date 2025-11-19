@@ -133,7 +133,7 @@ mutable struct FMU2Component{F} <: FMUInstance
 
     # a container for all created snapshots, so that we can properly release them at unload
     snapshots::Vector{FMUSnapshot}
-    sampleSnapshot::Union{FMUSnapshot, Nothing} # a snapshot that is (re-)used for sampling 
+    sampleSnapshot::Union{FMUSnapshot,Nothing} # a snapshot that is (re-)used for sampling 
 
     termSim::Bool
 

@@ -254,7 +254,7 @@ function eval_set!(
     p::AbstractVector{Float64},
     p_refs::AbstractVector{<:fmiValueReference},
     t::Float64,
-    x_d::AbstractVector{Float64}
+    x_d::AbstractVector{Float64},
 )
     # set the correct discrete state via FMUState!
     if length(x_d) > 0
@@ -263,7 +263,8 @@ function eval_set!(
         if c.fmu.isDummyDiscrete
             x_d[1] = round(Integer, x_d[1])
         else
-            @assert length(x_d) == length(c.fmu.modelDescription.discreteStateValueReferences) "eval!: length of x_d ($(length(x_d))) doesn't match number of discrete states in model desctiption ($(length(c.fmu.modelDescription.discreteStateValueReferences)))."
+            @assert length(x_d) ==
+                    length(c.fmu.modelDescription.discreteStateValueReferences) "eval!: length of x_d ($(length(x_d))) doesn't match number of discrete states in model desctiption ($(length(c.fmu.modelDescription.discreteStateValueReferences)))."
         end
 
         # set the corresponding FMUState
@@ -300,15 +301,16 @@ function eval_set!(
 
     nothing
 end
-function eval_set!(cRef::UInt64,
+function eval_set!(
+    cRef::UInt64,
     x::AbstractVector{Float64},
     u::AbstractVector{Float64},
     u_refs::AbstractVector{<:fmiValueReference},
     p::AbstractVector{Float64},
     p_refs::AbstractVector{<:fmiValueReference},
     t::Float64,
-    x_d::AbstractVector{Float64}
-) 
+    x_d::AbstractVector{Float64},
+)
     c = unsafe_pointer_to_objref(Ptr{Nothing}(cRef))
     return eval_set!(c, x, u, u_refs, p, p_refs, t, x_d)
 end
@@ -327,7 +329,7 @@ function eval!(
     ec::AbstractVector{Float64},
     ec_idcs::AbstractVector{<:fmiValueReference},
     t::Float64,
-    x_d::AbstractVector{Float64}
+    x_d::AbstractVector{Float64},
 )
 
     c = unsafe_pointer_to_objref(Ptr{Nothing}(cRef))
@@ -374,4 +376,19 @@ eval!(
     ec_idcs::AbstractVector{<:fmiValueReference},
     t::Int64,
     x_d::AbstractVector{Float64},
-) = eval!(cRef, dx, dx_refs, y, y_refs, x, u, u_refs, p, p_refs, ec, ec_idcs, Float64(t), x_d)
+) = eval!(
+    cRef,
+    dx,
+    dx_refs,
+    y,
+    y_refs,
+    x,
+    u,
+    u_refs,
+    p,
+    p_refs,
+    ec,
+    ec_idcs,
+    Float64(t),
+    x_d,
+)

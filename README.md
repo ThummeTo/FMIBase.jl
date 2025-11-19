@@ -2,7 +2,7 @@
 # FMIBase.jl
 
 ## What is FMIBase.jl?
-[*FMIBase.jl*](https://github.com/ThummeTo/FMIBase.jl) provides the foundation for the Julia packages [*FMIImport.jl*](https://github.com/ThummeTo/FMIImport.jl) and [*FMIExport.jl*](https://github.com/ThummeTo/FMIExport.jl).
+[*FMIBase.jl*](https://github.com/ThummeTo/FMIBase.jl) provides the foundation for the Julia packages [*FMIImport.jl*](https://github.com/ThummeTo/FMIImport.jl) and [*FMIExport.jl*](https://github.com/ThummeTo/FMIExport.jl), so functionality that is important for importing *and* exporting FMUs.
 
 [![Dev Docs](https://img.shields.io/badge/docs-dev-blue.svg)](https://ThummeTo.github.io/FMI.jl/dev)
 [![Test (latest)](https://github.com/ThummeTo/FMIBase.jl/actions/workflows/TestLatest.yml/badge.svg)](https://github.com/ThummeTo/FMIBase.jl/actions/workflows/TestLatest.yml)
@@ -40,4 +40,4 @@ To keep dependencies nice and clean, the original package [*FMI.jl*](https://git
 - [*FMIZoo.jl*](https://github.com/ThummeTo/FMIZoo.jl): A collection of testing and example FMUs
 
 ## What Platforms are supported?
-[*FMIBase.jl*](https://github.com/ThummeTo/FMIBase.jl) is tested (and testing) under Julia Versions *v1.6 LTS* and *v1 latest* on Windows *latest* (`x64` and `x86`) and Ubuntu *latest* (`x64`). MacOS is not CI-tested but should work with Mac-FMUs.
+[*FMIBase.jl*](https://github.com/ThummeTo/FMIBase.jl) is tested (and testing) under Julia Versions *v1.10 LTS* and *v1 latest* on Windows *latest* (`x64` and `x86`) and Ubuntu *latest* (`x64`). MacOS is not CI-tested but should work with Mac-FMUs.

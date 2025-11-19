@@ -211,8 +211,9 @@ function setupCallbacks(
     end
 
     if recordEigenvalues
-        dtypes =
-            collect(Float64 for _ = 1:2*length(c.fmu.modelDescription.stateValueReferences))
+        dtypes = collect(
+            Float64 for _ = 1:(2*length(c.fmu.modelDescription.stateValueReferences))
+        )
         c.solution.eigenvalues = SavedValues(getRealType(c), Tuple{dtypes...})
 
         savingCB = nothing
