@@ -178,7 +178,7 @@ function getDiscreteStates(c::FMU2Component; kwargs...)
             c.x_d = Vector{fmi2Real}() # Union{fmi2Real,fmi2Integer,fmi2Boolean} 
         else
             c.x_d =
-                getValue(c, c.fmu.modelDescription.discreteStateValueReferences; kwargs...)
+                getValue(c, c.fmu.modelDescription.discreteStateValueReferences; T=Float64, kwargs...)
         end
     end
 
@@ -191,7 +191,7 @@ function getDiscreteStates(c::FMU3Instance; kwargs...)
             c.x_d = Vector{fmi3Float64}() # Union{fmi2Real,fmi2Integer,fmi2Boolean} 
         else
             c.x_d =
-                getValue(c, c.fmu.modelDescription.discreteStateValueReferences; kwargs...)
+                getValue(c, c.fmu.modelDescription.discreteStateValueReferences; T=Float64, kwargs...)
         end
     end
 

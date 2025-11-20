@@ -169,9 +169,9 @@ More detailed: `fmi2ValueReferenceFormat = Union{Nothing, String, Array{String,1
 # Returns
 - `dstArray::Array{Any,1}(undef, length(vrs))`: Stores the specific value of `fmi2ScalarVariable` containing the modelVariables with the identical fmi2ValueReference to the input variable vr (vr = vrs[i]). `dstArray` is a 1-Dimensional Array that has the same length as `vrs`.
 """
-function getValue(comp::FMUInstance, vrs::fmiValueReferenceFormat)
+function getValue(comp::FMUInstance, vrs::fmiValueReferenceFormat; T=Any)
     vrs = prepareValueReference(comp, vrs)
-    dstArray = Array{Any,1}(undef, length(vrs))
+    dstArray = Vector{T}(undef, length(vrs))
     getValue!(comp, vrs, dstArray)
 
     if length(dstArray) == 1
