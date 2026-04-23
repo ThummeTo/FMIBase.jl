@@ -177,8 +177,12 @@ function getDiscreteStates(c::FMU2Component; kwargs...)
         if length(c.fmu.modelDescription.discreteStateValueReferences) <= 0
             c.x_d = Vector{fmi2Real}() # Union{fmi2Real,fmi2Integer,fmi2Boolean} 
         else
-            c.x_d =
-                getValue(c, c.fmu.modelDescription.discreteStateValueReferences; T=Float64, kwargs...)
+            c.x_d = getValue(
+                c,
+                c.fmu.modelDescription.discreteStateValueReferences;
+                T = Float64,
+                kwargs...,
+            )
         end
     end
 
@@ -190,8 +194,12 @@ function getDiscreteStates(c::FMU3Instance; kwargs...)
         if length(c.fmu.modelDescription.discreteStateValueReferences) <= 0
             c.x_d = Vector{fmi3Float64}() # Union{fmi2Real,fmi2Integer,fmi2Boolean} 
         else
-            c.x_d =
-                getValue(c, c.fmu.modelDescription.discreteStateValueReferences; T=Float64, kwargs...)
+            c.x_d = getValue(
+                c,
+                c.fmu.modelDescription.discreteStateValueReferences;
+                T = Float64,
+                kwargs...,
+            )
         end
     end
 
@@ -431,7 +439,7 @@ function sampleDirectionalDerivative!(c::FMUInstance, f_refs, x_refs, seed, res;
     setReal(c, x_refs, x - Δx * seed)
     neg = getReal(c, f_refs)
 
-    res[:] = (pos - neg) ./ (2*Δx)
+    res[:] = (pos - neg) ./ (2 * Δx)
 
     setReal(c, x_refs, x)
 
