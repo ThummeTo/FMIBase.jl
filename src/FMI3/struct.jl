@@ -181,7 +181,7 @@ mutable struct FMU3Instance{F} <: FMUInstance
         inst._ptr_nextEventTime = pointer(inst._nextEventTime)
 
         # AD
-        inst.output = FMUADOutput{Real}(; initType = Float64)
+        inst.output = FMUADOutput{Real}(; initType=Float64)
         inst.eval_output = FMUEvaluationOutput{Float64}()
         inst.rrule_input = FMUEvaluationInput()
         inst.frule_output = FMUEvaluationOutput{Float64}()
@@ -368,7 +368,7 @@ mutable struct FMU3 <: FMU
     modelDescription::fmi3ModelDescription
 
     # LayeredStandard ModelDescription (Sensitivity Analysis)
-    modelDescriptionLSSA::Union{FMIModelDescriptionLSSA, Nothing}
+    modelDescriptionLSSA::Union{FMIModelDescriptionLSSA,Nothing}
 
     type::fmi3Type
     instances::Vector{FMU3Instance}
@@ -492,7 +492,7 @@ mutable struct FMU3 <: FMU
     default_y_refs::AbstractVector{<:fmi3ValueReference}
 
     # Constructor
-    function FMU3(logLevel::FMULogLevel = FMULogLevelWarn)
+    function FMU3(logLevel::FMULogLevel=FMULogLevelWarn)
         inst = new()
 
         inst.modelName = ""

@@ -205,7 +205,7 @@ function setValue(
     comp::FMU2Component,
     vrs::fmi2ValueReferenceFormat,
     srcArray::AbstractArray;
-    filter = nothing,
+    filter=nothing,
 )
     vrs = prepareValueReference(comp, vrs)
 
@@ -253,7 +253,7 @@ function setValue(
     inst::FMU3Instance,
     vrs::fmi3ValueReferenceFormat,
     srcArray::Array;
-    filter = nothing,
+    filter=nothing,
 )
 
     vrs = prepareValueReference(inst, vrs)
