@@ -53,9 +53,9 @@ end
 function snapshot_if_needed!(
     obj::Union{FMUInstance,FMUSolution},
     t::Real;
-    atol=snapshotDeltaTimeTolerance(obj),
+    atol = snapshotDeltaTimeTolerance(obj),
 )
-    sn = getSnapshot(obj, t; atol=atol)
+    sn = getSnapshot(obj, t; atol = atol)
 
     if !isnothing(sn)
         return sn
@@ -68,9 +68,9 @@ export snapshot_if_needed!
 function snapshot_or_update!(
     obj::Union{FMUInstance,FMUSolution},
     t::Real;
-    atol=snapshotDeltaTimeTolerance(obj),
+    atol = snapshotDeltaTimeTolerance(obj),
 )
-    sn = getSnapshot(obj, t; atol=atol)
+    sn = getSnapshot(obj, t; atol = atol)
 
     if isnothing(sn)
         sn = snapshot!(obj)
@@ -88,7 +88,7 @@ export snapshot_or_update!
 function hasSnapshot(
     c::Union{FMUInstance,FMUSolution},
     t::Float64;
-    atol=snapshotDeltaTimeTolerance(obj),
+    atol = snapshotDeltaTimeTolerance(obj),
 )
     for snapshot in c.snapshots
         if abs(snapshot.t - t) <= atol
@@ -105,7 +105,7 @@ end
 function getSnapshot(
     c::Union{FMUInstance,FMUSolution},
     t::Float64;
-    atol=snapshotDeltaTimeTolerance(c),
+    atol = snapshotDeltaTimeTolerance(c),
 )
     if length(c.snapshots) <= 0
         return nothing
@@ -217,7 +217,7 @@ export getSnapshotForDiscreteState
 # end
 # export getSnapshotOrPrevious
 
-function update!(c::FMUInstance, s::FMUSnapshot; suppressWarning::Bool=false)
+function update!(c::FMUInstance, s::FMUSnapshot; suppressWarning::Bool = false)
 
     @debug "Updating snapshot t=$(s.t) [$(s.fmuState)]"
 
@@ -255,7 +255,7 @@ function update!(c::FMUInstance, s::FMUSnapshot; suppressWarning::Bool=false)
 end
 export update!
 
-function autoApply!(c::FMUInstance, t::Real; atol=snapshotDeltaTimeTolerance(c))
+function autoApply!(c::FMUInstance, t::Real; atol = snapshotDeltaTimeTolerance(c))
     left = nothing
     for snapshot in c.snapshots
         if snapshot.valid
@@ -275,13 +275,13 @@ export autoApply!
 function apply!(
     c::FMUInstance,
     s::FMUSnapshot;
-    t=s.t,
-    default_t=s.default_t,
-    x_c=s.x_c,
-    x_d=s.x_d,
-    fmuState=s.fmuState,
-    eventInfo=s.eventInfo,
-    state=s.state,
+    t = s.t,
+    default_t = s.default_t,
+    x_c = s.x_c,
+    x_d = s.x_d,
+    fmuState = s.fmuState,
+    eventInfo = s.eventInfo,
+    state = s.state,
 )
 
     @assert s.valid "Try to apply invalid snapshot!"
@@ -307,7 +307,8 @@ function apply!(
     if !isnothing(x_d)
         if length(x_d) == 1 &&
            length(x_d) != length(c.fmu.modelDescription.discreteStateValueReferences)
-            @warn "apply!(): length(x_d)=$(length(x_d)) != number of discrete value refs=$(length(c.fmu.modelDescription.discreteStateValueReferences)).\nThis might be because you are applying snapshots, that where recorded with dummy discrete state, but are now applied for regular simulation (e.g. during batch scheduling).\nSkipping this ..." maxlog = 3
+            @warn "apply!(): length(x_d)=$(length(x_d)) != number of discrete value refs=$(length(c.fmu.modelDescription.discreteStateValueReferences)).\nThis might be because you are applying snapshots, that where recorded with dummy discrete state, but are now applied for regular simulation (e.g. during batch scheduling).\nSkipping this ..." maxlog =
+                3
         else
             setDiscreteStates(c, x_d)
             c.x_d = copy(x_d)
@@ -323,7 +324,7 @@ function apply!(
 end
 export apply!
 
-function freeSnapshot!(s::FMUSnapshot; lazy::Bool=true)
+function freeSnapshot!(s::FMUSnapshot; lazy::Bool = true)
 
     # We use lazy unloading here, because some FMUs are not compatible with excessive creation/freeing of snapshots (memory leaks).
     # That's why we just invalidate the memory copy here, and re-use it later if new snapshots are needed.

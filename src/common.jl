@@ -177,8 +177,12 @@ function getDiscreteStates(c::FMU2Component; kwargs...)
         if length(c.fmu.modelDescription.discreteStateValueReferences) <= 0
             c.x_d = Vector{fmi2Real}() # Union{fmi2Real,fmi2Integer,fmi2Boolean} 
         else
-            c.x_d =
-                getValue(c, c.fmu.modelDescription.discreteStateValueReferences; T=Float64, kwargs...)
+            c.x_d = getValue(
+                c,
+                c.fmu.modelDescription.discreteStateValueReferences;
+                T = Float64,
+                kwargs...,
+            )
         end
     end
 
@@ -190,8 +194,12 @@ function getDiscreteStates(c::FMU3Instance; kwargs...)
         if length(c.fmu.modelDescription.discreteStateValueReferences) <= 0
             c.x_d = Vector{fmi3Float64}() # Union{fmi2Real,fmi2Integer,fmi2Boolean} 
         else
-            c.x_d =
-                getValue(c, c.fmu.modelDescription.discreteStateValueReferences; T=Float64, kwargs...)
+            c.x_d = getValue(
+                c,
+                c.fmu.modelDescription.discreteStateValueReferences;
+                T = Float64,
+                kwargs...,
+            )
         end
     end
 
@@ -421,7 +429,7 @@ function indicesForRefs(c, refs)
     return indices
 end
 
-function sampleDirectionalDerivative!(c::FMUInstance, f_refs, x_refs, seed, res; Δx=1e-12)
+function sampleDirectionalDerivative!(c::FMUInstance, f_refs, x_refs, seed, res; Δx = 1e-12)
 
     x = getReal(c, x_refs)
 
@@ -594,10 +602,10 @@ Performs a co-simulation step with the FMU.
 # Returns
 - FMI2 or FMI3 return code
 """
-function doStep(c::FMU2Component, dt::Real; currentCommunicationPoint::Real=c.t)
-    fmi2DoStep(c, dt; currentCommunicationPoint=currentCommunicationPoint)
+function doStep(c::FMU2Component, dt::Real; currentCommunicationPoint::Real = c.t)
+    fmi2DoStep(c, dt; currentCommunicationPoint = currentCommunicationPoint)
 end
-function doStep(c::FMU3Instance, dt::Real; currentCommunicationPoint::Real=c.t)
+function doStep(c::FMU3Instance, dt::Real; currentCommunicationPoint::Real = c.t)
     fmi3DoStep!(c, currentCommunicationPoint, dt)
 end
 
@@ -638,13 +646,13 @@ end
 # in FMI3 there is no eventInfo, so we need to pack a named tuple instead
 function getEventInfo(c::FMU3Instance)
     return (
-        enterEventMode=c.enterEventMode,
-        discreteStatesNeedUpdate=c.discreteStatesNeedUpdate,
-        terminateSimulation=c.terminateSimulation,
-        nominalsOfContinuousStatesChanged=c.nominalsOfContinuousStatesChanged,
-        valuesOfContinuousStatesChanged=c.valuesOfContinuousStatesChanged,
-        nextEventTimeDefined=c.nextEventTimeDefined,
-        nextEventTime=c.nextEventTime,
+        enterEventMode = c.enterEventMode,
+        discreteStatesNeedUpdate = c.discreteStatesNeedUpdate,
+        terminateSimulation = c.terminateSimulation,
+        nominalsOfContinuousStatesChanged = c.nominalsOfContinuousStatesChanged,
+        valuesOfContinuousStatesChanged = c.valuesOfContinuousStatesChanged,
+        nextEventTimeDefined = c.nextEventTimeDefined,
+        nextEventTime = c.nextEventTime,
     )
 end
 
