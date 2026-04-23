@@ -3,16 +3,20 @@
 # Licensed under the MIT license. See LICENSE file in the project root for details.
 #
 
-const ERR_MSG_CONT_TIME_MODE = """Function must be called in mode continuous time!\n
-This is most probably because the FMU errored before. 
-If no messages are printed, check that the FMU message printing 
-is enabled (this is tool dependent and must be selected during export) and 
-follow the message printing instructions under 
-https://thummeto.github.io/FMI.jl/dev/features/#Debugging-/-Logging"""
+const ERR_MSG_CONT_TIME_MODE = """
+    Function must be called in mode continuous time!
+    This is most probably because the FMU errored before.
+    If no messages are printed, check that the FMU message printing
+    is enabled (this is tool dependent and must be selected during export) and
+    follow the message printing instructions under
+    https://thummeto.github.io/FMI.jl/dev/features/#Debugging-/-Logging
+"""
 
 ERR_MSG_NO_FMISENSITIVITY(
     varname,
     vartype,
-) = """Wrong dispatched: `$(varname)` is `$(vartype)`.\n
-This is most likely because you tried differentiating (AD) over a FMU.\n
-If so, you need to `import FMISensitivity` first."""
+) = """
+    Wrong dispatched: `$(varname)` is `$(vartype)`.
+    This is most likely because you tried differentiating (AD) over a FMU.
+    If so, you need to `import FMISensitivity` first.
+"""
