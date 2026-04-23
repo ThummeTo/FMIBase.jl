@@ -367,6 +367,9 @@ mutable struct FMU3 <: FMU
 
     modelDescription::fmi3ModelDescription
 
+    # LayeredStandard ModelDescription (Sensitivity Analysis)
+    modelDescriptionLSSA::Union{FMIModelDescriptionLSSA, Nothing}
+
     type::fmi3Type
     instances::Vector{FMU3Instance}
 
@@ -521,6 +524,9 @@ mutable struct FMU3 <: FMU
         inst.default_y_refs = EMPTY_fmi3ValueReference
         inst.default_dx = EMPTY_fmi3Float64
         inst.default_dx_refs = EMPTY_fmi3ValueReference
+
+        # LSSA modelDescription
+        inst.modelDescriptionLSSA = nothing
 
         # c-functions
         inst.cInstantiateModelExchange = C_NULL

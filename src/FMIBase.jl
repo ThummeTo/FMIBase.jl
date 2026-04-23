@@ -26,6 +26,7 @@ include("struct.jl")
 include("io.jl")
 include("FMI2/helper.jl")
 include("FMI3/helper.jl")
+include("FMI3/lssa.jl")
 include("FMI2/struct.jl")
 include("FMI3/struct.jl")
 
