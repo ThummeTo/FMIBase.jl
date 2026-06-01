@@ -5,7 +5,7 @@
 
 module CSVExt
 
-using FMIBase, CSV
+using FMIBase, CSV, DataFrames
 
 """
     saveSolutionCSV(solution::FMUSolution, filepath::AbstractString)
