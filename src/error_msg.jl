@@ -17,6 +17,6 @@ ERR_MSG_NO_FMISENSITIVITY(
     vartype,
 ) = """
     Wrong dispatched: `$(varname)` is `$(vartype)`.
-    This is most likely because you tried differentiating (AD) over a FMU.
+    This is most likely because you tried differentiating (AD) a FMU.
     If so, you need to `import FMISensitivity` first.
 """
