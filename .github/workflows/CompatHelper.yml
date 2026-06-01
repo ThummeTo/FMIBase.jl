@@ -7,6 +7,11 @@ jobs:
   CompatHelper:
     runs-on: ubuntu-latest
     steps:
+      - name: "Set up Julia"
+        uses: julia-actions/setup-julia@v3
+        with:
+          version: '1'
+
       - name: Install CompatHelper
         run: julia -e 'using Pkg; Pkg.add("CompatHelper")'
       - name: Run CompatHelper
