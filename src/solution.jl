@@ -119,9 +119,9 @@ function getStateDerivative(
                 for vr in vrs
                     found = false
                     for i =
-                        1:length(
-                            solution.instance.fmu.modelDescription.stateValueReferences,
-                        )
+                            1:length(
+                                solution.instance.fmu.modelDescription.stateValueReferences,
+                            )
 
                         if solution.instance.fmu.modelDescription.stateValueReferences[i] ==
                            vr

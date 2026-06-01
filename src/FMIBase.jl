@@ -50,13 +50,6 @@ include("valueRefs.jl")
 
 include("deprecated.jl")
 
-# extensions
-using Requires
-using PackageExtensionCompat
-function __init__()
-    @require_extensions
-end
-
 # CSV.jl
 function saveSolutionCSV end
 function loadSolutionCSV end
