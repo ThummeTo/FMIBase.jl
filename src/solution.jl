@@ -26,7 +26,7 @@ More detailed: `fmi2ValueReferenceFormat = Union{Nothing, String, Array{String,1
 function getState(
     solution::FMUSolution,
     vrs::fmi2ValueReferenceFormat;
-    isIndex::Bool = false,
+    isIndex::Bool=false,
 )
 
     indices = []
@@ -100,8 +100,8 @@ More detailed: `fmi2ValueReferenceFormat = Union{Nothing, String, Array{String,1
 function getStateDerivative(
     solution::FMUSolution,
     vrs::fmi2ValueReferenceFormat;
-    isIndex::Bool = false,
-    order::Integer = 1,
+    isIndex::Bool=false,
+    order::Integer=1,
 )
     indices = []
 
@@ -182,7 +182,7 @@ More detailed: `fmi2ValueReferenceFormat = Union{Nothing, String, Array{String,1
 function getValue(
     solution::FMUSolution,
     vrs::fmi2ValueReferenceFormat;
-    isIndex::Bool = false,
+    isIndex::Bool=false,
 )
 
     indices = []

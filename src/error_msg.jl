@@ -12,11 +12,10 @@ const ERR_MSG_CONT_TIME_MODE = """
     https://thummeto.github.io/FMI.jl/dev/features/#Debugging-/-Logging
 """
 
-ERR_MSG_NO_FMISENSITIVITY(
-    varname,
-    vartype,
-) = """
-    Wrong dispatched: `$(varname)` is `$(vartype)`.
-    This is most likely because you tried differentiating (AD) a FMU.
-    If so, you need to `import FMISensitivity` first.
-"""
+function ERR_MSG_NO_FMISENSITIVITY(varname, vartype)
+    return """
+        Wrong dispatched: `$(varname)` is `$(vartype)`.
+        This is most likely because you tried differentiating (AD) a FMU.
+        If so, you need to `import FMISensitivity` first.
+    """
+end
