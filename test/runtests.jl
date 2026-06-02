@@ -13,4 +13,5 @@ using CSV, DataFrames, ForwardDiff, JLD2, MAT, Plots, ReverseDiff
     include("convert.jl")
     include("valueRefs_md.jl")
     include("struct_solution.jl")
+    include("real_fmu.jl")
 end
