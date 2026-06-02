@@ -10,8 +10,7 @@
 using Downloads
 using Libdl
 
-const BB_FMU_URL =
-    "https://github.com/ThummeTo/FMIZoo.jl/raw/main/models/bin/Dymola/2023x/2.0/BouncingBallGravitySwitch1D.fmu"
+const BB_FMU_URL = "https://github.com/ThummeTo/FMIZoo.jl/raw/main/models/bin/Dymola/2023x/2.0/BouncingBallGravitySwitch1D.fmu"
 
 function unzip_fmu(dlpath::AbstractString, fmuname::AbstractString)
     unpack_path = mktempdir(; prefix = "fmibase_", cleanup = true)
@@ -46,23 +45,20 @@ function fmi2_demo_binary_paths()
         return nothing
     elseif Sys.islinux()
         binary_dir = joinpath(fmu_path, "binaries", "linux64")
-        callback_url =
-            "https://github.com/ThummeTo/FMIImport.jl/raw/main/src/FMI2/callbackFunctions/binaries/linux64/libcallbackFunctions.so"
+        callback_url = "https://github.com/ThummeTo/FMIImport.jl/raw/main/src/FMI2/callbackFunctions/binaries/linux64/libcallbackFunctions.so"
     elseif Sys.iswindows()
         binary_dir = joinpath(fmu_path, "binaries", "win64")
-        callback_url =
-            "https://github.com/ThummeTo/FMIImport.jl/raw/main/src/FMI2/callbackFunctions/binaries/win64/callbackFunctions.dll"
+        callback_url = "https://github.com/ThummeTo/FMIImport.jl/raw/main/src/FMI2/callbackFunctions/binaries/win64/callbackFunctions.dll"
     else
         return nothing
     end
 
-    binary_candidates = [
-        joinpath(binary_dir, fmuname),
-        joinpath(binary_dir, fmuname * "." * Libdl.dlext),
-    ]
+    binary_candidates =
+        [joinpath(binary_dir, fmuname), joinpath(binary_dir, fmuname * "." * Libdl.dlext)]
     binary_path = something(findfirst(isfile, binary_candidates), nothing)
     if isnothing(binary_path)
-        matches = filter(name -> startswith(name, fmuname), readdir(binary_dir; join = true))
+        matches =
+            filter(name -> startswith(name, fmuname), readdir(binary_dir; join = true))
         binary_path = isempty(matches) ? "" : first(matches)
     else
         binary_path = binary_candidates[binary_path]
@@ -98,7 +94,8 @@ function minimal_real_fmu2(lib)
     md = fmi2ModelDescription()
     md.modelName = "BouncingBallGravitySwitch1D"
     md.numberOfEventIndicators = UInt32(2)
-    md.coSimulation = FMIBase.FMICore.fmi2ModelDescriptionCoSimulation("BouncingBallGravitySwitch1D")
+    md.coSimulation =
+        FMIBase.FMICore.fmi2ModelDescriptionCoSimulation("BouncingBallGravitySwitch1D")
     md.coSimulation.canGetAndSetFMUstate = true
     md.coSimulation.canSerializeFMUstate = true
     fmu.modelDescription = md
