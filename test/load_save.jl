@@ -15,7 +15,8 @@ function serializable_solution_fixture()
 end
 
 @testset "load/save dispatch" begin
-    filepath = joinpath(mktempdir(; cleanup = true), "solution.jld2")
+    tmpdir = mktempdir(; cleanup = true)
+    filepath = joinpath(tmpdir, "solution.jld2")
     keyword = "custom_solution"
     sol = serializable_solution_fixture()
 
@@ -24,4 +25,17 @@ end
     @test FMIBase.loadSolution(filepath; keyword = keyword).success
     @test !haskey(JLD2.load(filepath), "solution")
     @test JLD2.load(filepath, keyword).success
+
+    dotted_filepath = joinpath(tmpdir, "solution.with.dots.jld2")
+    FMIBase.saveSolution(sol, dotted_filepath)
+    @test FMIBase.loadSolution(dotted_filepath).success
+
+    uppercase_filepath = joinpath(tmpdir, "solution_upper.JLD2")
+    FMIBase.saveSolution(sol, uppercase_filepath)
+    @test FMIBase.loadSolution(uppercase_filepath).success
+
+    unsupported_filepath = joinpath(tmpdir, "solution.unsupported")
+    @test_throws AssertionError FMIBase.saveSolution(sol, unsupported_filepath)
+    @test_logs (:warn, r"not supported") FMIBase.loadSolution(unsupported_filepath) ===
+                                         nothing
 end
