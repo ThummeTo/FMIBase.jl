@@ -134,14 +134,32 @@ function fmi3_md_fixture()
     x.start = 4.0
     x.unit = "s"
 
-    md.modelVariables = [x]
-    md.valueReferences = fmi3ValueReference[11]
+    variables = [
+        x,
+        FC.fmi3VariableFloat32("f32", UInt32(12)),
+        FC.fmi3VariableInt8("i8", UInt32(13)),
+        FC.fmi3VariableUInt8("u8", UInt32(14)),
+        FC.fmi3VariableInt16("i16", UInt32(15)),
+        FC.fmi3VariableUInt16("u16", UInt32(16)),
+        FC.fmi3VariableInt32("i32", UInt32(17)),
+        FC.fmi3VariableUInt32("u32", UInt32(18)),
+        FC.fmi3VariableInt64("i64", UInt32(19)),
+        FC.fmi3VariableUInt64("u64", UInt32(20)),
+        FC.fmi3VariableBoolean("flag", UInt32(21)),
+        FC.fmi3VariableString("label", UInt32(22)),
+        FC.fmi3VariableBinary("blob", UInt32(23)),
+        FC.fmi3VariableEnumeration("mode", UInt32(24)),
+    ]
+
+    md.modelVariables = variables
+    md.valueReferences = fmi3ValueReference[getproperty.(variables, :valueReference)...]
     md.outputValueReferences = fmi3ValueReference[11]
     md.stateValueReferences = fmi3ValueReference[]
     md.derivativeValueReferences = fmi3ValueReference[]
     md.inputValueReferences = fmi3ValueReference[]
     md.parameterValueReferences = fmi3ValueReference[]
-    md.stringValueReferences = Dict("x3" => fmi3ValueReference(11))
+    md.stringValueReferences =
+        Dict(var.name => fmi3ValueReference(var.valueReference) for var in variables)
     return md
 end
 
@@ -221,6 +239,8 @@ end
 
     md3 = fmi3_md_fixture()
     @test stringToDataType(md3, "Float64") == fmi3Float64
+    @test stringToDataType(md3, "Clock") == fmi3Clock
+    @test stringToDataType(md3, "Enumeration") == Int64
     @test stringToDataType(md, "Real") == fmi2Real
     @test getModelIdentifier(md3) == "se_fixture"
     @test isScheduledExecution(md3)
@@ -232,4 +252,20 @@ end
     @test getStartValue(md3, "x3") == 4.0
     @test getUnit(md3.modelVariables[1]) == "s"
     @test dataTypeForValueReference(md3, fmi3ValueReference(11)) == fmi3Float64
+    @test dataTypeForValueReference(md3, fmi3ValueReference(12)) == fmi3Float32
+    @test dataTypeForValueReference(md3, fmi3ValueReference(13)) == fmi3Int8
+    @test dataTypeForValueReference(md3, fmi3ValueReference(14)) == fmi3UInt8
+    @test dataTypeForValueReference(md3, fmi3ValueReference(15)) == fmi3Int16
+    @test dataTypeForValueReference(md3, fmi3ValueReference(16)) == fmi3UInt16
+    @test dataTypeForValueReference(md3, fmi3ValueReference(17)) == fmi3Int32
+    @test dataTypeForValueReference(md3, fmi3ValueReference(18)) == fmi3UInt32
+    @test dataTypeForValueReference(md3, fmi3ValueReference(19)) == fmi3Int64
+    @test dataTypeForValueReference(md3, fmi3ValueReference(20)) == fmi3UInt64
+    @test dataTypeForValueReference(md3, fmi3ValueReference(21)) == fmi3Boolean
+    @test dataTypeForValueReference(md3, fmi3ValueReference(22)) == fmi3String
+    @test dataTypeForValueReference(md3, fmi3ValueReference(23)) == fmi3Binary
+    @test_logs (:warn, r"Currently not implemented for fmi3Enum") dataTypeForValueReference(
+        md3,
+        fmi3ValueReference(24),
+    ) === nothing
 end

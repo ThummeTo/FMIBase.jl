@@ -64,7 +64,8 @@ function fmi2_demo_binary_paths()
         binary_path = binary_candidates[binary_path]
     end
 
-    callback_path = Downloads.download(callback_url)
+    callback_path = joinpath(mktempdir(; cleanup = true), basename(callback_url))
+    Downloads.download(callback_url, callback_path)
     if !Sys.iswindows()
         chmod(callback_path, 0o755)
     end

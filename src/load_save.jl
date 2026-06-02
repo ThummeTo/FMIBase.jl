@@ -18,7 +18,7 @@ function saveSolution(solution::FMUSolution, filepath::AbstractString; keyword =
     if ending == "mat"
         saveSolutionMAT(solution, filepath)
     elseif ending == "jld2"
-        saveSolutionJLD2(solution, filepath; keyword = "solution")
+        saveSolutionJLD2(solution, filepath; keyword = keyword)
     elseif ending == "csv"
         saveSolutionCSV(solution, filepath)
     else
@@ -42,7 +42,7 @@ function loadSolution(filepath::AbstractString; keyword = "solution")
     if ending == "mat"
         return loadSolutionMAT(filepath)
     elseif ending == "jld2"
-        return loadSolutionJLD2(filepath; keyword = "solution")
+        return loadSolutionJLD2(filepath; keyword = keyword)
     elseif ending == "csv"
         return loadSolutionCSV(filepath)
     else
