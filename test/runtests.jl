@@ -10,7 +10,7 @@ using Test
 using CSV, DataFrames, ForwardDiff, JLD2, MAT, Plots, ReverseDiff
 
 @testset "FMIBase.jl" begin
-    @testset "FMI2" begin
-
-    end
+    include("convert.jl")
+    include("valueRefs_md.jl")
+    include("struct_solution.jl")
 end
