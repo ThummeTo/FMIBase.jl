@@ -347,10 +347,11 @@ function affectFMU!(c::FMU2Component, integrator, idx, inputFunction)
     right_x = nothing
 
     if isTrue(c.eventInfo.valuesOfContinuousStatesChanged)
-        left_x = integrator.u
+        # copy, so the recorded states are not mutated by the integrator afterwards
+        left_x = copy(integrator.u)
         right_x = getContinuousStates(c)
         @debug "affectFMU!(...): Handled event at t=$(integrator.t), new state is $(right_x)"
-        integrator.u = right_x
+        integrator.u .= right_x
 
         u_modified!(integrator, true)
     else
@@ -398,10 +399,11 @@ function affectFMU!(c::FMU3Instance, integrator, idx, inputFunction)
     right_x = nothing
 
     if c.valuesOfContinuousStatesChanged == fmi3True
-        left_x = integrator.u
-        right_x = fmi3GetContinuousStates(c)
-        @debug "affectFMU!(...): Handled event at t=$(integrator.t), new state is $(new_u)"
-        integrator.u = right_x
+        # copy, so the recorded states are not mutated by the integrator afterwards
+        left_x = copy(integrator.u)
+        right_x = getContinuousStates(c)
+        @debug "affectFMU!(...): Handled event at t=$(integrator.t), new state is $(right_x)"
+        integrator.u .= right_x
 
         u_modified!(integrator, true)
         #set_proposed_dt!(integrator, 1e-10)
@@ -411,7 +413,7 @@ function affectFMU!(c::FMU3Instance, integrator, idx, inputFunction)
     end
 
     if c.nominalsOfContinuousStatesChanged == fmi3True
-        x_nom = fmi3GetNominalsOfContinuousStates(c)
+        x_nom = getNominalsOfContinuousStates(c)
     end
 
     ignore_derivatives() do
