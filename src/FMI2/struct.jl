@@ -398,6 +398,10 @@ mutable struct FMU2 <: FMU
     # execution configuration
     executionConfig::FMUExecutionConfiguration
 
+    # sparsity
+    dependencyMatrix::Union{AbstractDependencyMatrix,Nothing}
+    jac_prototype::Union{AbstractMatrix,Nothing}
+
     # events
     hasStateEvents::Union{Bool,Nothing}
     hasTimeEvents::Union{Bool,Nothing}
@@ -442,6 +446,9 @@ mutable struct FMU2 <: FMU
         inst.isDummyDiscrete = false
 
         inst.executionConfig = FMU_EXECUTION_CONFIGURATION_NO_RESET
+        inst.dependencyMatrix = nothing
+        inst.jac_prototype = nothing
+
         inst.threadInstances = Dict{Integer,Union{FMU2Component,Nothing}}()
         inst.cFunctionPtrs = Dict{String,Ptr{Nothing}}()
 

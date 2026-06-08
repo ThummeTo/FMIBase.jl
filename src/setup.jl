@@ -66,6 +66,10 @@ function setupSolver!(fmu::FMU, tspan, kwargs)
     return tspan
 end
 
+# Stub — overloaded by FMIImport's SparseArraysExt when SparseArrays is loaded
+function loadDependencyMatrix!(::FMU) end
+export loadDependencyMatrix!
+
 # sets up the ODEProblem for simulating a ME-FMU
 function setupODEProblem(
     c::FMUInstance,
@@ -76,7 +80,8 @@ function setupODEProblem(
 )
 
     fx = (dx, x, p, t) -> f(c, dx, x, p, t, inputFunction)
-    ff = ODEFunction{true}(fx) # , tgrad=nothing)
+    jp = c.fmu.executionConfig.use_jac_prototype ? c.fmu.jac_prototype : nothing
+    ff = ODEFunction{true}(fx; jac_prototype = jp)
     return ODEProblem{true}(ff, x0, tspan, p)
 end
 
