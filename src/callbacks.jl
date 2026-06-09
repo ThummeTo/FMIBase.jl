@@ -254,9 +254,8 @@ function stepCompleted(
     end
 
     noSetFMUStatePriorToCurrentPoint = fmi2False
-    status = FMICore.fmi2CompletedIntegratorStep!(
-        c.fmu.cCompletedIntegratorStep,
-        c.addr,
+    status = fmi2CompletedIntegratorStep!(
+        c,
         noSetFMUStatePriorToCurrentPoint,
         c._ptr_enterEventMode,
         c._ptr_terminateSimulation,
@@ -339,7 +338,7 @@ function affectFMU!(c::FMU2Component, integrator, idx, inputFunction)
     # there are fx-evaluations before the event is handled, reset the FMU state to the current integrator step
     f_set(c, integrator.u, t, inputFunction; force = true)
 
-    FMICore.fmi2EnterEventMode(c.fmu.cEnterEventMode, c.addr)
+    fmi2EnterEventMode(c)
 
     # Event found - handle it
     handleEvents(c)
@@ -461,7 +460,7 @@ function handleEvents(c::FMU2Component)
         numCalls += 1
         eventInfoRef = Ref(c.eventInfo)
         eventInfoPtr = Base.unsafe_convert(Ptr{fmi2EventInfo}, eventInfoRef)
-        FMICore.fmi2NewDiscreteStates!(c.fmu.cNewDiscreteStates, c.addr, eventInfoPtr)
+        fmi2NewDiscreteStates!(c, eventInfoPtr)
         c.eventInfo = eventInfoRef[]
 
         if c.eventInfo.valuesOfContinuousStatesChanged == fmi2True
@@ -491,7 +490,7 @@ function handleEvents(c::FMU2Component)
 
     @debug "handleEvents(...) -> valuesOfContinuousStatesChanged=$(c.eventInfo.valuesOfContinuousStatesChanged), nextEventTimeDefined=$(c.eventInfo.nextEventTimeDefined), nextEventTime=$(c.eventInfo.nextEventTime)"
 
-    @assert FMICore.fmi2EnterContinuousTimeMode(c.fmu.cEnterContinuousTimeMode, c.addr) ==
+    @assert fmi2EnterContinuousTimeMode(c) ==
             fmi2StatusOK "FMU is not in state continuous time after event handling."
 
     return nothing

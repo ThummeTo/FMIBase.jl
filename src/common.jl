@@ -3,6 +3,123 @@
 # Licensed under the MIT license. See LICENSE file in the project root for details.
 #
 
+fmi2GetReal!(
+    c::FMU2Component,
+    refs,
+    nvr::Csize_t,
+    values,
+) = FMICore.fmi2GetReal!(c.fmu.cGetReal, c.addr, refs, nvr, values)
+
+fmi2GetInteger!(
+    c::FMU2Component,
+    refs,
+    nvr::Csize_t,
+    values,
+) = FMICore.fmi2GetInteger!(c.fmu.cGetInteger, c.addr, refs, nvr, values)
+
+fmi2GetBoolean!(
+    c::FMU2Component,
+    refs,
+    nvr::Csize_t,
+    values,
+) = FMICore.fmi2GetBoolean!(c.fmu.cGetBoolean, c.addr, refs, nvr, values)
+
+fmi2GetString!(
+    c::FMU2Component,
+    refs,
+    nvr::Csize_t,
+    values,
+) = FMICore.fmi2GetString!(c.fmu.cGetString, c.addr, refs, nvr, values)
+
+fmi2SetReal(
+    c::FMU2Component,
+    refs,
+    nvr::Csize_t,
+    values,
+) = FMICore.fmi2SetReal(c.fmu.cSetReal, c.addr, refs, nvr, values)
+
+fmi2SetInteger(
+    c::FMU2Component,
+    refs,
+    nvr::Csize_t,
+    values,
+) = FMICore.fmi2SetInteger(c.fmu.cSetInteger, c.addr, refs, nvr, values)
+
+fmi2SetBoolean(
+    c::FMU2Component,
+    refs,
+    nvr::Csize_t,
+    values,
+) = FMICore.fmi2SetBoolean(c.fmu.cSetBoolean, c.addr, refs, nvr, values)
+
+fmi2SetString(
+    c::FMU2Component,
+    refs,
+    nvr::Csize_t,
+    values,
+) = FMICore.fmi2SetString(c.fmu.cSetString, c.addr, refs, nvr, values)
+
+fmi2SetTime(c::FMU2Component, t::fmi2Real) =
+    FMICore.fmi2SetTime(c.fmu.cSetTime, c.addr, t)
+
+fmi2SetContinuousStates(c::FMU2Component, x, nx::Csize_t = Csize_t(length(x))) =
+    FMICore.fmi2SetContinuousStates(c.fmu.cSetContinuousStates, c.addr, x, nx)
+
+fmi2GetContinuousStates!(c::FMU2Component, x, nx::Csize_t = Csize_t(length(x))) =
+    FMICore.fmi2GetContinuousStates!(c.fmu.cGetContinuousStates, c.addr, x, nx)
+
+fmi2GetNominalsOfContinuousStates!(
+    c::FMU2Component,
+    x,
+    nx::Csize_t = Csize_t(length(x)),
+) = FMICore.fmi2GetNominalsOfContinuousStates!(
+    c.fmu.cGetNominalsOfContinuousStates,
+    c.addr,
+    x,
+    nx,
+)
+
+fmi2GetDerivatives!(c::FMU2Component, dx, nx::Csize_t = Csize_t(length(dx))) =
+    FMICore.fmi2GetDerivatives!(c.fmu.cGetDerivatives, c.addr, dx, nx)
+
+fmi2GetEventIndicators!(c::FMU2Component, indicators, ni::Csize_t = Csize_t(length(indicators))) =
+    FMICore.fmi2GetEventIndicators!(c.fmu.cGetEventIndicators, c.addr, indicators, ni)
+
+fmi2DoStep(
+    c::FMU2Component,
+    currentCommunicationPoint::Real,
+    communicationStepSize::Real,
+    noSetFMUStatePriorToCurrentPoint::fmi2Boolean = fmi2True,
+) = FMICore.fmi2DoStep(
+    c.fmu.cDoStep,
+    c.addr,
+    currentCommunicationPoint,
+    communicationStepSize,
+    noSetFMUStatePriorToCurrentPoint,
+)
+
+fmi2EnterEventMode(c::FMU2Component) =
+    FMICore.fmi2EnterEventMode(c.fmu.cEnterEventMode, c.addr)
+
+fmi2NewDiscreteStates!(c::FMU2Component, eventInfo) =
+    FMICore.fmi2NewDiscreteStates!(c.fmu.cNewDiscreteStates, c.addr, eventInfo)
+
+fmi2EnterContinuousTimeMode(c::FMU2Component) =
+    FMICore.fmi2EnterContinuousTimeMode(c.fmu.cEnterContinuousTimeMode, c.addr)
+
+fmi2CompletedIntegratorStep!(
+    c::FMU2Component,
+    noSetFMUStatePriorToCurrentPoint::fmi2Boolean,
+    enterEventMode,
+    terminateSimulation,
+) = FMICore.fmi2CompletedIntegratorStep!(
+    c.fmu.cCompletedIntegratorStep,
+    c.addr,
+    noSetFMUStatePriorToCurrentPoint,
+    enterEventMode,
+    terminateSimulation,
+)
+
 """
 ToDo
 """
@@ -101,12 +218,7 @@ function getNominalsOfContinuousStates(c::FMU2Component)
     if !c.fmu.isZeroState
         nx = Csize_t(length(c.fmu.modelDescription.stateValueReferences))
         x = zeros(fmi2Real, nx)
-        FMICore.fmi2GetNominalsOfContinuousStates!(
-            c.fmu.cGetNominalsOfContinuousStates,
-            c.addr,
-            x,
-            nx,
-        )
+        fmi2GetNominalsOfContinuousStates!(c, x, nx)
         return x
     else
         return zeros(fmi2Real, 1)
@@ -128,12 +240,7 @@ ToDo
 """
 function getContinuousStates!(c::FMU2Component, x::AbstractArray{<:fmi2Real})
     if !c.fmu.isZeroState
-        FMICore.fmi2GetContinuousStates!(
-            c.fmu.cGetContinuousStates,
-            c.addr,
-            x,
-            Csize_t(length(x)),
-        )
+        fmi2GetContinuousStates!(c, x)
     end
     return nothing
 end
@@ -149,12 +256,7 @@ ToDo
 """
 function setContinuousStates(c::FMU2Component, x::AbstractArray{<:fmi2Real})
     if !c.fmu.isZeroState
-        FMICore.fmi2SetContinuousStates(
-            c.fmu.cSetContinuousStates,
-            c.addr,
-            x,
-            Csize_t(length(x)),
-        )
+        fmi2SetContinuousStates(c, x)
     end
     return nothing
 end
@@ -225,7 +327,7 @@ end
 ToDo
 """
 function setTime(c::FMU2Component, t::fmi2Real; kwargs...)
-    FMICore.fmi2SetTime(c.fmu.cSetTime, c.addr, t)
+    fmi2SetTime(c, t)
     return nothing
 end
 function setTime(c::FMU3Instance, t::fmi3Float64; kwargs...)
@@ -289,12 +391,7 @@ function getDerivatives!(
     if c.fmu.isZeroState
         dx[1] = 1.0
     else
-        status = FMICore.fmi2GetDerivatives!(
-            c.fmu.cGetDerivatives,
-            c.addr,
-            dx,
-            Csize_t(length(dx)),
-        )
+        fmi2GetDerivatives!(c, dx)
     end
 
     return nothing
@@ -341,7 +438,7 @@ ToDo
 function getEventIndicators(c::FMU2Component)
     ni = Csize_t(c.fmu.modelDescription.numberOfEventIndicators)
     n = zeros(fmi2Real, ni)
-    FMICore.fmi2GetEventIndicators!(c.fmu.cGetEventIndicators, c.addr, n, ni)
+    fmi2GetEventIndicators!(c, n, ni)
     return n
 end
 function getEventIndicators(c::FMU3Instance)
@@ -363,19 +460,9 @@ function getEventIndicators!(
 
     if length(ec_idcs) == c.fmu.modelDescription.numberOfEventIndicators ||
        length(ec_idcs) == 0 # pick ALL event indicators
-        FMICore.fmi2GetEventIndicators!(
-            c.fmu.cGetEventIndicators,
-            c.addr,
-            ec,
-            Csize_t(length(ec)),
-        )
+        fmi2GetEventIndicators!(c, ec)
     else # pick only some specific ones
-        FMICore.fmi2GetEventIndicators!(
-            c.fmu.cGetEventIndicators,
-            c.addr,
-            c.eventIndicatorBuffer,
-            Csize_t(length(c.eventIndicatorBuffer)),
-        )
+        fmi2GetEventIndicators!(c, c.eventIndicatorBuffer)
         ec[:] = c.eventIndicatorBuffer[ec_idcs]
     end
     return nothing
@@ -633,13 +720,7 @@ Performs a co-simulation step with the FMU.
 - FMI2 or FMI3 return code
 """
 function doStep(c::FMU2Component, dt::Real; currentCommunicationPoint::Real = c.t)
-    return FMICore.fmi2DoStep(
-        c.fmu.cDoStep,
-        c.addr,
-        currentCommunicationPoint,
-        dt,
-        fmi2True,
-    )
+    return fmi2DoStep(c, currentCommunicationPoint, dt, fmi2True)
 end
 function doStep(c::FMU3Instance, dt::Real; currentCommunicationPoint::Real = c.t)
     fmi3DoStep!(c, currentCommunicationPoint, dt)
