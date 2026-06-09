@@ -29,6 +29,8 @@ include("FMI3/helper.jl")
 include("FMI3/lssa.jl")
 include("FMI2/struct.jl")
 include("FMI3/struct.jl")
+include("FMI2/prep.jl")
+include("FMI3/prep.jl")
 
 include("base.jl")
 include("printing.jl")
@@ -47,6 +49,7 @@ include("sense.jl")
 include("snapshot.jl")
 include("solution.jl")
 include("valueRefs.jl")
+include("sim.jl")
 
 include("deprecated.jl")
 
