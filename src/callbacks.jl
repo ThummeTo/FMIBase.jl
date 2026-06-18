@@ -458,10 +458,7 @@ function handleEvents(c::FMU2Component)
     numCalls = 0
     while c.eventInfo.newDiscreteStatesNeeded == fmi2True
         numCalls += 1
-        eventInfoRef = Ref(c.eventInfo)
-        eventInfoPtr = Base.unsafe_convert(Ptr{fmi2EventInfo}, eventInfoRef)
-        fmi2NewDiscreteStates!(c, eventInfoPtr)
-        c.eventInfo = eventInfoRef[]
+        fmi2NewDiscreteStates!(c, c.eventInfo)
 
         if c.eventInfo.valuesOfContinuousStatesChanged == fmi2True
             valuesOfContinuousStatesChanged = fmi2True
