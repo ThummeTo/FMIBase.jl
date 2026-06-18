@@ -347,10 +347,11 @@ function affectFMU!(c::FMU2Component, integrator, idx, inputFunction)
     right_x = nothing
 
     if isTrue(c.eventInfo.valuesOfContinuousStatesChanged)
-        left_x = integrator.u
+        # copy, so the recorded states are not mutated by the integrator afterwards
+        left_x = copy(integrator.u)
         right_x = getContinuousStates(c)
         @debug "affectFMU!(...): Handled event at t=$(integrator.t), new state is $(right_x)"
-        integrator.u = right_x
+        integrator.u .= right_x
 
         u_modified!(integrator, true)
     else
@@ -363,11 +364,7 @@ function affectFMU!(c::FMU2Component, integrator, idx, inputFunction)
     end
 
     ignore_derivatives() do
-        eventIndex = idx isa AbstractVector ? idx[1] : idx
-        if eventIndex != -1 # -1 no event, 0, time event, >=1 state event with indicator
-            e = FMUEvent(integrator.t, UInt64(eventIndex), left_x, right_x)
-            push!(c.solution.events, e)
-        end
+        recordEvents!(c, integrator, idx, left_x, right_x)
     end
 
     #fmi2EnterContinuousTimeMode(c)
@@ -382,6 +379,9 @@ function affectFMU!(c::FMU3Instance, integrator, idx, inputFunction)
 
     # there are fx-evaluations before the event is handled, reset the FMU state to the current integrator step
     f_set(c, integrator.u, t, inputFunction; force = true)
+
+    # update the event flags (`stepEvent`, `stateEvent`, `timeEvent`, `rootsFound`) passed to the FMU
+    setEventFlags!(c, idx)
 
     fmi3EnterEventMode(
         c,
@@ -399,10 +399,11 @@ function affectFMU!(c::FMU3Instance, integrator, idx, inputFunction)
     right_x = nothing
 
     if c.valuesOfContinuousStatesChanged == fmi3True
-        left_x = integrator.u
-        right_x = fmi3GetContinuousStates(c)
-        @debug "affectFMU!(...): Handled event at t=$(integrator.t), new state is $(new_u)"
-        integrator.u = right_x
+        # copy, so the recorded states are not mutated by the integrator afterwards
+        left_x = copy(integrator.u)
+        right_x = getContinuousStates(c)
+        @debug "affectFMU!(...): Handled event at t=$(integrator.t), new state is $(right_x)"
+        integrator.u .= right_x
 
         u_modified!(integrator, true)
         #set_proposed_dt!(integrator, 1e-10)
@@ -412,17 +413,67 @@ function affectFMU!(c::FMU3Instance, integrator, idx, inputFunction)
     end
 
     if c.nominalsOfContinuousStatesChanged == fmi3True
-        x_nom = fmi3GetNominalsOfContinuousStates(c)
+        x_nom = getNominalsOfContinuousStates(c)
     end
 
     ignore_derivatives() do
-        if idx != -1 # -1 no event, 0, time event, >=1 state event with indicator
+        recordEvents!(c, integrator, idx, left_x, right_x)
+    end
+
+    #fmi3EnterContinuousTimeMode(c)
+end
+
+# sets the event flags (`stepEvent`, `stateEvent`, `timeEvent`, `rootsFound`) on the instance,
+# these are passed to the FMU via `fmi3EnterEventMode`
+# scalar `idx`: -1 step event, 0 time event, >=1 state event with indicator `idx` (crossing direction unknown)
+function setEventFlags!(c::FMU3Instance, idx::Integer)
+    c.stepEvent = (idx == -1 ? fmi3True : fmi3False)
+    c.timeEvent = (idx == 0 ? fmi3True : fmi3False)
+    c.stateEvent = (idx >= 1 ? fmi3True : fmi3False)
+    fill!(c.rootsFound, fmi3Int32(0))
+    if 1 <= idx <= length(c.rootsFound)
+        c.rootsFound[idx] = fmi3Int32(1)
+    end
+    return nothing
+end
+# vector `idxs` (state events via `VectorContinuousCallback`): `idxs[i] ∈ (0, +1, -1)` matches the
+# `rootsFound` semantics (no root / rising / falling) for event indicator `i`
+function setEventFlags!(c::FMU3Instance, idxs::AbstractVector{<:Integer})
+    c.stepEvent = fmi3False
+    c.timeEvent = fmi3False
+    c.stateEvent = (any(!iszero, idxs) ? fmi3True : fmi3False)
+    for i = 1:length(c.rootsFound)
+        c.rootsFound[i] = (i <= length(idxs) ? fmi3Int32(idxs[i]) : fmi3Int32(0))
+    end
+    return nothing
+end
+
+# records the event(s) handled by `affectFMU!` in the solution object
+# scalar `idx`: -1 no event, 0 time event, >=1 state event with indicator `idx`
+function recordEvents!(c::FMUInstance, integrator, idx::Integer, left_x, right_x)
+    if idx != -1
+        e = FMUEvent(integrator.t, UInt64(idx), left_x, right_x)
+        push!(c.solution.events, e)
+    end
+    return nothing
+end
+# vector `idxs` (state events via `VectorContinuousCallback`): `idxs[i]` is `0` if event
+# indicator `i` did not trigger, `+1` for an upcrossing and `-1` for a downcrossing,
+# multiple indicators may trigger simultaneously
+function recordEvents!(
+    c::FMUInstance,
+    integrator,
+    idxs::AbstractVector{<:Integer},
+    left_x,
+    right_x,
+)
+    for idx = 1:length(idxs)
+        if idxs[idx] != 0
             e = FMUEvent(integrator.t, UInt64(idx), left_x, right_x)
             push!(c.solution.events, e)
         end
     end
-
-    #fmi3EnterContinuousTimeMode(c)
+    return nothing
 end
 
 

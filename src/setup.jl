@@ -125,7 +125,9 @@ function setupCallbacks(
         eventCb = VectorContinuousCallback(
             (out, x, t, integrator) ->
                 condition(c, out, x, t, integrator, _inputFunction),
-            (integrator, idx) -> affectFMU!(c, integrator, idx, _inputFunction),
+            # `events` is a `Vector{Int8}` with `events[i] ∈ (0, +1, -1)`, denoting if (and in
+            # which crossing direction) event indicator `i` triggered (OrdinaryDiffEq >= v7)
+            (integrator, events) -> affectFMU!(c, integrator, events, _inputFunction),
             Int64(c.fmu.modelDescription.numberOfEventIndicators);
             rootfind = RightRootFind,
             save_positions = (false, false),
