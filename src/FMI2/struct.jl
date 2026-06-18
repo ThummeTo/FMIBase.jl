@@ -153,7 +153,7 @@ mutable struct FMU2Component{F} <: FMUInstance
         inst.eventInfo = fmi2EventInfo()
 
         # AD
-        inst.output = FMUADOutput{Real}(; initType=Float64)
+        inst.output = FMUADOutput{Real}(; initType = Float64)
         inst.eval_output = FMUEvaluationOutput{Float64}()
         inst.rrule_input = FMUEvaluationInput()
         inst.frule_output = FMUEvaluationOutput{Float64}()
@@ -430,7 +430,7 @@ mutable struct FMU2 <: FMU
     default_y_refs::AbstractVector{<:fmi2ValueReference}
 
     # Constructor
-    function FMU2(logLevel::FMULogLevel=FMULogLevelWarn)
+    function FMU2(logLevel::FMULogLevel = FMULogLevelWarn)
         inst = new()
         inst.instances = Vector{FMU2Component}()
         inst.callbackLibHandle = C_NULL

@@ -223,8 +223,12 @@ function setValue(
             if !isnothing(mv.Real)
 
                 @assert isa(srcArray[i], Real) "setValue(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Real`, is `$(typeof(srcArray[i]))`."
-                retcodes[i] =
-                    fmi2SetReal(comp, fmi2ValueReference[vr], Csize_t(1), fmi2Real[srcArray[i]])
+                retcodes[i] = fmi2SetReal(
+                    comp,
+                    fmi2ValueReference[vr],
+                    Csize_t(1),
+                    fmi2Real[srcArray[i]],
+                )
             elseif !isnothing(mv.Integer)
 
                 @assert isa(srcArray[i], Union{Real,Integer}) "setValue(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(srcArray[i]))`."

@@ -490,8 +490,7 @@ function handleEvents(c::FMU2Component)
 
     @debug "handleEvents(...) -> valuesOfContinuousStatesChanged=$(c.eventInfo.valuesOfContinuousStatesChanged), nextEventTimeDefined=$(c.eventInfo.nextEventTimeDefined), nextEventTime=$(c.eventInfo.nextEventTime)"
 
-    @assert fmi2EnterContinuousTimeMode(c) ==
-            fmi2StatusOK "FMU is not in state continuous time after event handling."
+    @assert fmi2EnterContinuousTimeMode(c) == fmi2StatusOK "FMU is not in state continuous time after event handling."
 
     return nothing
 end

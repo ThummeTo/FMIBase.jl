@@ -22,20 +22,20 @@ end
 function prepareSolveFMU(
     fmu::FMU3,
     c::Union{Nothing,FMU3Instance},
-    type::fmi3Type=fmu.type;
-    instantiate::Union{Nothing,Bool}=fmu.executionConfig.instantiate,
-    freeInstance::Union{Nothing,Bool}=fmu.executionConfig.freeInstance,
-    terminate::Union{Nothing,Bool}=fmu.executionConfig.terminate,
-    reset::Union{Nothing,Bool}=fmu.executionConfig.reset,
-    setup::Union{Nothing,Bool}=fmu.executionConfig.setup,
-    parameters::Union{Dict{<:Any,<:Any},Nothing}=nothing,
-    t_start::Real=0.0,
-    t_stop::Union{Real,Nothing}=nothing,
-    tolerance::Union{Real,Nothing}=nothing,
-    x0::Union{AbstractArray{<:Real},Nothing}=nothing,
-    inputs::Union{Dict{<:Any,<:Any},Nothing}=nothing,
-    cleanup::Bool=false,
-    handleEvents=handleEvents,
+    type::fmi3Type = fmu.type;
+    instantiate::Union{Nothing,Bool} = fmu.executionConfig.instantiate,
+    freeInstance::Union{Nothing,Bool} = fmu.executionConfig.freeInstance,
+    terminate::Union{Nothing,Bool} = fmu.executionConfig.terminate,
+    reset::Union{Nothing,Bool} = fmu.executionConfig.reset,
+    setup::Union{Nothing,Bool} = fmu.executionConfig.setup,
+    parameters::Union{Dict{<:Any,<:Any},Nothing} = nothing,
+    t_start::Real = 0.0,
+    t_stop::Union{Real,Nothing} = nothing,
+    tolerance::Union{Real,Nothing} = nothing,
+    x0::Union{AbstractArray{<:Real},Nothing} = nothing,
+    inputs::Union{Dict{<:Any,<:Any},Nothing} = nothing,
+    cleanup::Bool = false,
+    handleEvents = handleEvents,
     instantiateKwargs...,
 )
 
@@ -82,13 +82,13 @@ function prepareSolveFMU(
 
         # soft terminate (if necessary)
         if terminate
-            retcode = fmi3Terminate(c; soft=true)
+            retcode = fmi3Terminate(c; soft = true)
             @assert retcode == fmi3StatusOK "fmi3Simulate(...): Termination failed with return code $(retcode)."
         end
 
         # soft reset (if necessary)
         if reset
-            retcode = fmi3Reset(c; soft=true)
+            retcode = fmi3Reset(c; soft = true)
             @assert retcode == fmi3StatusOK "fmi3Simulate(...): Reset failed with return code $(retcode)."
         end
 
@@ -101,7 +101,7 @@ function prepareSolveFMU(
                 c,
                 collect(keys(parameters)),
                 collect(values(parameters));
-                filter=setBeforeInitialization,
+                filter = setBeforeInitialization,
             )
             @assert all(retcodes .== fmi3StatusOK) "fmi3Simulate(...): Setting initial parameters failed with return code $(retcode)."
         end
@@ -112,7 +112,7 @@ function prepareSolveFMU(
                 c,
                 collect(keys(inputs)),
                 collect(values(inputs));
-                filter=setBeforeInitialization,
+                filter = setBeforeInitialization,
             )
             @assert all(retcodes .== fmi3StatusOK) "fmi3Simulate(...): Setting initial inputs failed with return code $(retcode)."
         end
@@ -125,14 +125,14 @@ function prepareSolveFMU(
                 c,
                 fmu.modelDescription.stateValueReferences,
                 x0;
-                filter=setBeforeInitialization,
+                filter = setBeforeInitialization,
             )
             @assert all(retcodes .== fmi3StatusOK) "fmi3Simulate(...): Setting initial inputs failed with return code $(retcode)."
         end
 
         # enter (hard)
         if setup
-            retcode = fmi3EnterInitializationMode(c, t_start, t_stop; tolerance=tolerance)
+            retcode = fmi3EnterInitializationMode(c, t_start, t_stop; tolerance = tolerance)
             @assert retcode == fmi3StatusOK "fmi3Simulate(...): Entering initialization mode failed with return code $(retcode)."
         end
 
@@ -142,7 +142,7 @@ function prepareSolveFMU(
                 c,
                 collect(keys(parameters)),
                 collect(values(parameters));
-                filter=setInInitialization,
+                filter = setInInitialization,
             )
             @assert all(retcodes .== fmi3StatusOK) "fmi3Simulate(...): Setting initial parameters failed with return code $(retcode)."
         end
@@ -152,7 +152,7 @@ function prepareSolveFMU(
                 c,
                 collect(keys(inputs)),
                 collect(values(inputs));
-                filter=setInInitialization,
+                filter = setInInitialization,
             )
             @assert all(retcodes .== fmi3StatusOK) "fmi3Simulate(...): Setting initial inputs failed with return code $(retcode)."
         end
@@ -165,7 +165,7 @@ function prepareSolveFMU(
                 c,
                 fmu.modelDescription.stateValueReferences,
                 x0;
-                filter=setInInitialization,
+                filter = setInInitialization,
             )
             @assert all(retcodes .== fmi3StatusOK) "fmi3Simulate(...): Setting initial inputs failed with return code $(retcode)."
         end
@@ -206,7 +206,7 @@ function prepareSolveFMU(
                 @debug "[AUTO] setup"
 
                 if !setup
-                    fmi3EnterInitializationMode(c, t_start, t_stop; tolerance=tolerance)
+                    fmi3EnterInitializationMode(c, t_start, t_stop; tolerance = tolerance)
                     fmi3ExitInitializationMode(c)
                 end
 
@@ -236,9 +236,9 @@ end
 function finishSolveFMU(
     fmu::FMU3,
     c::FMU3Instance;
-    freeInstance::Union{Nothing,Bool}=nothing,
-    terminate::Union{Nothing,Bool}=nothing,
-    popComponent::Bool=true,
+    freeInstance::Union{Nothing,Bool} = nothing,
+    terminate::Union{Nothing,Bool} = nothing,
+    popComponent::Bool = true,
 )
 
     if isnothing(c)
@@ -260,7 +260,7 @@ function finishSolveFMU(
 
         # soft terminate (if necessary)
         if terminate
-            retcode = fmi3Terminate(c; soft=true)
+            retcode = fmi3Terminate(c; soft = true)
             @assert retcode == fmi3StatusOK "fmi3Simulate(...): Termination failed with return code $(retcode)."
         end
 
@@ -294,7 +294,7 @@ function finishSolveFMU(
 
                 # soft terminate (if necessary)
                 if terminate
-                    retcode = fmi2Terminate(c[i]; soft=true)
+                    retcode = fmi2Terminate(c[i]; soft = true)
                     @assert retcode == fmi2StatusOK "fmi2Simulate(...): Termination failed with return code $(retcode)."
                 end
 
