@@ -74,4 +74,6 @@ function loadSolutionMAT end
 # ReverseDiff.jl
 # [Note] nothing to declare
 
+include("load_save.jl")
+
 end # module FMIBase
