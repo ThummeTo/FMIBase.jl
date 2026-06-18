@@ -865,8 +865,8 @@ function getUnit(mv::fmi2ScalarVariable)
     end
 end
 function getUnit(mv::fmi3Variable)
-    if mv._Float !== nothing
-        return mv._Float.unit
+    if hasproperty(mv, :unit)
+        return mv.unit
     else
         return nothing
     end
