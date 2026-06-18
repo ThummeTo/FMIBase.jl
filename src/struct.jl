@@ -22,6 +22,15 @@ abstract type FMUInstance end
 export FMUInstance
 
 """
+    AbstractDependencyMatrix
+
+Abstract type for dependency matrices derived from FMU model descriptions.
+Concrete implementation lives in FMIImport's SparseArraysExt.
+"""
+abstract type AbstractDependencyMatrix end
+export AbstractDependencyMatrix
+
+"""
 A mutable struct representing the excution configuration of a FMU.
 For FMUs that have issues with calls like `fmi2Reset` or `fmi2FreeInstance`, this is pretty useful.
 
@@ -99,7 +108,10 @@ mutable struct FMUExecutionConfiguration
     finitediff_absstep::Float64
 
 
-    # deprecated 
+    load_dep_matrix::Bool                   # build DependencyMatrix during loadFMU (requires SparseArrays)
+    use_jac_prototype::Bool                 # pass jac_prototype to ODEFunction when available
+
+    # deprecated
     concat_eval::Bool                       # wheter FMU/Component evaluation should return a tuple (y, dx, ec) or a conacatenation [y..., dx..., ec...]
     isolatedStateDependency::Any
 
@@ -150,7 +162,10 @@ mutable struct FMUExecutionConfiguration
         inst.finitediff_relstep = -1.0           # < 0.0 use FiniteDiff default
         inst.finitediff_absstep = -1.0           # < 0.0 use FiniteDiff default
 
-        # deprecated 
+        inst.load_dep_matrix = true
+        inst.use_jac_prototype = true
+
+        # deprecated
         inst.concat_eval = true
         inst.isolatedStateDependency = false
 

@@ -20,7 +20,9 @@ function FMIBase.saveSolutionJLD2(
     filepath::AbstractString;
     keyword = "solution",
 )
-    return JLD2.save(filepath, Dict(keyword => solution))
+    return JLD2.jldopen(filepath, "w") do file
+        file[keyword] = solution
+    end
 end
 export saveSolutionJLD2
 
@@ -33,7 +35,9 @@ Loads a `solution` of an FMU under dictionary `keyword` in a JLD2 file at `filep
 See also [`loadSolution`](@ref).
 """
 function FMIBase.loadSolutionJLD2(filepath::AbstractString; keyword = "solution")
-    return JLD2.load(filepath, keyword)
+    return JLD2.jldopen(filepath, "r") do file
+        file[keyword]
+    end
 end
 export loadSolutionJLD2
 
