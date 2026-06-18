@@ -37,22 +37,22 @@ function getValue!(
         if !isnothing(mv.Real)
             #@assert isa(dstArray[i], Real) "fmi2Get!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Real`, is `$(typeof(dstArray[i]))`."
             values = zeros(fmi2Real, num)
-            fmi2GetReal!(comp, [vr], num, values)
+            fmi2GetReal!(comp, fmi2ValueReference[vr], num, values)
             dstArray[i] = values[1]
         elseif mv.Integer != nothing
             #@assert isa(dstArray[i], Union{Real, Integer}) "fmi2Get!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(dstArray[i]))`."
             values = zeros(fmi2Integer, num)
-            fmi2GetInteger!(comp, [vr], num, values)
+            fmi2GetInteger!(comp, fmi2ValueReference[vr], num, values)
             dstArray[i] = values[1]
         elseif mv.Boolean != nothing
             #@assert isa(dstArray[i], Union{Real, Bool}) "fmi2Get!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Bool`, is `$(typeof(dstArray[i]))`."
             values = zeros(fmi2Boolean, num)
-            fmi2GetBoolean!(comp, [vr], num, values)
+            fmi2GetBoolean!(comp, fmi2ValueReference[vr], num, values)
             dstArray[i] = values[1]
         elseif mv.String != nothing
             #@assert isa(dstArray[i], String) "fmi2Get!(...): Unknown data type for value reference `$(vr)` at index $(i), should be `String`, is `$(typeof(dstArray[i]))`."
             values = Vector{fmi2String}(undef, num)
-            fmi2GetString!(comp, [vr], num, values)
+            fmi2GetString!(comp, fmi2ValueReference[vr], num, values)
             dstArray[i] = unsafe_string(values[1])
         elseif mv.Enumeration != nothing
             @warn "getValue!(...): Currently not implemented for fmi2Enum."
@@ -223,23 +223,48 @@ function setValue(
             if !isnothing(mv.Real)
 
                 @assert isa(srcArray[i], Real) "setValue(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Real`, is `$(typeof(srcArray[i]))`."
-                retcodes[i] = fmi2SetReal(comp, vr, srcArray[i])
+                retcodes[i] = fmi2SetReal(
+                    comp,
+                    fmi2ValueReference[vr],
+                    Csize_t(1),
+                    fmi2Real[srcArray[i]],
+                )
             elseif !isnothing(mv.Integer)
 
                 @assert isa(srcArray[i], Union{Real,Integer}) "setValue(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Integer`, is `$(typeof(srcArray[i]))`."
-                retcodes[i] = fmi2SetInteger(comp, vr, Integer(srcArray[i]))
+                retcodes[i] = fmi2SetInteger(
+                    comp,
+                    fmi2ValueReference[vr],
+                    Csize_t(1),
+                    fmi2Integer[srcArray[i]],
+                )
             elseif !isnothing(mv.Boolean)
 
                 @assert isa(srcArray[i], Union{Real,Bool}) "setValue(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Bool`, is `$(typeof(srcArray[i]))`."
-                retcodes[i] = fmi2SetBoolean(comp, vr, Bool(srcArray[i]))
+                retcodes[i] = fmi2SetBoolean(
+                    comp,
+                    fmi2ValueReference[vr],
+                    Csize_t(1),
+                    fmi2Boolean[srcArray[i] ? fmi2True : fmi2False],
+                )
             elseif !isnothing(mv.String)
 
                 @assert isa(srcArray[i], String) "setValue(...): Unknown data type for value reference `$(vr)` at index $(i), should be `String`, is `$(typeof(srcArray[i]))`."
-                retcodes[i] = fmi2SetString(comp, vr, srcArray[i])
+                retcodes[i] = fmi2SetString(
+                    comp,
+                    fmi2ValueReference[vr],
+                    Csize_t(1),
+                    fmi2String[pointer(srcArray[i])],
+                )
             elseif !isnothing(mv.Enumeration)
 
                 @assert isa(srcArray[i], Union{Real,Integer}) "setValue(...): Unknown data type for value reference `$(vr)` at index $(i), should be `Enumeration` (`Integer`), is `$(typeof(srcArray[i]))`."
-                retcodes[i] = fmi2SetInteger(comp, vr, Integer(srcArray[i]))
+                retcodes[i] = fmi2SetInteger(
+                    comp,
+                    fmi2ValueReference[vr],
+                    Csize_t(1),
+                    fmi2Integer[srcArray[i]],
+                )
             else
                 @assert false "setValue(...): Unknown data type for value reference `$(vr)` at index $(i), is `$(mv.datatype.datatype)`."
             end
