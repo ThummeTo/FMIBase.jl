@@ -47,6 +47,7 @@ include("sense.jl")
 include("snapshot.jl")
 include("solution.jl")
 include("valueRefs.jl")
+include("problem.jl")
 
 include("deprecated.jl")
 
