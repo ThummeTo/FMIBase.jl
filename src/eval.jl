@@ -44,7 +44,9 @@ Not all options are available for any FMU type, e.g. setting state is not suppor
 - `ec::Union{AbstractVector{<:Real}, Nothing}`: The system event indicators (if ME-FMU, otherwise `nothing`).
 """
 function (fmu::FMU)(;
-    dx_refs::Union{AbstractVector{<:fmiValueReference},Symbol} = :none,
+    dx_refs::Union{AbstractVector{<:fmiValueReference},Symbol}=:none,
+    y_refs::Union{AbstractVector{<:fmiValueReference},Symbol}=:none,
+    u_refs::Union{AbstractVector{<:fmiValueReference},Symbol}=:none,
     kwargs...,
 )
 
@@ -61,7 +63,27 @@ function (fmu::FMU)(;
         end
     end
 
-    return (c)(; dx_refs = dx_refs, kwargs...)
+    if isa(y_refs, Symbol)
+        if y_refs == :all
+            y_refs = fmu.modelDescription.outputValueReferences
+        elseif y_refs == :none
+            y_refs = getEmptyValueReference(fmu)
+        else
+            @assert false "Given `y_refs` is unknown symbol `$(y_refs)`, supported are `:all` or `:none`."
+        end
+    end
+
+    if isa(u_refs, Symbol)
+        if u_refs == :all
+            u_refs = fmu.modelDescription.inputValueReferences
+        elseif u_refs == :none
+            u_refs = getEmptyValueReference(fmu)
+        else
+            @assert false "Given `u_refs` is unknown symbol `$(u_refs)`, supported are `:all` or `:none`."
+        end
+    end
+
+    return (c)(; dx_refs=dx_refs, y_refs=y_refs, u_refs=u_refs, kwargs...)
 end
 
 # [ToDo]: Implement `scheduled execution specific allocations/assertions.`
@@ -99,19 +121,19 @@ Not all options are available for any FMU type, e.g. setting state is not suppor
 - `ec::Union{AbstractVector{<:Real}, Nothing}`: The system event indicators (if ME-FMU, otherwise `nothing`).
 """
 function (c::FMUInstance)(;
-    dx::AbstractVector{<:Real} = c.default_dx,
-    dx_refs::AbstractVector{<:fmiValueReference} = c.default_dx_refs,
-    y::AbstractVector{<:Real} = c.default_y,
-    y_refs::AbstractVector{<:fmiValueReference} = c.default_y_refs,
-    x::AbstractVector{<:Real} = getEmptyReal(c.fmu),
-    u::AbstractVector{<:Real} = getEmptyReal(c.fmu),
-    u_refs::AbstractVector{<:fmiValueReference} = getEmptyValueReference(c.fmu),
-    p::AbstractVector{<:Real} = c.default_p,
-    p_refs::AbstractVector{<:fmiValueReference} = c.default_p_refs,
-    ec::AbstractVector{<:Real} = c.default_ec,
-    ec_idcs::AbstractVector{<:fmiValueReference} = c.default_ec_idcs,
-    t::Real = c.default_t,
-    x_d::AbstractVector{<:Real} = c.default_x_d,
+    dx::AbstractVector{<:Real}=c.default_dx,
+    dx_refs::AbstractVector{<:fmiValueReference}=c.default_dx_refs,
+    y::AbstractVector{<:Real}=c.default_y,
+    y_refs::AbstractVector{<:fmiValueReference}=c.default_y_refs,
+    x::AbstractVector{<:Real}=getEmptyReal(c.fmu),
+    u::AbstractVector{<:Real}=getEmptyReal(c.fmu),
+    u_refs::AbstractVector{<:fmiValueReference}=getEmptyValueReference(c.fmu),
+    p::AbstractVector{<:Real}=c.default_p,
+    p_refs::AbstractVector{<:fmiValueReference}=c.default_p_refs,
+    ec::AbstractVector{<:Real}=c.default_ec,
+    ec_idcs::AbstractVector{<:fmiValueReference}=c.default_ec_idcs,
+    t::Real=c.default_t,
+    x_d::AbstractVector{<:Real}=c.default_x_d,
 )
     (c)(dx, dx_refs, y, y_refs, x, u, u_refs, p, p_refs, ec, ec_idcs, t, x_d)
 end

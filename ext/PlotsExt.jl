@@ -36,7 +36,7 @@ Plots the `solution` of a FMU simulation and returns a new figure.
 - `plotkwargs...`: Arguments, that are passed on to Plots.plot
 """
 function Plots.plot(solution::FMUSolution; plotkwargs...)
-    fig = Plots.plot(; xlabel = "t [s]")
+    fig = Plots.plot(; xlabel="t [s]")
     Plots.plot!(fig, solution; plotkwargs...)
     return fig
 end
@@ -71,16 +71,16 @@ Plots the `solution` of a FMU simulation into `fig` and returns the figure again
 function Plots.plot!(
     fig::Plots.Plot,
     solution::FMUSolution;
-    states::Union{Bool,Nothing} = nothing,
-    values::Union{Bool,Nothing} = nothing,
-    stateEvents::Union{Bool,Nothing} = nothing,
-    timeEvents::Union{Bool,Nothing} = nothing,
-    stateIndices = nothing,
-    valueIndices = nothing,
-    maxLabelLength::Integer = 64,
-    maxStateEvents::Integer = 100,
-    maxTimeEvents::Integer = 100,
-    tspan::Union{Tuple{Real,Real},Nothing} = nothing,
+    states::Union{Bool,Nothing}=isnothing(solution.values),
+    values::Union{Bool,Nothing}=nothing,
+    stateEvents::Union{Bool,Nothing}=nothing,
+    timeEvents::Union{Bool,Nothing}=nothing,
+    stateIndices=nothing,
+    valueIndices=nothing,
+    maxLabelLength::Integer=64,
+    maxStateEvents::Integer=100,
+    maxTimeEvents::Integer=100,
+    tspan::Union{Tuple{Real,Real},Nothing}=nothing,
     plotkwargs...,
 )
 
@@ -216,7 +216,7 @@ function Plots.plot!(
                     label = "..." * label[(labelLength-maxLabelLength):end]
                 end
 
-                Plots.plot!(fig, t, vals; label = label, plotkwargs...)
+                Plots.plot!(fig, t, vals; label=label, plotkwargs...)
             end
         end
     end
@@ -249,7 +249,7 @@ function Plots.plot!(
                     label = "..." * label[(labelLength-maxLabelLength):end]
                 end
 
-                Plots.plot!(fig, t, vals; label = label, plotkwargs...)
+                Plots.plot!(fig, t, vals; label=label, plotkwargs...)
             end
         end
     end
@@ -262,9 +262,9 @@ function Plots.plot!(
                     fig,
                     [e.t, e.t],
                     [plot_min, plot_max];
-                    label = (first ? "State event(s)" : nothing),
-                    style = :dash,
-                    color = :blue,
+                    label=(first ? "State event(s)" : nothing),
+                    style=:dash,
+                    color=:blue,
                 )
                 first = false
             end
@@ -279,9 +279,9 @@ function Plots.plot!(
                     fig,
                     [e.t, e.t],
                     [plot_min, plot_max];
-                    label = (first ? "Time event(s)" : nothing),
-                    style = :dash,
-                    color = :red,
+                    label=(first ? "Time event(s)" : nothing),
+                    style=:dash,
+                    color=:red,
                 )
                 first = false
             end

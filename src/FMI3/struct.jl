@@ -49,7 +49,7 @@ mutable struct FMU3Instance{F} <: FMUInstance
 
     problem::Any
     callback::Any # ToDo: CallbackSet
-    solution::FMUSolution
+    solution::Union{FMUSolution,Nothing}
     force::Bool
     threadid::Integer
 
@@ -162,6 +162,8 @@ mutable struct FMU3Instance{F} <: FMUInstance
         inst.type = nothing
         inst.threadid = Threads.threadid()
 
+        inst.solution = nothing
+
         # performance (pointers to prevent repeating allocations)
         inst._enterEventMode = zeros(fmi3Boolean, 1)
         inst._discreteStatesNeedUpdate = zeros(fmi3Boolean, 1)
@@ -182,7 +184,7 @@ mutable struct FMU3Instance{F} <: FMUInstance
         inst._ptr_nextEventTime = pointer(inst._nextEventTime)
 
         # AD
-        inst.output = FMUADOutput{Real}(; initType = Float64)
+        inst.output = FMUADOutput{Real}(; initType=Float64)
         inst.eval_output = FMUEvaluationOutput{Float64}()
         inst.rrule_input = FMUEvaluationInput()
         inst.frule_output = FMUEvaluationOutput{Float64}()
@@ -327,7 +329,7 @@ function Base.hasproperty(str::FMU3Instance, var::Symbol)
     if var ∈ FMU3Instance_AdditionalFields
         return true
     else
-        return Base.hasfield(str, var)
+        return Base.hasfield(typeof(str), var)
     end
 end
 
@@ -497,7 +499,7 @@ mutable struct FMU3 <: FMU
     default_y_refs::AbstractVector{<:fmi3ValueReference}
 
     # Constructor
-    function FMU3(logLevel::FMULogLevel = FMULogLevelWarn)
+    function FMU3(logLevel::FMULogLevel=FMULogLevelWarn)
         inst = new()
 
         inst.modelName = ""

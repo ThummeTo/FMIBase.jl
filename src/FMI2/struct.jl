@@ -51,7 +51,7 @@ mutable struct FMU2Component{F} <: FMUInstance
 
     problem::Any # ToDo: ODEProblem, but this is not a dependency of FMICore.jl nor FMIImport.jl ...
     callback::Any # ToDo: CallbackSet
-    solution::FMUSolution
+    solution::Union{FMUSolution,Nothing}
     force::Bool
     threadid::Integer
 
@@ -149,11 +149,13 @@ mutable struct FMU2Component{F} <: FMUInstance
         inst.type = nothing
         inst.threadid = Threads.threadid()
 
+        inst.solution = nothing
+
         # event handling 
         inst.eventInfo = fmi2EventInfo()
 
         # AD
-        inst.output = FMUADOutput{Real}(; initType = Float64)
+        inst.output = FMUADOutput{Real}(; initType=Float64)
         inst.eval_output = FMUEvaluationOutput{Float64}()
         inst.rrule_input = FMUEvaluationInput()
         inst.frule_output = FMUEvaluationOutput{Float64}()
@@ -299,7 +301,7 @@ function Base.hasproperty(str::FMU2Component, var::Symbol)
     if var ∈ FMU2Component_AdditionalFields
         return true
     else
-        return Base.hasfield(str, var)
+        return Base.hasfield(typeof(str), var)
     end
 end
 
@@ -434,7 +436,7 @@ mutable struct FMU2 <: FMU
     default_y_refs::AbstractVector{<:fmi2ValueReference}
 
     # Constructor
-    function FMU2(logLevel::FMULogLevel = FMULogLevelWarn)
+    function FMU2(logLevel::FMULogLevel=FMULogLevelWarn)
         inst = new()
         inst.instances = Vector{FMU2Component}()
         inst.callbackLibHandle = C_NULL
@@ -482,7 +484,7 @@ function Base.hasproperty(f::FMU2, var::Symbol)
     if var == :components
         return true
     else
-        return Base.hasfield(f, var)
+        return Base.hasfield(typeof(f), var)
     end
 end
 

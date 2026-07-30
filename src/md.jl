@@ -18,7 +18,7 @@ Returns the tag 'modelIdentifier' from CS or ME section.
 - `md.modelExchange.modelIdentifier::String`: Returns the tag `modelIdentifier` from ModelExchange section.
 - `md.coSimulation.modelIdentifier::String`: Returns the tag `modelIdentifier` from CoSimulation section.
 """
-function getModelIdentifier(md::fmi2ModelDescription; type = nothing)
+function getModelIdentifier(md::fmi2ModelDescription; type=nothing)
 
     if isnothing(type)
         if isCoSimulation(md)
@@ -34,7 +34,7 @@ function getModelIdentifier(md::fmi2ModelDescription; type = nothing)
         return md.modelExchange.modelIdentifier
     end
 end
-function getModelIdentifier(md::fmi3ModelDescription; type = nothing)
+function getModelIdentifier(md::fmi3ModelDescription; type=nothing)
 
     if isnothing(type)
         if isCoSimulation(md)
@@ -318,7 +318,7 @@ Returns a dictionary `Dict(fmi2ValueReference, Array{String})` of value referenc
 - `dict::Dict{fmi2ValueReference, Array{String}}`: Returns a dictionary that constructs a hash table with keys of type fmi2ValueReference and values of type Array{String}.
 
 """
-function getValueReferencesAndNames(md::fmi2ModelDescription; vrs = md.valueReferences)
+function getValueReferencesAndNames(md::fmi2ModelDescription; vrs=md.valueReferences)
     dict = Dict{fmi2ValueReference,Array{String}}()
     for vr in vrs
         dict[vr] = valueReferenceToString(md, vr)
@@ -342,7 +342,7 @@ Returns a array of names corresponding to value references `vrs`.
 # Returns
 - `names::Array{String}`: Returns a array of names corresponding to value references `vrs`
 """
-function getNames(md::fmi2ModelDescription; vrs = md.valueReferences, mode = :first)
+function getNames(md::fmi2ModelDescription; vrs=md.valueReferences, mode=:first)
     names = []
     for vr in vrs
         ns = valueReferenceToString(md, vr)
@@ -379,7 +379,7 @@ Returns a array of indices corresponding to value references `vrs`
 - `names::Array{Integer}`: Returns a array of indices corresponding to value references `vrs`
 
 """
-function getModelVariableIndices(md::fmi2ModelDescription; vrs = md.valueReferences)
+function getModelVariableIndices(md::fmi2ModelDescription; vrs=md.valueReferences)
     indices = []
 
     for i = 1:length(md.modelVariables)
@@ -408,7 +408,7 @@ Returns a dict with (vrs, names of inputs).
 
 """
 getInputValueReferencesAndNames(md::fmiModelDescription) =
-    getValueReferencesAndNames(md; vrs = md.inputValueReferences)
+    getValueReferencesAndNames(md; vrs=md.inputValueReferences)
 getInputValueReferencesAndNames(fmu::FMU) =
     getInputValueReferencesAndNames(fmu.modelDescription)
 export getInputValueReferencesAndNames
@@ -429,7 +429,7 @@ Returns names of inputs.
 
 """
 getInputNames(md::fmiModelDescription; kwargs...) =
-    getNames(md; vrs = md.inputValueReferences, kwargs...)
+    getNames(md; vrs=md.inputValueReferences, kwargs...)
 getInputNames(fmu::FMU; kwargs...) = getInputNames(fmu.modelDescription; kwargs...)
 export getInputNames
 
@@ -449,7 +449,7 @@ Returns a dictionary `Dict(fmi2ValueReference, Array{String})` of value referenc
 
 """
 getOutputValueReferencesAndNames(md::fmiModelDescription) =
-    getValueReferencesAndNames(md; vrs = md.outputValueReferences)
+    getValueReferencesAndNames(md; vrs=md.outputValueReferences)
 getOutputValueReferencesAndNames(fmu::FMU) =
     getOutputValueReferencesAndNames(fmu.modelDescription)
 export getOutputValueReferencesAndNames
@@ -470,7 +470,7 @@ Returns names of outputs.
 
 """
 getOutputNames(md::fmiModelDescription; kwargs...) =
-    getNames(md; vrs = md.outputValueReferences, kwargs...)
+    getNames(md; vrs=md.outputValueReferences, kwargs...)
 getOutputNames(fmu::FMU; kwargs...) = getOutputNames(fmu.modelDescription; kwargs...)
 export getOutputNames
 
@@ -488,7 +488,7 @@ Returns a dictionary `Dict(fmi2ValueReference, Array{String})` of parameterValue
 See also [`getValueReferencesAndNames`](@ref).
 """
 getParameterValueReferencesAndNames(md::fmiModelDescription) =
-    getValueReferencesAndNames(md; vrs = md.parameterValueReferences)
+    getValueReferencesAndNames(md; vrs=md.parameterValueReferences)
 getParameterValueReferencesAndNames(fmu::FMU) =
     getParameterValueReferencesAndNames(fmu.modelDescription)
 export getParameterValueReferencesAndNames
@@ -510,7 +510,7 @@ Returns names of parameters.
 
 """
 getParameterNames(md::fmiModelDescription; kwargs...) =
-    getNames(md; vrs = md.parameterValueReferences, kwargs...)
+    getNames(md; vrs=md.parameterValueReferences, kwargs...)
 getParameterNames(fmu::FMU; kwargs...) = getParameterNames(fmu.modelDescription; kwargs...)
 export getParameterNames
 
@@ -527,7 +527,7 @@ Returns a dictionary `Dict(fmi2ValueReference, Array{String})` of state value re
 
 """
 getStateValueReferencesAndNames(md::fmiModelDescription) =
-    getValueReferencesAndNames(md; vrs = md.stateValueReferences)
+    getValueReferencesAndNames(md; vrs=md.stateValueReferences)
 getStateValueReferencesAndNames(fmu::FMU) =
     getStateValueReferencesAndNames(fmu.modelDescription)
 export getStateValueReferencesAndNames
@@ -549,7 +549,7 @@ Returns names of states.
 
 """
 getStateNames(md::fmiModelDescription; kwargs...) =
-    getNames(md; vrs = md.stateValueReferences, kwargs...)
+    getNames(md; vrs=md.stateValueReferences, kwargs...)
 getStateNames(fmu::FMU; kwargs...) = getStateNames(fmu.modelDescription; kwargs...)
 export getStateNames
 
@@ -566,7 +566,7 @@ Returns a dictionary `Dict(fmi2ValueReference, Array{String})` of derivative val
 See also [`getValueReferencesAndNames`](@ref)
 """
 getDerivateValueReferencesAndNames(md::fmiModelDescription) =
-    getValueReferencesAndNames(md; vrs = md.derivativeValueReferences)
+    getValueReferencesAndNames(md; vrs=md.derivativeValueReferences)
 getDerivateValueReferencesAndNames(fmu::FMU) =
     getDerivateValueReferencesAndNames(fmu.modelDescription)
 export getDerivateValueReferencesAndNames
@@ -588,7 +588,7 @@ Returns names of derivatives.
 
 """
 getDerivativeNames(md::fmiModelDescription; kwargs...) =
-    getNames(md; vrs = md.derivativeValueReferences, kwargs...)
+    getNames(md; vrs=md.derivativeValueReferences, kwargs...)
 getDerivativeNames(fmu::FMU; kwargs...) =
     getDerivativeNames(fmu.modelDescription; kwargs...)
 export getDerivativeNames
@@ -668,7 +668,7 @@ Returns a dictionary of input variables with their starting values.
 See also [`getStartValue`](@ref).
 """
 function getInputNamesAndStarts(md::fmiModelDescription)
-    inputIndices = getModelVariableIndices(md; vrs = md.inputValueReferences)
+    inputIndices = getModelVariableIndices(md; vrs=md.inputValueReferences)
     Dict(
         md.modelVariables[i].name => getStartValue(md.modelVariables[i]) for
         i in inputIndices
@@ -696,7 +696,7 @@ More detailed: `fmi2ValueReferenceFormat = Union{Nothing, String, Array{String,1
 """
 function getStartValue(
     md::fmi2ModelDescription,
-    vrs::fmi2ValueReferenceFormat = md.valueReferences,
+    vrs::fmi2ValueReferenceFormat=md.valueReferences,
 )
 
     vrs = prepareValueReference(md, vrs)
@@ -721,13 +721,13 @@ function getStartValue(
 end
 function getStartValue(
     fmu::FMU2,
-    vrs::fmi2ValueReferenceFormat = fmu.modelDescription.valueReferences,
+    vrs::fmi2ValueReferenceFormat=fmu.modelDescription.valueReferences,
 )
     getStartValue(fmu.modelDescription, vrs)
 end
 function getStartValue(
     md::fmi3ModelDescription,
-    vrs::fmi3ValueReferenceFormat = md.valueReferences,
+    vrs::fmi3ValueReferenceFormat=md.valueReferences,
 )
 
     vrs = prepareValueReference(md, vrs)
@@ -752,13 +752,13 @@ function getStartValue(
 end
 function getStartValue(
     fmu::FMU3,
-    vrs::fmi3ValueReferenceFormat = fmu.modelDescription.valueReferences,
+    vrs::fmi3ValueReferenceFormat=fmu.modelDescription.valueReferences,
 )
     getStartValue(fmu.modelDescription, vrs)
 end
 function getStartValue(
     c::FMU2Component,
-    vrs::fmi2ValueReferenceFormat = c.fmu.modelDescription.valueReferences,
+    vrs::fmi2ValueReferenceFormat=c.fmu.modelDescription.valueReferences,
 )
 
     vrs = prepareValueReference(c, vrs)
@@ -810,7 +810,7 @@ function getStartValue(mv::fmi2ScalarVariable)
 end
 function getStartValue(
     c::FMU3Instance,
-    vrs::fmi3ValueReferenceFormat = c.fmu.modelDescription.valueReferences,
+    vrs::fmi3ValueReferenceFormat=c.fmu.modelDescription.valueReferences,
 )
 
     vrs = prepareValueReference(c, vrs)
@@ -1028,12 +1028,12 @@ canSerializeFMUState(fmu::FMU) = canSerializeFMUState(fmu.modelDescription)
 export canSerializeFMUState
 
 """
-    providesDirectionalDerivative(md::fmi2ModelDescription)
+    providesDirectionalDerivative(md::fmiModelDescription)
 
 Returns true, if the FMU provides directional derivatives
 
 # Arguments
-- `md::fmi2ModelDescription`: Struct which provides the static information of ModelVariables.
+- `md::fmiModelDescription`: Struct which provides the static information of ModelVariables.
 
 # Returns
 - `::Bool`: Returns true, if the FMU provides directional derivatives
