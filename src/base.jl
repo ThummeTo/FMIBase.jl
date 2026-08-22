@@ -30,8 +30,8 @@ const fmi2ValueReferenceFormat = Union{
     AbstractArray{String,1},
     fmi2ValueReference,
     AbstractArray{fmi2ValueReference,1},
-    Int64,
-    AbstractArray{Int64,1},
+    Int,
+    AbstractArray{Int,1},
     Symbol,
 }
 const fmi3ValueReferenceFormat = Union{
@@ -40,8 +40,8 @@ const fmi3ValueReferenceFormat = Union{
     AbstractArray{String,1},
     fmi3ValueReference,
     AbstractArray{fmi3ValueReference,1},
-    Int64,
-    AbstractArray{Int64,1},
+    Int,
+    AbstractArray{Int,1},
     Symbol,
 }
 const fmiValueReferenceFormat = Union{fmi2ValueReferenceFormat,fmi3ValueReferenceFormat}
