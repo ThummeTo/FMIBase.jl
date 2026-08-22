@@ -40,7 +40,7 @@ The mutable struct represents a pointer to an FMU specific data structure that c
 """
 mutable struct FMU3Instance{F} <: FMUInstance
     addr::fmi3Instance
-    cRef::UInt64
+    cRef::UInt
 
     fmu::F
     state::fmi3InstanceState
@@ -153,7 +153,7 @@ mutable struct FMU3Instance{F} <: FMUInstance
     function FMU3Instance{F}() where {F}
         inst = new()
 
-        inst.cRef = UInt64(pointer_from_objref(inst))
+        inst.cRef = UInt(pointer_from_objref(inst))
 
         inst.state = fmi3InstanceStateInstantiated
         inst.t = NO_fmi3Float64
