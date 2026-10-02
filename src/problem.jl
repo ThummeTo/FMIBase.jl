@@ -16,7 +16,7 @@ and returns the resulting SciML `ODESolution`. For Co-Simulation FMUs, `solve`
 uses the FMU's own do-step interface instead of an ODE algorithm.
 """
 mutable struct FMUProblem{uType,tType,isinplace,F<:FMU} <:
-               AbstractODEProblem{uType,tType,isinplace}
+    AbstractODEProblem{uType,tType,isinplace}
     f::Any
     u0::Any
     tspan::tType
@@ -33,26 +33,6 @@ end
 export FMUProblem
 
 const FMU_PROBLEM_MODES = (:ME, :CS, :SE)
-
-# Accept a few readable aliases while storing the compact internal mode symbol.
-function _normalize_fmu_problem_mode(mode::Symbol)
-    mode in FMU_PROBLEM_MODES && return mode
-
-    str = uppercase(String(mode))
-    str in ("ME", "MODEL_EXCHANGE", "MODELEXCHANGE", "MODEL-EXCHANGE") && return :ME
-    str in ("CS", "CO_SIMULATION", "COSIMULATION", "CO-SIMULATION") && return :CS
-    str in ("SE", "SCHEDULED_EXECUTION", "SCHEDULEDEXECUTION", "SCHEDULED-EXECUTION") &&
-        return :SE
-
-    throw(
-        ArgumentError(
-            "Unknown FMUProblem mode `$(mode)`. Supported modes are :ME, :CS and :SE.",
-        ),
-    )
-end
-_normalize_fmu_problem_mode(mode::AbstractString) =
-    _normalize_fmu_problem_mode(Symbol(mode))
-_normalize_fmu_problem_mode(::Nothing) = nothing
 
 # Prefer the already selected FMU type, then fall back to model-description support flags.
 function _default_fmu_problem_mode(fmu::FMU2)
@@ -89,9 +69,11 @@ function _default_fmu_problem_mode(fmu::FMU3)
     )
 end
 
-function _fmu_problem_mode(fmu::FMU, mode)
-    normalized = _normalize_fmu_problem_mode(mode)
-    return isnothing(normalized) ? _default_fmu_problem_mode(fmu) : normalized
+_fmu_problem_mode(fmu::FMU, ::Nothing) = _default_fmu_problem_mode(fmu)
+
+function _fmu_problem_mode(fmu::FMU, mode::Symbol)
+    @assert mode in FMU_PROBLEM_MODES "Unknown FMUProblem mode `$(mode)`. Supported modes are :ME, :CS and :SE."
+    return mode
 end
 
 # Reuse the existing default-time/tolerance setup path, but only keep the normalized tspan.
@@ -119,7 +101,7 @@ function _normalize_fmu_problem_kwargs(kwargs::NamedTuple, p)
     if _is_null_parameters(p) && haskey(kwargs, :parameters)
         p = kwargs.parameters
     elseif !_is_null_parameters(p) && p isa AbstractDict && !haskey(kwargs, :parameters)
-        kwargs = merge(kwargs, (; parameters = p))
+        kwargs = merge(kwargs, (; parameters=p))
     end
 
     return kwargs, p
@@ -127,14 +109,14 @@ end
 
 function FMUProblem(
     fmu::F,
-    tspan = nothing;
-    instance = nothing,
-    mode = nothing,
-    u0 = nothing,
-    x0 = nothing,
-    p = SciMLBase.NullParameters(),
-    problem = nothing,
-    callback = nothing,
+    tspan=nothing;
+    instance=nothing,
+    mode=nothing,
+    u0=nothing,
+    x0=nothing,
+    p=SciMLBase.NullParameters(),
+    problem=nothing,
+    callback=nothing,
     kwargs...,
 ) where {F<:FMU}
     _mode = _fmu_problem_mode(fmu, mode)
@@ -162,8 +144,8 @@ function FMUProblem(
     )
 end
 
-FMUProblem(instance::FMUInstance, tspan = nothing; kwargs...) =
-    FMUProblem(instance.fmu, tspan; instance = instance, kwargs...)
+FMUProblem(instance::FMUInstance, tspan=nothing; kwargs...) =
+    FMUProblem(instance.fmu, tspan; instance=instance, kwargs...)
 
 """
     solveFMUProblem!(prob, args...; kwargs...)
@@ -204,16 +186,16 @@ end
 
 function SciMLBase.remake(
     prob::FMUProblem;
-    f = missing,
-    u0 = missing,
-    x0 = missing,
-    tspan = missing,
-    p = missing,
-    kwargs = missing,
-    instance = missing,
-    mode = missing,
-    problem = missing,
-    callback = missing,
+    f=missing,
+    u0=missing,
+    x0=missing,
+    tspan=missing,
+    p=missing,
+    kwargs=missing,
+    instance=missing,
+    mode=missing,
+    problem=missing,
+    callback=missing,
     _kwargs...,
 )
     if f !== missing
@@ -239,12 +221,12 @@ function SciMLBase.remake(
     return FMUProblem(
         prob.fmu,
         new_tspan;
-        instance = instance === missing ? prob.instance : instance,
-        mode = mode === missing ? prob.mode : mode,
-        u0 = new_u0,
-        p = new_p,
-        problem = problem === missing ? nothing : problem,
-        callback = callback === missing ? nothing : callback,
+        instance=instance === missing ? prob.instance : instance,
+        mode=mode === missing ? prob.mode : mode,
+        u0=new_u0,
+        p=new_p,
+        problem=problem === missing ? nothing : problem,
+        callback=callback === missing ? nothing : callback,
         new_kwargs...,
     )
 end
