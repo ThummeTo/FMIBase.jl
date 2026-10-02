@@ -42,7 +42,7 @@ The mutable struct represents an allocated instance of an FMU in the FMI 2.0.2 S
 """
 mutable struct FMU2Component{F} <: FMUInstance
     addr::fmi2Component
-    cRef::UInt64
+    cRef::UInt
 
     fmu::F
     state::fmi2ComponentState
@@ -141,7 +141,7 @@ mutable struct FMU2Component{F} <: FMUInstance
     # constructor
     function FMU2Component{F}() where {F}
         inst = new{F}()
-        inst.cRef = UInt64(pointer_from_objref(inst))
+        inst.cRef = UInt(pointer_from_objref(inst))
         inst.state = fmi2ComponentStateInstantiated
         inst.t = NO_fmi2Real
         inst.t_offset = fmi2Real(0.0)
