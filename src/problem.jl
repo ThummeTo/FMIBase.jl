@@ -20,7 +20,7 @@ The simulation `mode` must be one of `:ME`, `:CS` or `:SE`. If no `mode` is give
 FMUs that only support Scheduled Execution).
 """
 mutable struct FMUProblem{uType,tType,isinplace,F<:FMU} <:
-    AbstractODEProblem{uType,tType,isinplace}
+               AbstractODEProblem{uType,tType,isinplace}
     f::Any
     u0::Any
     tspan::tType
@@ -98,7 +98,7 @@ function _normalize_fmu_problem_kwargs(kwargs::NamedTuple, p)
     if _is_null_parameters(p) && haskey(kwargs, :parameters)
         p = kwargs.parameters
     elseif !_is_null_parameters(p) && p isa AbstractDict && !haskey(kwargs, :parameters)
-        kwargs = merge(kwargs, (; parameters=p))
+        kwargs = merge(kwargs, (; parameters = p))
     end
 
     return kwargs, p
@@ -106,14 +106,14 @@ end
 
 function FMUProblem(
     fmu::F,
-    tspan=nothing;
-    instance=nothing,
-    mode=nothing,
-    u0=nothing,
-    x0=nothing,
-    p=SciMLBase.NullParameters(),
-    problem=nothing,
-    callback=nothing,
+    tspan = nothing;
+    instance = nothing,
+    mode = nothing,
+    u0 = nothing,
+    x0 = nothing,
+    p = SciMLBase.NullParameters(),
+    problem = nothing,
+    callback = nothing,
     kwargs...,
 ) where {F<:FMU}
     _mode = _fmu_problem_mode(fmu, mode)
@@ -141,8 +141,8 @@ function FMUProblem(
     )
 end
 
-FMUProblem(instance::FMUInstance, tspan=nothing; kwargs...) =
-    FMUProblem(instance.fmu, tspan; instance=instance, kwargs...)
+FMUProblem(instance::FMUInstance, tspan = nothing; kwargs...) =
+    FMUProblem(instance.fmu, tspan; instance = instance, kwargs...)
 
 """
     solveFMUProblem!(prob, args...; kwargs...)
@@ -183,16 +183,16 @@ end
 
 function SciMLBase.remake(
     prob::FMUProblem;
-    f=missing,
-    u0=missing,
-    x0=missing,
-    tspan=missing,
-    p=missing,
-    kwargs=missing,
-    instance=missing,
-    mode=missing,
-    problem=missing,
-    callback=missing,
+    f = missing,
+    u0 = missing,
+    x0 = missing,
+    tspan = missing,
+    p = missing,
+    kwargs = missing,
+    instance = missing,
+    mode = missing,
+    problem = missing,
+    callback = missing,
     _kwargs...,
 )
     if f !== missing
@@ -218,12 +218,12 @@ function SciMLBase.remake(
     return FMUProblem(
         prob.fmu,
         new_tspan;
-        instance=instance === missing ? prob.instance : instance,
-        mode=mode === missing ? prob.mode : mode,
-        u0=new_u0,
-        p=new_p,
-        problem=problem === missing ? nothing : problem,
-        callback=callback === missing ? nothing : callback,
+        instance = instance === missing ? prob.instance : instance,
+        mode = mode === missing ? prob.mode : mode,
+        u0 = new_u0,
+        p = new_p,
+        problem = problem === missing ? nothing : problem,
+        callback = callback === missing ? nothing : callback,
         new_kwargs...,
     )
 end
