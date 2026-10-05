@@ -11,7 +11,7 @@ Saves a `solution` of an FMU simulation at `filepath`.
 Currently .mat, .jld2 and .csv are supported for saving and selected by the ending of `filepath`.
 For JLD2 the `keyword` is used as key.
 
-See also [`saveSolutionCSV`](@ref), [`saveSolutionMAT`](@ref), [`saveSolutionJLD2`](@ref), [`loadSolutionJLD2`](@ref).
+See also `saveSolutionCSV`, `saveSolutionMAT`, `saveSolutionJLD2`, and `loadSolutionJLD2`.
 """
 function saveSolution(solution::FMUSolution, filepath::AbstractString; keyword = "solution")
     ending = lowercase(splitext(filepath)[2])
@@ -35,7 +35,7 @@ Loads a `solution` of an FMU simulation at `filepath`.
 Currently only .jld2 is implemented for loading.
 For JLD2 the `keyword` is used as key.
 
-See also [`saveSolutionCSV`](@ref), [`saveSolutionMAT`](@ref), [`saveSolutionJLD2`](@ref), [`loadSolutionJLD2`](@ref).
+See also `saveSolutionCSV`, `saveSolutionMAT`, `saveSolutionJLD2`, and `loadSolutionJLD2`.
 """
 function loadSolution(filepath::AbstractString; keyword = "solution")
     ending = lowercase(splitext(filepath)[2])

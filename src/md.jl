@@ -1028,12 +1028,12 @@ canSerializeFMUState(fmu::FMU) = canSerializeFMUState(fmu.modelDescription)
 export canSerializeFMUState
 
 """
-    providesDirectionalDerivative(md::fmi2ModelDescription)
+    providesDirectionalDerivative(md::fmiModelDescription)
 
 Returns true, if the FMU provides directional derivatives
 
 # Arguments
-- `md::fmi2ModelDescription`: Struct which provides the static information of ModelVariables.
+- `md::fmiModelDescription`: Struct which provides the static information of ModelVariables.
 
 # Returns
 - `::Bool`: Returns true, if the FMU provides directional derivatives

@@ -4,7 +4,12 @@
 #
 
 import ProgressMeter
-using SciMLBase: u_modified!
+
+const derivative_discontinuity! = if isdefined(SciMLBase, :derivative_discontinuity!)
+    SciMLBase.derivative_discontinuity!
+else
+    SciMLBase.u_modified!
+end
 
 # returns the event indicators for an FMU
 function condition(c::FMUInstance, out, x, t, integrator, inputFunction)
@@ -353,9 +358,9 @@ function affectFMU!(c::FMU2Component, integrator, idx, inputFunction)
         @debug "affectFMU!(...): Handled event at t=$(integrator.t), new state is $(right_x)"
         integrator.u .= right_x
 
-        u_modified!(integrator, true)
+        derivative_discontinuity!(integrator, true)
     else
-        u_modified!(integrator, false)
+        derivative_discontinuity!(integrator, false)
         @debug "affectFMU!(...): Handled event at t=$(integrator.t), no new state."
     end
 
@@ -405,10 +410,10 @@ function affectFMU!(c::FMU3Instance, integrator, idx, inputFunction)
         @debug "affectFMU!(...): Handled event at t=$(integrator.t), new state is $(right_x)"
         integrator.u .= right_x
 
-        u_modified!(integrator, true)
+        derivative_discontinuity!(integrator, true)
         #set_proposed_dt!(integrator, 1e-10)
     else
-        u_modified!(integrator, false)
+        derivative_discontinuity!(integrator, false)
         @debug "affectFMU!(...): Handled event at t=$(integrator.t), no new state."
     end
 
