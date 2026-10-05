@@ -45,6 +45,8 @@ Not all options are available for any FMU type, e.g. setting state is not suppor
 """
 function (fmu::FMU)(;
     dx_refs::Union{AbstractVector{<:fmiValueReference},Symbol} = :none,
+    y_refs::Union{AbstractVector{<:fmiValueReference},Symbol} = :none,
+    u_refs::Union{AbstractVector{<:fmiValueReference},Symbol} = :none,
     kwargs...,
 )
 
@@ -61,7 +63,27 @@ function (fmu::FMU)(;
         end
     end
 
-    return (c)(; dx_refs = dx_refs, kwargs...)
+    if isa(y_refs, Symbol)
+        if y_refs == :all
+            y_refs = fmu.modelDescription.outputValueReferences
+        elseif y_refs == :none
+            y_refs = getEmptyValueReference(fmu)
+        else
+            @assert false "Given `y_refs` is unknown symbol `$(y_refs)`, supported are `:all` or `:none`."
+        end
+    end
+
+    if isa(u_refs, Symbol)
+        if u_refs == :all
+            u_refs = fmu.modelDescription.inputValueReferences
+        elseif u_refs == :none
+            u_refs = getEmptyValueReference(fmu)
+        else
+            @assert false "Given `u_refs` is unknown symbol `$(u_refs)`, supported are `:all` or `:none`."
+        end
+    end
+
+    return (c)(; dx_refs = dx_refs, y_refs = y_refs, u_refs = u_refs, kwargs...)
 end
 
 # [ToDo]: Implement `scheduled execution specific allocations/assertions.`

@@ -17,5 +17,6 @@ using CSV, DataFrames, ForwardDiff, JLD2, MAT, Plots, ReverseDiff
     include("valueRefs_md.jl")
     include("struct_solution.jl")
     include("sparsity.jl")
+    include("problem.jl")
     include("real_fmu.jl")
 end
