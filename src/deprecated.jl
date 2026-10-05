@@ -20,7 +20,7 @@ function Base.hasproperty(obj::FMUSolution, var::Symbol)
             3
         return true
     end
-    return Base.hasfield(obj, var)
+    return Base.hasfield(typeof(obj), var)
 end
 
 function Base.getproperty(obj::FMUSolution, var::Symbol)
