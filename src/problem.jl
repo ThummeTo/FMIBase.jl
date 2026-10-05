@@ -14,9 +14,13 @@ A SciML-style problem wrapper for simulating FMUs.
 For Model Exchange FMUs, `solve(::FMUProblem)` prepares an internal `ODEProblem`
 and returns the resulting SciML `ODESolution`. For Co-Simulation FMUs, `solve`
 uses the FMU's own do-step interface instead of an ODE algorithm.
+
+The simulation `mode` must be one of `:ME`, `:CS` or `:SE`. If no `mode` is given,
+`:CS` is used if the FMU supports Co-Simulation, otherwise `:ME` (or `:SE` for FMI3
+FMUs that only support Scheduled Execution).
 """
 mutable struct FMUProblem{uType,tType,isinplace,F<:FMU} <:
-               AbstractODEProblem{uType,tType,isinplace}
+    AbstractODEProblem{uType,tType,isinplace}
     f::Any
     u0::Any
     tspan::tType
@@ -34,15 +38,10 @@ export FMUProblem
 
 const FMU_PROBLEM_MODES = (:ME, :CS, :SE)
 
-# Prefer the already selected FMU type, then fall back to model-description support flags.
+# Fall back to model-description support flags: prefer CS, then ME (then SE for FMI3).
 function _default_fmu_problem_mode(fmu::FMU2)
-    if isdefined(fmu, :type)
-        fmu.type == fmi2TypeModelExchange && return :ME
-        fmu.type == fmi2TypeCoSimulation && return :CS
-    end
-
-    isModelExchange(fmu) && !isCoSimulation(fmu) && return :ME
-    isCoSimulation(fmu) && !isModelExchange(fmu) && return :CS
+    isCoSimulation(fmu) && return :CS
+    isModelExchange(fmu) && return :ME
 
     throw(
         ArgumentError(
@@ -52,15 +51,9 @@ function _default_fmu_problem_mode(fmu::FMU2)
 end
 
 function _default_fmu_problem_mode(fmu::FMU3)
-    if isdefined(fmu, :type)
-        fmu.type == fmi3TypeModelExchange && return :ME
-        fmu.type == fmi3TypeCoSimulation && return :CS
-        fmu.type == fmi3TypeScheduledExecution && return :SE
-    end
-
-    isModelExchange(fmu) && !isCoSimulation(fmu) && !isScheduledExecution(fmu) && return :ME
-    isCoSimulation(fmu) && !isModelExchange(fmu) && !isScheduledExecution(fmu) && return :CS
-    isScheduledExecution(fmu) && !isModelExchange(fmu) && !isCoSimulation(fmu) && return :SE
+    isCoSimulation(fmu) && return :CS
+    isModelExchange(fmu) && return :ME
+    isScheduledExecution(fmu) && return :SE
 
     throw(
         ArgumentError(
@@ -71,8 +64,12 @@ end
 
 _fmu_problem_mode(fmu::FMU, ::Nothing) = _default_fmu_problem_mode(fmu)
 
-function _fmu_problem_mode(fmu::FMU, mode::Symbol)
-    @assert mode in FMU_PROBLEM_MODES "Unknown FMUProblem mode `$(mode)`. Supported modes are :ME, :CS and :SE."
+function _fmu_problem_mode(fmu::FMU, mode)
+    mode in FMU_PROBLEM_MODES || throw(
+        ArgumentError(
+            "Unknown FMUProblem mode `$(repr(mode))`. Supported modes are :ME, :CS and :SE.",
+        ),
+    )
     return mode
 end
 
@@ -87,7 +84,7 @@ function _normalize_fmu_problem_u0(u0, x0)
     if u0 !== nothing && x0 !== nothing
         throw(
             ArgumentError(
-                "Pass only one of `u0` and `x0` to FMUProblem. They describe the same initial state.",
+                "Pass only one of `u0` (Julia world) and `x0` (FMI world) to FMUProblem. They describe the same initial state.",
             ),
         )
     end
@@ -101,7 +98,7 @@ function _normalize_fmu_problem_kwargs(kwargs::NamedTuple, p)
     if _is_null_parameters(p) && haskey(kwargs, :parameters)
         p = kwargs.parameters
     elseif !_is_null_parameters(p) && p isa AbstractDict && !haskey(kwargs, :parameters)
-        kwargs = merge(kwargs, (; parameters = p))
+        kwargs = merge(kwargs, (; parameters=p))
     end
 
     return kwargs, p
@@ -109,14 +106,14 @@ end
 
 function FMUProblem(
     fmu::F,
-    tspan = nothing;
-    instance = nothing,
-    mode = nothing,
-    u0 = nothing,
-    x0 = nothing,
-    p = SciMLBase.NullParameters(),
-    problem = nothing,
-    callback = nothing,
+    tspan=nothing;
+    instance=nothing,
+    mode=nothing,
+    u0=nothing,
+    x0=nothing,
+    p=SciMLBase.NullParameters(),
+    problem=nothing,
+    callback=nothing,
     kwargs...,
 ) where {F<:FMU}
     _mode = _fmu_problem_mode(fmu, mode)
@@ -144,8 +141,8 @@ function FMUProblem(
     )
 end
 
-FMUProblem(instance::FMUInstance, tspan = nothing; kwargs...) =
-    FMUProblem(instance.fmu, tspan; instance = instance, kwargs...)
+FMUProblem(instance::FMUInstance, tspan=nothing; kwargs...) =
+    FMUProblem(instance.fmu, tspan; instance=instance, kwargs...)
 
 """
     solveFMUProblem!(prob, args...; kwargs...)
@@ -186,16 +183,16 @@ end
 
 function SciMLBase.remake(
     prob::FMUProblem;
-    f = missing,
-    u0 = missing,
-    x0 = missing,
-    tspan = missing,
-    p = missing,
-    kwargs = missing,
-    instance = missing,
-    mode = missing,
-    problem = missing,
-    callback = missing,
+    f=missing,
+    u0=missing,
+    x0=missing,
+    tspan=missing,
+    p=missing,
+    kwargs=missing,
+    instance=missing,
+    mode=missing,
+    problem=missing,
+    callback=missing,
     _kwargs...,
 )
     if f !== missing
@@ -221,12 +218,12 @@ function SciMLBase.remake(
     return FMUProblem(
         prob.fmu,
         new_tspan;
-        instance = instance === missing ? prob.instance : instance,
-        mode = mode === missing ? prob.mode : mode,
-        u0 = new_u0,
-        p = new_p,
-        problem = problem === missing ? nothing : problem,
-        callback = callback === missing ? nothing : callback,
+        instance=instance === missing ? prob.instance : instance,
+        mode=mode === missing ? prob.mode : mode,
+        u0=new_u0,
+        p=new_p,
+        problem=problem === missing ? nothing : problem,
+        callback=callback === missing ? nothing : callback,
         new_kwargs...,
     )
 end

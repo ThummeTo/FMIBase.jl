@@ -72,8 +72,16 @@ end
     @test cs_prob.mode == :CS
     @test cs_prob.tspan == (0.0, 1.0)
 
+    # FMU supporting ME and CS defaults to CS, unless a mode is given explicitly
+    both = fmu_problem_fixture(fmi2TypeModelExchange)
+    both.modelDescription.coSimulation =
+        FMIBase.FMICore.fmi2ModelDescriptionCoSimulation("cs_fixture")
+    @test FMUProblem(both).mode == :CS
+    @test FMUProblem(both; mode = :ME).mode == :ME
+
     @test_throws ArgumentError FMUProblem(me; u0 = [1.0], x0 = [1.0])
     @test_throws ArgumentError FMUProblem(me; mode = :unknown)
+    @test_throws ArgumentError FMUProblem(me; mode = "ME")
     @test_throws ArgumentError FMIBase.SciMLBase.remake(prob; f = (du, u, p, t) -> du)
     @test_throws ArgumentError FMIBase.SciMLBase.solve(prob)
 end
