@@ -437,10 +437,10 @@ mutable struct FMUEvent{T}
 
     function FMUEvent(
         t::T,
-        indicator::UInt=0,
-        x_left::Union{Array{T,1},Nothing}=nothing,
-        x_right::Union{Array{T,1},Nothing}=nothing,
-        indicatorValue::Union{T,Nothing}=nothing,
+        indicator::UInt = 0,
+        x_left::Union{Array{T,1},Nothing} = nothing,
+        x_right::Union{Array{T,1},Nothing} = nothing,
+        indicatorValue::Union{T,Nothing} = nothing,
     ) where {T}
         inst = new{T}(t, indicator, x_left, x_right, indicatorValue)
         inst.left_snapshot = nothing
