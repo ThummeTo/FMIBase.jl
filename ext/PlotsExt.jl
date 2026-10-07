@@ -71,7 +71,7 @@ Plots the `solution` of a FMU simulation into `fig` and returns the figure again
 function Plots.plot!(
     fig::Plots.Plot,
     solution::FMUSolution;
-    states::Union{Bool,Nothing} = nothing,
+    states::Union{Bool,Nothing} = isnothing(solution.values),
     values::Union{Bool,Nothing} = nothing,
     stateEvents::Union{Bool,Nothing} = nothing,
     timeEvents::Union{Bool,Nothing} = nothing,

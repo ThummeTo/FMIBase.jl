@@ -183,7 +183,8 @@ reference ∈ (fmi2ValueReference, fmi3ValueReference, Integer
 Returns the string identifier for a give value reference.
 """
 function valueReferenceToString(md::fmiModelDescription, reference::fmiValueReference)
-    [k for (k, v) in md.stringValueReferences if v == reference]
+    # iterate model variables (not the `stringValueReferences` Dict) to get a deterministic order
+    [mv.name for mv in md.modelVariables if mv.valueReference == reference]
 end
 valueReferenceToString(md::fmiModelDescription, reference::Integer) =
     valueReferenceToString(md, fmiValueReference(reference))

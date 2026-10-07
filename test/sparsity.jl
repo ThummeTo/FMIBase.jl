@@ -9,7 +9,7 @@ end
 
 @testset "FMUExecutionConfiguration sparsity defaults" begin
     cfg = FMUExecutionConfiguration()
-    @test cfg.load_dep_matrix == true
+    @test cfg.load_dep_matrix == false
     @test cfg.use_jac_prototype == true
 end
 
