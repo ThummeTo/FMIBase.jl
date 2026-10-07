@@ -162,7 +162,7 @@ mutable struct FMUExecutionConfiguration
         inst.finitediff_relstep = -1.0           # < 0.0 use FiniteDiff default
         inst.finitediff_absstep = -1.0           # < 0.0 use FiniteDiff default
 
-        inst.load_dep_matrix = true
+        inst.load_dep_matrix = false
         inst.use_jac_prototype = true
 
         # deprecated
@@ -437,10 +437,10 @@ mutable struct FMUEvent{T}
 
     function FMUEvent(
         t::T,
-        indicator::UInt = 0,
-        x_left::Union{Array{T,1},Nothing} = nothing,
-        x_right::Union{Array{T,1},Nothing} = nothing,
-        indicatorValue::Union{T,Nothing} = nothing,
+        indicator::UInt=0,
+        x_left::Union{Array{T,1},Nothing}=nothing,
+        x_right::Union{Array{T,1},Nothing}=nothing,
+        indicatorValue::Union{T,Nothing}=nothing,
     ) where {T}
         inst = new{T}(t, indicator, x_left, x_right, indicatorValue)
         inst.left_snapshot = nothing
