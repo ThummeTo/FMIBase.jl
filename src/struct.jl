@@ -162,7 +162,7 @@ mutable struct FMUExecutionConfiguration
         inst.finitediff_relstep = -1.0           # < 0.0 use FiniteDiff default
         inst.finitediff_absstep = -1.0           # < 0.0 use FiniteDiff default
 
-        inst.load_dep_matrix = true
+        inst.load_dep_matrix = false
         inst.use_jac_prototype = true
 
         # deprecated
