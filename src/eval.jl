@@ -324,7 +324,7 @@ function eval_set!(
     nothing
 end
 function eval_set!(
-    cRef::UInt64,
+    cRef::UInt,
     x::AbstractVector{Float64},
     u::AbstractVector{Float64},
     u_refs::AbstractVector{<:fmiValueReference},
@@ -338,7 +338,7 @@ function eval_set!(
 end
 
 function eval!(
-    cRef::UInt64,
+    cRef::UInt,
     dx::AbstractVector{Float64},
     dx_refs::AbstractVector{<:fmiValueReference},
     y::AbstractVector{Float64},
@@ -384,7 +384,7 @@ function eval!(
     return c.eval_output
 end
 eval!(
-    cRef::UInt64,
+    cRef::UInt,
     dx::AbstractVector{Float64},
     dx_refs::AbstractVector{<:fmiValueReference},
     y::AbstractVector{Float64},
