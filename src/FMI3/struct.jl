@@ -58,6 +58,10 @@ mutable struct FMU3Instance{F} <: FMUInstance
     continuousStatesChanged::fmi3Boolean
     visible::Bool
 
+    # logger callback and environment, passed to the instantiate functions (FMI 3 has no callback functions struct)
+    callbackLogMessage::Ptr{Cvoid}
+    callbackInstanceEnvironment::fmi3InstanceEnvironment
+
     # caches
     t::fmi3Float64             # the system time
     t_offset::fmi3Float64      # time offset between simulation environment and FMU
@@ -193,6 +197,8 @@ mutable struct FMU3Instance{F} <: FMUInstance
         inst.loggingOn = false
         inst.visible = false
         inst.instanceName = ""
+        inst.callbackLogMessage = C_NULL
+        inst.callbackInstanceEnvironment = C_NULL
 
         # caches
         inst.x = nothing

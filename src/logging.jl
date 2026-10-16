@@ -18,7 +18,17 @@ function logInfo(component::FMU2Component, message, status::fmi2Status = fmi2Sta
     end
 end
 function logInfo(component::FMU3Instance, message, status::fmi3Status = fmi3StatusOK)
-    @assert false, "Not implemented yet. Please open an issue." # [TODO]
+    if component.loggingOn && component.callbackLogMessage != C_NULL
+        ccall(
+            component.callbackLogMessage,
+            Cvoid,
+            (fmi3InstanceEnvironment, fmi3Status, fmi3String, fmi3String),
+            component.callbackInstanceEnvironment,
+            status,
+            "info",
+            message * "\n",
+        )
+    end
 end
 function logInfo(::Nothing, message, status::fmi2Status = fmi2StatusOK)
     @info "logInfo(nothing, $(message), $(status))"
@@ -47,7 +57,17 @@ function logWarning(
     message,
     status::fmi3Status = fmi3StatusWarning,
 )
-    @assert false, "Not implemented yet. Please open an issue." # [TODO]
+    if component.loggingOn && component.callbackLogMessage != C_NULL
+        ccall(
+            component.callbackLogMessage,
+            Cvoid,
+            (fmi3InstanceEnvironment, fmi3Status, fmi3String, fmi3String),
+            component.callbackInstanceEnvironment,
+            status,
+            "warning",
+            message * "\n",
+        )
+    end
 end
 function logWarning(::Nothing, message, status::fmi2Status = fmi2StatusOK)
     @warn "logWarning(nothing, $(message), $(status))"
@@ -68,7 +88,17 @@ function logError(component::FMU2Component, message, status::fmi2Status = fmi2St
     end
 end
 function logError(component::FMU3Instance, message, status::fmi3Status = fmi3StatusError)
-    @assert false, "Not implemented yet. Please open an issue." # [TODO]
+    if component.loggingOn && component.callbackLogMessage != C_NULL
+        ccall(
+            component.callbackLogMessage,
+            Cvoid,
+            (fmi3InstanceEnvironment, fmi3Status, fmi3String, fmi3String),
+            component.callbackInstanceEnvironment,
+            status,
+            "error",
+            message * "\n",
+        )
+    end
 end
 function logError(::Nothing, message, status::fmi2Status = fmi2StatusOK)
     @error "logError(nothing, $(message), $(status))"
