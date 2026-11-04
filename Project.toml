@@ -1,6 +1,6 @@
 name = "FMIBase"
 uuid = "900ee838-d029-460e-b485-d98a826ceef2"
-version = "1.6.0"
+version = "1.6.1"
 authors = ["TT <tobias.thummerer@informatik.uni-augsburg.de>", "LM <lars.mikelsons@informatik.uni-augsburg.de>"]
 
 [deps]

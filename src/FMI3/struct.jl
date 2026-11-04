@@ -512,6 +512,12 @@ mutable struct FMU3 <: FMU
         inst.fmuResourceLocation = ""
         inst.logLevel = logLevel
 
+        # set when loading an FMU from file, FMUs created in memory (e.g. by FMIExport.jl) have none
+        inst.path = ""
+        inst.binaryPath = ""
+        inst.zipPath = ""
+        inst.libHandle = C_NULL
+
         inst.instances = []
 
         inst.hasStateEvents = nothing
