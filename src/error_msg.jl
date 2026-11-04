@@ -9,7 +9,7 @@ const ERR_MSG_CONT_TIME_MODE = """
     If no messages are printed, check that the FMU message printing
     is enabled (this is tool dependent and must be selected during export) and
     follow the message printing instructions under
-    https://thummeto.github.io/FMI.jl/dev/features/#Debugging-/-Logging
+    https://juliafmi.github.io/FMI.jl/dev/features/#Debugging-/-Logging
 """
 
 function ERR_MSG_NO_FMISENSITIVITY(varname, vartype)
