@@ -440,6 +440,11 @@ mutable struct FMU2 <: FMU
         inst = new()
         inst.instances = Vector{FMU2Component}()
         inst.callbackLibHandle = C_NULL
+        # set when loading an FMU from file, FMUs created in memory (e.g. by FMIExport.jl) have none
+        inst.path = ""
+        inst.binaryPath = ""
+        inst.zipPath = ""
+        inst.libHandle = C_NULL
         inst.modelName = ""
         inst.logLevel = logLevel
 
