@@ -10,7 +10,7 @@
 using Downloads
 using Libdl
 
-const BB_FMU_URL = "https://github.com/ThummeTo/FMIZoo.jl/raw/main/models/bin/Dymola/2023x/2.0/BouncingBallGravitySwitch1D.fmu"
+const BB_FMU_URL = "https://github.com/JuliaFMI/FMIZoo.jl/raw/main/models/bin/Dymola/2023x/2.0/BouncingBallGravitySwitch1D.fmu"
 
 function unzip_fmu(dlpath::AbstractString, fmuname::AbstractString)
     unpack_path = mktempdir(; prefix = "fmibase_", cleanup = true)
@@ -45,10 +45,10 @@ function fmi2_demo_binary_paths()
         return nothing
     elseif Sys.islinux()
         binary_dir = joinpath(fmu_path, "binaries", "linux64")
-        callback_url = "https://github.com/ThummeTo/FMIImport.jl/raw/main/src/FMI2/callbackFunctions/binaries/linux64/libcallbackFunctions.so"
+        callback_url = "https://github.com/JuliaFMI/FMIImport.jl/raw/main/src/FMI2/callbackFunctions/binaries/linux64/libcallbackFunctions.so"
     elseif Sys.iswindows()
         binary_dir = joinpath(fmu_path, "binaries", "win64")
-        callback_url = "https://github.com/ThummeTo/FMIImport.jl/raw/main/src/FMI2/callbackFunctions/binaries/win64/callbackFunctions.dll"
+        callback_url = "https://github.com/JuliaFMI/FMIImport.jl/raw/main/src/FMI2/callbackFunctions/binaries/win64/callbackFunctions.dll"
     else
         return nothing
     end
